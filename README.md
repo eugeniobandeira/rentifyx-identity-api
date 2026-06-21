@@ -1,755 +1,517 @@
-<div align="center">
+# Clean Architecture Template
 
-# 🪪 RentifyX — Identity Service
+[![CI](https://github.com/eugeniobandeira/clean-arch-template/actions/workflows/ci.yml/badge.svg)](https://github.com/eugeniobandeira/clean-arch-template/actions/workflows/ci.yml)
+![.NET](https://img.shields.io/badge/.NET-10-512BD4)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/EugenioBandeira.RentifyxIdentityTemplate?label=downloads)](https://www.nuget.org/packages/EugenioBandeira.RentifyxIdentityTemplate)
+[![NuGet Version](https://img.shields.io/nuget/v/EugenioBandeira.RentifyxIdentityTemplate)](https://www.nuget.org/packages/EugenioBandeira.RentifyxIdentityTemplate)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-eugeniobandeira-0077B5?logo=linkedin)](https://linkedin.com/in/eugeniobandeira)
 
-**`rentifyx-identity-api`**
-
-*The trust anchor of the RentifyX platform. Financial-grade identity, onboarding, and compliance.*
-
-[![.NET](https://img.shields.io/badge/.NET_10-512BD4?style=flat-square&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![C#](https://img.shields.io/badge/C%23-239120?style=flat-square&logo=csharp&logoColor=white)](https://learn.microsoft.com/en-us/dotnet/csharp/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![AWS](https://img.shields.io/badge/AWS-232F3E?style=flat-square&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![Kafka](https://img.shields.io/badge/Apache_Kafka-231F20?style=flat-square&logo=apache-kafka&logoColor=white)](https://kafka.apache.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
-[![Status](https://img.shields.io/badge/status-in_development-blue?style=flat-square)]()
-
-</div>
-
----
-
-## Table of Contents
-
-- [About RentifyX](#about-rentifyx)
-- [The Problem and the Solution](#the-problem-and-the-solution)
-- [About This Service](#about-this-service)
-- [Domain Responsibilities](#domain-responsibilities)
-- [Platform Architecture](#platform-architecture)
-- [Service Architecture](#service-architecture)
-- [Tech Stack](#tech-stack)
-- [Patterns and Architectural Decisions](#patterns-and-architectural-decisions)
-- [Local Setup](#local-setup)
-- [Environment Variables](#environment-variables)
-- [Running with Docker Compose](#running-with-docker-compose)
-- [Tests](#tests)
-- [Project Structure](#project-structure)
-- [Domain Events](#domain-events)
-- [Roadmap](#roadmap)
-- [Infrastructure Costs](#infrastructure-costs)
-- [Other Platform Services](#other-platform-services)
-- [Architecture Decision Records](#architecture-decision-records)
-
----
-
-## About RentifyX
-
-> *"Own less. Experience more."*
-
-**RentifyX** is a financial-grade rental platform — it applies the same rigor, security, and compliance standards used in banking to the rental market. Every lease agreement is treated as an auditable, traceable, and legally valid financial transaction.
-
-The platform is composed of **6 independent microservices**, each responsible for a distinct bounded context:
-
-| Service | Repository | Domain |
-|---|---|---|
-| **Identity** *(this repo)* | `rentifyx-identity-api` | Identity, authentication, KYC, LGPD/GDPR |
-| Asset Registry | `rentifyx-asset-registry-api` | Asset catalog, availability, dynamic pricing |
-| Leasing | `rentifyx-leasing-api` | Lease agreements, lifecycle, digital signing |
-| Billing | `rentifyx-billing-api` | Invoicing, payments, financial reconciliation |
-| Risk | `rentifyx-risk-api` | Credit scoring, fraud detection, compliance |
-| Communications | `rentifyx-communications-api` | Notifications, email, SMS, SignalR |
-
-**Platform numbers:**
-- 6 microservices in an independent polyrepo
-- 5 database engines (PostgreSQL, SQL Server, DynamoDB, MongoDB, Redis)
-- 2 message brokers (Apache Kafka + RabbitMQ)
-- 100% Infrastructure as Code with Terraform
-- Build timeline: 6 months to production-ready
-
----
-
-## The Problem and the Solution
-
-### The Rental Market Today
-
-The rental market moves billions annually, yet operates without the financial-grade trust, compliance, and automation that modern consumers expect:
-
-| Problem | Impact |
-|---|---|
-| **No credit assessment** | Anyone can rent anything — no risk evaluation, no fraud protection |
-| **High cost of ownership** | Consumers spend thousands on items used only a few times per year |
-| **Fragmented market** | No unified platform across categories — electronics, vehicles, equipment |
-| **No legal-grade contracts** | Informal agreements, no digital signing, no compliance audit trail |
-| **Payment uncertainty** | No guaranteed receivables, no installment plans, no reconciliation |
-
-### The RentifyX Solution
-
-| Solution | Delivery |
-|---|---|
-| **AI-powered risk assessment** | Credit scoring, fraud detection, and automated compliance checks per party |
-| **Unified marketplace** | Single platform across all rental categories with dynamic pricing |
-| **Digital lease agreements** | Legally-binding digital contracts, S3-stored, Step Functions orchestrated |
-| **Financial-grade billing** | Invoicing, installments, PIX/boleto, reconciliation — bank-level accuracy |
-| **Real-time communication** | SignalR alerts, multi-channel notifications, full communication audit trail |
-
----
-
-## About This Service
-
-The **Identity Service** is the trust anchor of the entire RentifyX platform — the equivalent of account opening in a bank. No rental operation takes place without the parties involved having gone through the onboarding, verification, and authentication process managed by this service.
-
-This service manages **every party** on the platform:
-
-- **Tenants** — those who rent items
-- **Lessors** — those who list items for rent
-- **Guarantors** — those who act as co-signers in higher-risk contracts
-
-Every party — whether an individual or a legal entity — holds a complete profile with verified identity, KYC history, LGPD/GDPR consent records, and authentication credentials.
-
----
-
-## Domain Responsibilities
-
-### Onboarding and KYC
-
-The KYC (Know Your Customer) workflow is orchestrated via **AWS Step Functions**, providing full traceability of each step in the process:
-
-1. Initial party registration (basic data)
-2. Document submission (S3 upload via pre-signed URL)
-3. Document verification (Lambda + bureau integrations)
-4. Approval or rejection with recorded reason
-5. Publication of the `PartyOnboarded` event to Kafka
-
-### Authentication and Authorization
-
-- Custom authentication with **JWT + Refresh Token** (implemented in Phase 1 for learning depth)
-- Integration with **AWS Cognito** for MFA, social login, and federated identity (Phase 2)
-- Role-based access control (RBAC) by party type
-
-### LGPD/GDPR Compliance
-
-This service is responsible for the complete lifecycle of personal data in compliance with the LGPD (Brazil's General Data Protection Law) and GDPR:
-
-- **Consent**: explicit recording of each data processing purpose
-- **Portability**: on-demand export of personal data
-- **Erasure**: anonymization and deletion of personal data upon request
-- **Audit trail**: every access or modification of sensitive data is logged
-
-### Individual and Legal Entity Profiles
-
-The domain model supports two party types with distinct fields and validations:
-
-- **Individual (CPF)**: national ID, date of birth, address, declared income
-- **Legal Entity (CNPJ)**: company registration, legal name, legal representatives, balance sheet
-
----
-
-## Platform Architecture
-
-```
-                        ┌──────────────────────────────────────┐
-                        │    AWS API Gateway + CloudFront       │
-                        │    Cognito Auth · Rate Limiting        │
-                        └──────────────┬───────────────────────┘
-                                       │  HTTPS
-          ┌────────────────────────────┼─────────────────────────────┐
-          │                            │                             │
-┌─────────▼──────────┐    ┌────────────▼───────────┐    ┌───────────▼──────────┐
-│  identity-api      │    │  asset-registry-api    │    │  leasing-api          │
-│  PostgreSQL        │    │  DynamoDB              │    │  SQL Server           │
-│  Step Functions    │    │  S3 · Lambda           │    │  Step Functions       │
-│  Outbox → Kafka    │    │  OpenSearch            │    │  Outbox → Kafka       │
-└─────────┬──────────┘    └────────────┬───────────┘    └───────────┬──────────┘
-          │                            │                             │
-          └────────────────────────────▼─────────────────────────────┘
-                                       │
-                            ┌──────────▼──────────┐
-                            │    Apache Kafka      │  ← Domain Events (immutable log)
-                            │  MSK · 3 brokers    │    PartyOnboarded
-                            │  Multi-AZ           │    AssetListed
-                            └──────────┬──────────┘    LeaseActivated
-                                       │               PaymentReceived
-          ┌────────────────────────────┼──────────────────────────────┐
-          │                            │                              │
-┌─────────▼──────────┐    ┌────────────▼───────────┐    ┌────────────▼──────────┐
-│  billing-api       │    │  risk-api              │    │  communications-api   │
-│  PostgreSQL        │    │  PostgreSQL · Redis    │    │  MongoDB              │
-│  DynamoDB (audit)  │    │  ML.NET · Claude API   │    │  SignalR Hub          │
-│  RabbitMQ → jobs   │    │  Rule Engine           │    │  RabbitMQ → email     │
-│  ReconcileWorker   │    │  RabbitMQ → review     │    │  AWS SES · SMS        │
-└────────────────────┘    └────────────────────────┘    └──────────────────────┘
-```
-
----
-
-## Service Architecture
-
-The Identity Service follows **Clean Architecture** with well-defined layers and no cross-layer dependency violations:
-
-```
-rentifyx-identity-api/
-├── src/
-│   ├── RentifyX.Identity.API/            # Presentation layer (Controllers, Middleware)
-│   ├── RentifyX.Identity.Application/    # Use cases (Commands, Queries, Handlers)
-│   ├── RentifyX.Identity.Domain/         # Aggregates, entities, value objects, events
-│   └── RentifyX.Identity.Infrastructure/ # Repositories, EF Core, Kafka, AWS integrations
-└── tests/
-    ├── RentifyX.Identity.UnitTests/
-    ├── RentifyX.Identity.IntegrationTests/
-    └── RentifyX.Identity.ArchitectureTests/
-```
-
-### Command Flow (CQRS)
-
-```
-HTTP Request
-    ↓
-Controller (validates ModelState)
-    ↓
-MediatR.Send(Command)
-    ↓
-ValidationBehavior (FluentValidation) → returns 422 if invalid
-    ↓
-LoggingBehavior (Serilog structured log)
-    ↓
-CommandHandler
-    ↓
-Domain Aggregate (business logic)
-    ↓
-Repository.SaveAsync() → persists aggregate + outbox in the same transaction
-    ↓
-OutboxPublisher (background worker) → publishes event to Kafka
-```
-
----
+A .NET 10 project template for building production-ready Web APIs using Clean Architecture.
 
 ## Tech Stack
 
-### Backend
-
-| Technology | Version | Purpose |
-|---|---|---|
-| **.NET** | 10 | Runtime and main framework |
-| **C#** | 13 | Programming language |
-| **ASP.NET Core** | 10 | Web API and middleware |
-| **MediatR** | Latest | Mediator for CQRS and pipeline behaviors |
-| **FluentValidation** | Latest | Command and query validation |
-| **Entity Framework Core** | 10 | ORM for the write side (aggregate persistence) |
-| **Dapper** | Latest | Micro-ORM for the read side (optimized queries) |
-| **Worker Service** | .NET 10 | Background outbox publisher |
-
-### Data
-
-| Technology | Purpose |
+| Concern | Library / Technology |
 |---|---|
-| **PostgreSQL** | Primary database — identity data, outbox, KYC records |
-| **Redis** | Session and token cache (via AWS ElastiCache in production) |
+| Framework | ASP.NET Core 10 Minimal APIs |
+| Error Handling | ErrorOr 2.0.1 |
+| Validation | FluentValidation 12.1.1 |
+| Logging | Serilog 10.0.0 |
+| API Versioning | Asp.Versioning.Http 8.1.0 |
+| API Documentation | Scalar + Microsoft.AspNetCore.OpenApi |
+| Orchestration | .NET Aspire 9.3.1 |
+| Observability | OpenTelemetry (traces, metrics, logs) |
+| Testing | xUnit, Moq, FluentAssertions, Bogus |
+| Code Analysis | SonarAnalyzer.CSharp |
 
-### Messaging and Integration
-
-| Technology | Purpose |
-|---|---|
-| **Apache Kafka** | Domain event publishing (Outbox Pattern) |
-| **AWS Step Functions** | KYC workflow orchestration |
-| **AWS Cognito** | MFA, federated authentication (Phase 2) |
-| **AWS S3** | Document and verification photo storage |
-| **AWS Lambda** | Uploaded document processing |
-
-### Quality and Observability
-
-| Technology | Purpose |
-|---|---|
-| **OpenTelemetry** | Distributed traces, metrics, and structured logs |
-| **Serilog** | Structured logging (JSON) with enrichers |
-| **Datadog** | APM, dashboards, and SLOs in production |
-| **xUnit** | Test framework |
-| **Testcontainers** | Integration tests with real infrastructure in Docker |
-| **SonarQube** | Static analysis and code coverage (target: ≥ 80%) |
-
-### CI/CD and Infrastructure
-
-| Technology | Purpose |
-|---|---|
-| **GitHub Actions** | CI/CD pipeline |
-| **Docker / Docker Compose** | Containerization and local environment |
-| **Terraform** | Infrastructure as Code (IaC) for AWS |
-| **Helm** | Kubernetes deployment (AWS EKS) |
-| **AWS EKS** | Container orchestration in production |
-
----
-
-## Patterns and Architectural Decisions
-
-### Clean Architecture + DDD
-
-The service is organized in concentric layers where dependencies always point inward (toward the domain):
-
-- **Domain**: Aggregates, entities, value objects, domain events, repository interfaces. No framework dependencies.
-- **Application**: Command/query handlers, DTOs, application services. Depends only on the domain.
-- **Infrastructure**: Concrete implementations (EF Core, Kafka, AWS). Depends on application and domain.
-- **API**: Controllers, middleware, configuration. Depends on the application.
-
-### CQRS with MediatR
-
-Commands and queries are completely separated:
-
-- **Commands** → mutate state → handled by `CommandHandler` → persisted via EF Core → events published via Outbox
-- **Queries** → pure reads → handled by `QueryHandler` → fetched via Dapper (optimized SQL) → never touch aggregates
-
-### Outbox Pattern
-
-Guarantees exactly-once delivery of domain events to Kafka, eliminating the dual-write problem:
-
-1. The handler persists the aggregate **and** a record in the `outbox` table within the **same transaction**
-2. A background Worker Service reads the `outbox` table and publishes events to Kafka
-3. After Kafka acknowledges (ack), the record is marked as processed
-
-This guarantees that **if the business transaction committed, the event will be published** — regardless of network failures or broker downtime.
-
-### JWT + Refresh Token (Phase 1)
-
-Custom implementation for learning depth:
-
-- Short-lived access token (15 minutes)
-- Long-lived refresh token, rotated on each use
-- Refresh token revocation stored in PostgreSQL
-
-### AWS Cognito Integration (Phase 2 — ADR-006)
-
-After the custom implementation, Cognito is integrated to add:
-
-- MFA (TOTP and SMS)
-- Social login (Google, Apple)
-- Federated identity via OIDC/SAML
-
----
-
-## Local Setup
-
-### Prerequisites
+## Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Git](https://git-scm.com/)
-
-### Cloning the repository
+- .NET Aspire workload:
 
 ```bash
-git clone https://github.com/eugeniobandeira/rentifyx-identity-api.git
-cd rentifyx-identity-api
+dotnet workload install aspire
 ```
 
-### Restoring dependencies
+## Quick Start
 
 ```bash
-dotnet restore
+dotnet new install EugenioBandeira.RentifyxIdentityTemplate
+dotnet new clean-arch -n MyProject
 ```
-
-### Applying migrations
-
-```bash
-dotnet ef database update --project src/RentifyX.Identity.Infrastructure \
-                           --startup-project src/RentifyX.Identity.API
-```
-
----
-
-## Environment Variables
-
-Create an `appsettings.Development.json` file inside `src/RentifyX.Identity.API/` based on the template below:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=rentifyx_identity;Username=postgres;Password=postgres"
-  },
-  "Jwt": {
-    "SecretKey": "your-secret-key-with-at-least-256-bits",
-    "Issuer": "rentifyx-identity-api",
-    "Audience": "rentifyx-platform",
-    "AccessTokenExpirationMinutes": 15,
-    "RefreshTokenExpirationDays": 30
-  },
-  "Kafka": {
-    "BootstrapServers": "localhost:9092",
-    "Topics": {
-      "PartyOnboarded": "rentifyx.identity.party-onboarded",
-      "KycCompleted": "rentifyx.identity.kyc-completed"
-    }
-  },
-  "Aws": {
-    "Region": "us-east-1",
-    "S3": {
-      "BucketName": "rentifyx-identity-documents-dev"
-    },
-    "StepFunctions": {
-      "KycWorkflowArn": "arn:aws:states:us-east-1:000000000000:stateMachine:rentifyx-kyc-workflow"
-    }
-  },
-  "Serilog": {
-    "MinimumLevel": {
-      "Default": "Information",
-      "Override": {
-        "Microsoft": "Warning",
-        "System": "Warning"
-      }
-    }
-  }
-}
-```
-
-> **Note**: Never commit real credentials. In production, all sensitive configuration is injected via **AWS Secrets Manager**.
-
----
-
-## Running with Docker Compose
-
-The full local platform environment runs via Docker Compose — **at zero cost**.
-
-```bash
-# From the project root (or the platform infrastructure repository)
-docker compose up -d
-
-# Check container status
-docker compose ps
-```
-
-**Locally available services:**
-
-| Service | Port | Credentials |
-|---|---|---|
-| PostgreSQL | `5432` | `postgres` / `postgres` |
-| Kafka (Broker) | `9092` | — |
-| Kafka UI | `8080` | — |
-| Redis | `6379` | — |
-| Localstack (AWS Local) | `4566` | — |
-
-**Starting the API:**
-
-```bash
-dotnet run --project src/RentifyX.Identity.API
-```
-
-The API will be available at `https://localhost:5001` and `http://localhost:5000`.
-
-Swagger/OpenAPI will be accessible at `https://localhost:5001/swagger`.
-
----
-
-## Tests
-
-The project adopts a three-layer testing strategy:
-
-### Unit Tests
-
-Cover domain logic — aggregates, value objects, domain services, and isolated handlers:
-
-```bash
-dotnet test tests/RentifyX.Identity.UnitTests
-```
-
-### Integration Tests
-
-Use **Testcontainers** to spin up real PostgreSQL and Kafka instances in Docker during test execution — no infrastructure mocks:
-
-```bash
-dotnet test tests/RentifyX.Identity.IntegrationTests
-```
-
-> The choice of Testcontainers over database mocks is deliberate (ADR): a mock that passes tests but diverges from real PostgreSQL behavior can hide critical migration and transaction bugs.
-
-### Architecture Tests
-
-Verify that Clean Architecture dependency rules are respected — for example, that no class in the `Domain` layer references `Infrastructure`:
-
-```bash
-dotnet test tests/RentifyX.Identity.ArchitectureTests
-```
-
-### Running all tests with coverage
-
-```bash
-dotnet test --collect:"XPlat Code Coverage" \
-            --results-directory ./coverage \
-            /p:CoverletOutputFormat=cobertura
-```
-
-> **Coverage target**: ≥ 80% (enforced via SonarQube in the CI pipeline)
-
----
 
 ## Project Structure
 
 ```
-rentifyx-identity-api/
-│
-├── src/
-│   ├── RentifyX.Identity.API/
-│   │   ├── Controllers/
-│   │   │   ├── AuthController.cs
-│   │   │   ├── PartyController.cs
-│   │   │   └── KycController.cs
-│   │   ├── Middleware/
-│   │   │   ├── ExceptionHandlingMiddleware.cs
-│   │   │   └── CorrelationIdMiddleware.cs
-│   │   ├── Program.cs
-│   │   └── appsettings.json
-│   │
-│   ├── RentifyX.Identity.Application/
-│   │   ├── Parties/
-│   │   │   ├── Commands/
-│   │   │   │   ├── RegisterParty/
-│   │   │   │   │   ├── RegisterPartyCommand.cs
-│   │   │   │   │   ├── RegisterPartyCommandHandler.cs
-│   │   │   │   │   └── RegisterPartyCommandValidator.cs
-│   │   │   │   └── UpdatePartyProfile/
-│   │   │   └── Queries/
-│   │   │       └── GetPartyById/
-│   │   ├── Auth/
-│   │   │   ├── Commands/
-│   │   │   │   ├── Login/
-│   │   │   │   └── RefreshToken/
-│   │   │   └── Queries/
-│   │   ├── Kyc/
-│   │   │   ├── Commands/
-│   │   │   │   ├── InitiateKyc/
-│   │   │   │   └── SubmitDocument/
-│   │   │   └── Queries/
-│   │   ├── Common/
-│   │   │   ├── Behaviors/
-│   │   │   │   ├── ValidationBehavior.cs
-│   │   │   │   └── LoggingBehavior.cs
-│   │   │   └── Interfaces/
-│   │   └── DependencyInjection.cs
-│   │
-│   ├── RentifyX.Identity.Domain/
-│   │   ├── Parties/
-│   │   │   ├── Party.cs                    # Aggregate root
-│   │   │   ├── IndividualParty.cs          # Natural person
-│   │   │   ├── LegalEntityParty.cs         # Legal entity
-│   │   │   ├── PartyRole.cs                # ValueObject: Tenant, Lessor, Guarantor
-│   │   │   └── Events/
-│   │   │       ├── PartyRegisteredEvent.cs
-│   │   │       └── PartyOnboardedEvent.cs
-│   │   ├── Kyc/
-│   │   │   ├── KycWorkflow.cs              # Aggregate
-│   │   │   ├── KycStatus.cs               # ValueObject
-│   │   │   └── Events/
-│   │   │       └── KycCompletedEvent.cs
-│   │   ├── Auth/
-│   │   │   ├── Credential.cs              # Entity
-│   │   │   └── RefreshToken.cs            # ValueObject
-│   │   └── Common/
-│   │       ├── Entity.cs
-│   │       ├── AggregateRoot.cs
-│   │       └── IDomainEvent.cs
-│   │
-│   └── RentifyX.Identity.Infrastructure/
-│       ├── Persistence/
-│       │   ├── IdentityDbContext.cs
-│       │   ├── Configurations/            # EF Core fluent configurations
-│       │   ├── Repositories/
-│       │   ├── Outbox/
-│       │   │   ├── OutboxMessage.cs
-│       │   │   └── OutboxPublisherWorker.cs
-│       │   └── Migrations/
-│       ├── Messaging/
-│       │   └── KafkaEventPublisher.cs
-│       ├── Aws/
-│       │   ├── S3DocumentService.cs
-│       │   └── StepFunctionsKycOrchestrator.cs
-│       └── DependencyInjection.cs
-│
-└── tests/
-    ├── RentifyX.Identity.UnitTests/
-    ├── RentifyX.Identity.IntegrationTests/
-    └── RentifyX.Identity.ArchitectureTests/
+MyProject/
+├── 01-aspire/
+│   ├── 01-AppHost/
+│   │   └── MyProject.AppHost/              # .NET Aspire orchestration
+│   └── 02-ServiceDefaults/
+│       └── MyProject.ServiceDefaults/      # OpenTelemetry, health checks, service discovery
+├── 02-src/
+│   ├── 01-Api/
+│   │   └── MyProject.Api/                  # Endpoints, middlewares, extensions
+│   ├── 02-Application/
+│   │   └── MyProject.Application/          # Handlers, validators, DTOs, mappers
+│   ├── 03-Domain/
+│   │   └── MyProject.Domain/               # Entities, repository interfaces, constants
+│   ├── 04-IoC/
+│   │   └── MyProject.IoC/                  # Dependency injection wiring
+│   └── 05-Infrastructure/
+│       └── MyProject.Infrastructure/       # Repository implementations
+├── 03-tests/
+│   ├── 01-Common/                          # Shared builders (Bogus)
+│   ├── 02-Validators/                      # FluentValidation unit tests
+│   ├── 03-Handlers/                        # Handler unit tests
+│   ├── 04-Repositories/                    # Repository tests
+│   └── 05-Integration/                     # API integration tests (WebApplicationFactory)
+├── docs/                                   # Architecture docs, ADRs, feature specs
+├── iac/                                    # Infrastructure as Code (Terraform, Bicep, etc.)
+├── k8s/                                    # Kubernetes manifests (Kustomize)
+│   ├── base/
+│   └── overlays/
+│       ├── dev/
+│       └── prod/
+├── Directory.Build.props                   # Shared build settings for all projects
+├── Directory.Packages.props                # Centralized NuGet package versions
+├── Dockerfile
+└── RentifyxIdentity.slnx
 ```
 
----
+## Architecture
 
-## Domain Events
+### Layer responsibilities
 
-The Identity Service publishes the following events to Apache Kafka. Other platform services consume these events to react to changes in the identity domain:
-
-| Event | Kafka Topic | Published when |
+| Layer | Responsibility | Allowed dependencies |
 |---|---|---|
-| `PartyRegistered` | `rentifyx.identity.party-registered` | A new party is registered on the platform |
-| `PartyOnboarded` | `rentifyx.identity.party-onboarded` | KYC completed successfully — party is eligible to operate |
-| `KycInitiated` | `rentifyx.identity.kyc-initiated` | KYC workflow started via Step Functions |
-| `KycCompleted` | `rentifyx.identity.kyc-completed` | KYC finalized (approved or rejected) |
-| `KycRejected` | `rentifyx.identity.kyc-rejected` | KYC rejected with reason |
-| `PartyProfileUpdated` | `rentifyx.identity.party-profile-updated` | Party registration data was updated |
-| `PartyDataEraseRequested` | `rentifyx.identity.data-erase-requested` | LGPD/GDPR data erasure request submitted |
+| Domain | Entities, repository interfaces, error codes | None |
+| Application | Handlers, validators, DTOs, mappers | Domain |
+| Infrastructure | Repository implementations | Domain |
+| IoC | DI registration | All layers |
+| Api | Endpoints, middlewares, HTTP mapping | Application, Domain |
 
-All events follow the Outbox Pattern — guaranteeing **exactly-once delivery**, even in the event of broker or application failure.
+### Dependency flow
 
----
+```
+Api → Application → Domain ← Infrastructure
+                       ↑
+              IoC (wires all layers)
+```
 
-## Roadmap
+- **Domain** has no outbound dependencies — it defines interfaces, not implementations.
+- **Infrastructure** implements Domain interfaces. It never references Application.
+- **Application** depends only on Domain interfaces, never on Infrastructure directly.
+- **IoC** is the only layer that references all others — it is the composition root.
+- **Api** depends on Application (handlers) and IoC.
 
-The Identity Service is **Month 1** of the 6-month RentifyX timeline — it establishes the architectural patterns that all other services will follow.
+### Handler pattern
 
-### Month 1 — Foundation *(in progress)*
+Every use case implements `IHandler<TRequest, TResponse>`, returning `ErrorOr<T>` instead of throwing exceptions:
 
-**Identity Service · Core Patterns**
+```csharp
+public interface IHandler<TRequest, TResponse>
+{
+    Task<ErrorOr<TResponse>> Handle(TRequest request, CancellationToken cancellationToken = default);
+}
+```
 
-Build the platform foundation: Identity API with Clean Architecture, CQRS + MediatR, JWT auth, Outbox Pattern publishing to Kafka. Establish the full Docker Compose local environment and the architectural patterns all other services will follow.
+Handlers are registered automatically via reflection scan in IoC — no manual wiring needed when adding new features:
 
-**Deliverables:**
-- [ ] Full Clean Architecture (API → Application → Domain → Infrastructure)
-- [ ] DDD Aggregates: `Party`, `KycWorkflow`, `Credential`
-- [ ] CQRS with MediatR + pipeline behaviors (validation, logging)
-- [ ] JWT + Refresh Token (custom auth)
-- [ ] Outbox Pattern → Kafka (local Docker)
-- [ ] PostgreSQL with EF Core 10 + Dapper (read side)
-- [ ] Docker Compose with all infrastructure services
-- [ ] Tests with Testcontainers (real integration with PostgreSQL and Kafka)
-- [ ] GitHub Actions pipeline (build, test, SonarQube)
+```csharp
+assembly.GetTypes()
+    .Where(t => !t.IsAbstract && !t.IsInterface)
+    .SelectMany(t => t.GetInterfaces()
+        .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IHandler<,>))
+        .Select(i => (Implementation: t, Interface: i)))
+    .ToList()
+    .ForEach(x => services.AddScoped(x.Interface, x.Implementation));
+```
 
----
+### Repository interfaces
 
-### Month 2 — Asset Registry · IaC
+Two interfaces cover all repository needs:
 
-DynamoDB data modeling for the Asset Registry, S3 + Lambda image processing pipeline, OpenSearch for full-text search. Start Terraform IaC for AWS infrastructure: VPC, ECR, RDS, MSK.
+```csharp
+// Basic CRUD — used by most handlers
+IRepository<TEntity>
 
----
+// Extends with pagination — used by GetAll handlers
+IRepository<TEntity, TFilter> : IRepository<TEntity>
+```
 
-### Month 3 — Leasing · Saga
+A concrete repository implements the extended interface, satisfying both:
 
-Core domain implementation: Leasing Service with SQL Server, Saga Choreography via Kafka for cross-service consistency, Step Functions for approval workflow orchestration, digital PDF contract generation to S3.
+```csharp
+public sealed class ExampleRepository : IRepository<ExampleEntity, GetAllExampleRequest>
+{ ... }
+```
 
----
+IoC registration is automatic — any class in the Infrastructure assembly that implements `IRepository<T>` or `IRepository<T, TFilter>` is discovered and registered via reflection. No manual wiring needed.
 
-### Month 4 — Billing · RabbitMQ
+### Feature organization
 
-Full billing implementation with PIX/boleto integration, RabbitMQ for payment task queues, Saga Orchestration pattern, and the `ReconciliationWorker` background service running daily financial reconciliation.
+Features are organized by name inside `Application/Features/{Feature}/`:
 
----
+```
+Application/Features/Example/
+├── ExampleResponse.cs
+├── Mapper/ExampleMapper.cs
+└── Handlers/
+    ├── Create/
+    │   ├── CreateExampleHandler.cs
+    │   ├── Request/CreateExampleRequest.cs
+    │   └── Validator/CreateExampleValidator.cs
+    ├── GetById/GetByIdExampleHandler.cs
+    ├── GetAll/
+    │   ├── GetAllExampleHandler.cs
+    │   └── Request/GetAllExampleRequest.cs
+    ├── Update/
+    │   ├── UpdateExampleHandler.cs
+    │   ├── Request/UpdateExampleRequest.cs
+    │   └── Validator/UpdateExampleValidator.cs
+    └── Delete/DeleteExampleHandler.cs
+```
 
-### Month 5 — Risk · Communications · Kubernetes
+Endpoints follow the same convention in the Api layer:
 
-Risk Service with ML.NET scoring, Communications Service with SignalR and AWS SES, deploy all services to Kubernetes with Helm charts, and wire up OpenTelemetry distributed tracing across the full platform.
+```
+Api/Endpoints/Example/
+├── Create.cs
+├── GetById.cs
+├── GetAll.cs
+├── Update.cs
+└── Delete.cs
+```
 
----
+### Endpoints
 
-### Month 6 — Claude AI · Observability · Production Ready
+Each endpoint is a single file implementing `IEndpoint` and is auto-registered via reflection — no manual wiring:
 
-Integrate Claude API for intelligent risk assessment and anomaly explanation, finalize Datadog dashboards with SLOs per service, complete Terraform for full production infrastructure, and document the full architecture with C4 Model diagrams and ADRs.
+```csharp
+internal sealed class Create : IEndpoint
+{
+    public void MapEndpoint(IEndpointRouteBuilder app)
+    {
+        app.MapPost("/examples", HandleAsync)
+           .WithName("CreateExample")
+           .WithTags(Tags.EXAMPLE);
+    }
+}
+```
 
----
+All endpoints are mounted under `/api/v1` with rate limiting applied automatically.
 
-## Infrastructure Costs
+## Centralized Package Management
 
-### Local Development — $0/month
+All NuGet package versions are declared once in `Directory.Packages.props` at the solution root. Individual `.csproj` files reference packages **without specifying versions** — versions are resolved centrally.
 
-The full stack runs via Docker Compose. PostgreSQL, Kafka, Redis, RabbitMQ — all containerized, at zero cost.
+```xml
+<!-- Directory.Packages.props -->
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
 
-### Cloud Dev / Staging — ~$310/month
+  <ItemGroup Label="Application">
+    <PackageVersion Include="ErrorOr" Version="2.0.1" />
+    <PackageVersion Include="FluentValidation" Version="12.1.1" />
+  </ItemGroup>
 
-Minimal cloud environment to validate AWS service integrations (Cognito, Step Functions, SES):
+  <ItemGroup Label="Api">
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.14.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+  </ItemGroup>
 
-| Resource | Monthly Cost |
+  <ItemGroup Label="Tests">
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="FluentAssertions" Version="8.2.0" />
+  </ItemGroup>
+  <!-- ... -->
+</Project>
+```
+
+**Benefits:**
+- No version conflicts between projects — a single source of truth.
+- To upgrade a package, edit one line in `Directory.Packages.props`.
+- PRs show version changes in one file, making upgrades easy to review.
+
+### Shared build settings
+
+`Directory.Build.props` at the solution root applies common MSBuild properties to every project automatically:
+
+```xml
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <LangVersion>latest</LangVersion>
+    <NuGetAuditMode>direct</NuGetAuditMode>
+  </PropertyGroup>
+</Project>
+```
+
+`03-tests/Directory.Build.props` extends the root file and suppresses analyzer rules that conflict with test conventions (underscore naming, interface-typed fields, etc.) — without touching production project settings.
+
+## Middlewares
+
+### CorrelationIdMiddleware
+
+Tracks every request end-to-end across logs, responses, and error payloads.
+
+- Reads `X-Correlation-Id` from the request header; generates a new `Guid` if absent.
+- Sanitizes the value (alphanumeric + dashes, max 64 chars) to prevent header injection.
+- Stores the value in `HttpContext.Items` and echoes it in the `X-Correlation-Id` response header.
+- Pushes it to Serilog's `LogContext` — every log line in that request automatically includes `{CorrelationId}`.
+
+### GlobalExceptionHandler
+
+Catches all unhandled exceptions and returns a structured `ProblemDetails` response (RFC 7807):
+
+```json
+{
+  "status": 500,
+  "title": "An unexpected error occurred.",
+  "instance": "/api/v1/examples",
+  "extensions": {
+    "correlationId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    "exceptionType": "System.InvalidOperationException",
+    "exceptionMessage": "Sequence contains no elements."
+  }
+}
+```
+
+`OperationCanceledException` triggered by client disconnection returns HTTP 499 and is logged as a warning, not an error.
+
+### Rate Limiting
+
+Fixed window policy applied globally to all versioned endpoints. Configurable via `appsettings.json`:
+
+```json
+"RateLimit": {
+  "PermitLimit": 100,
+  "WindowSeconds": 60,
+  "QueueLimit": 0
+}
+```
+
+### CORS
+
+Configured via `appsettings.json`. Update the allowed origins before going to production:
+
+```json
+"Cors": {
+  "AllowedOrigins": [ "https://your-frontend.com" ]
+}
+```
+
+## Health Endpoints
+
+| Route | Purpose |
 |---|---|
-| EKS cluster + t3.medium nodes | $133 |
-| RDS PostgreSQL t3.micro | $15 |
-| RDS SQL Server t3.micro | $28 |
-| MSK Kafka t3.small (×2) | $70 |
-| Amazon MQ t3.micro | $18 |
-| ElastiCache t3.micro | $12 |
-| DynamoDB on-demand (dev) | $2 |
-| MongoDB Atlas M0 | Free |
-| S3 + SES + Lambda + Cognito | ~$2 |
-| Step Functions (dev usage) | Free tier |
+| `GET /health` | All registered health checks |
+| `GET /alive` | Liveness probe (checks tagged `live`) |
+| `GET /api/v1/health` | Application-level health check (versioned, documented in Swagger) |
 
-> **Cost tip**: the staging environment can be **scheduled on/off** (weekdays only), reducing actual monthly spend to ~$150.
+## Error Handling
 
-### Production MVP (~1,000 MAU) — ~$1,450/month
+Business logic never throws — it returns `ErrorOr<T>`. Endpoints map the result to HTTP responses:
 
-Full production setup: Multi-AZ databases, 3-broker Kafka cluster, autoscaling Kubernetes nodes, Datadog monitoring, and all AWS managed services.
+```csharp
+ErrorOr<ExampleEntity> result = await handler.Handle(request, cancellationToken);
 
-| Resource | Monthly Cost |
+return result.Match(
+    entity => Results.Ok(entity.ToResponse()),
+    errors => errors.ToProblem(httpContext));
+```
+
+Error types are mapped to HTTP status codes automatically:
+
+| ErrorOr type | HTTP status |
 |---|---|
-| EKS + 3× t3.large nodes | $253 |
-| RDS PostgreSQL Multi-AZ db.t3.medium | $100 |
-| RDS SQL Server Multi-AZ db.t3.medium | $180 |
-| MSK Kafka m5.large (×3) | $450 |
-| Amazon MQ m5.large | $120 |
-| ElastiCache cache.t3.medium | $50 |
-| DynamoDB on-demand (prod) | $25 |
-| MongoDB Atlas M10 | $57 |
-| API Gateway + CloudFront + SES | $30 |
-| Lambda + Step Functions | $15 |
-| Datadog (3 hosts) | $45 |
-| Cognito (< 50k MAU) | Free |
+| `Error.Validation` | 422 Unprocessable Entity |
+| `Error.NotFound` | 404 Not Found |
+| `Error.Conflict` | 409 Conflict |
+| `Error.Unauthorized` | 401 Unauthorized |
+| Other | 500 Internal Server Error |
 
-> **Scaling**: at ~10,000 MAU the estimated cost is **~$3,500–5,000/month**. The largest cost driver is MSK (managed Kafka) — which can be replaced by self-hosted Kafka on EKS to save ~$350/month in early stages.
+## Observability
 
-*All estimates based on AWS pricing for the São Paulo region (sa-east-1) as of 2026.*
+The template ships with OpenTelemetry pre-configured for traces, metrics, and logs via `.NET Aspire ServiceDefaults`.
 
----
+Set the following environment variables to enable export to any OTLP-compatible collector:
 
-## Other Platform Services
+| Variable | Description | Default |
+|---|---|---|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Collector URL | _(empty — export disabled)_ |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` or `grpc` | `http/protobuf` |
+| `OTEL_EXPORTER_OTLP_HEADERS` | Auth headers (e.g. API key) | _(empty)_ |
+| `OTEL_SERVICE_NAME` | Service name in traces/metrics | `RentifyxIdentity.Api` |
+| `OTEL_RESOURCE_ATTRIBUTES` | Additional resource metadata | `deployment.environment=production` |
 
-| Service | Repository | Database | Messaging | Domain |
-|---|---|---|---|---|
-| Asset Registry | `rentifyx-asset-registry-api` | DynamoDB + OpenSearch | Kafka | Catalog, availability, dynamic pricing |
-| Leasing | `rentifyx-leasing-api` | SQL Server | Kafka + Step Functions | Contracts, lifecycle, digital signing |
-| Billing | `rentifyx-billing-api` | PostgreSQL + DynamoDB | RabbitMQ + Kafka | Invoicing, PIX/boleto, reconciliation |
-| Risk | `rentifyx-risk-api` | PostgreSQL + Redis | Kafka + RabbitMQ | ML scoring, fraud, compliance, Claude API |
-| Communications | `rentifyx-communications-api` | MongoDB | RabbitMQ | SignalR, SES, SMS, dead-letter retry |
+Compatible platforms: Grafana Cloud, Datadog, New Relic, Honeycomb, Elastic, Jaeger, OpenTelemetry Collector.
 
----
+### Serilog sinks (logs only)
 
-## Architecture Decision Records
+If you prefer sending logs via a Serilog sink instead of OTLP:
 
-ADRs document the context, options considered, and rationale behind every significant architectural decision.
+```bash
+dotnet add package Serilog.Sinks.Seq
+dotnet add package Serilog.Sinks.Datadog.Logs
+dotnet add package Serilog.Sinks.Elasticsearch
+```
 
-### ADR-001 — Polyrepo over Monorepo
+Configure in `appsettings.json` under `Serilog.WriteTo`.
 
-Each service evolves independently with its own CI/CD pipeline, dependency tree, and deployment cadence — mirroring real-world fintech engineering teams.
+## Post-Generation Setup
 
-### ADR-002 — Kafka for domain events, RabbitMQ for tasks
+After running `dotnet new clean-arch -n MyProject`, complete the following steps:
 
-**Kafka** provides an immutable event log with replay capability for cross-service domain events. **RabbitMQ** handles work queues (email, SMS, reports) where acknowledgment and dead-lettering matter more than ordering.
+### 1. Replace the connection string
 
-### ADR-003 — Polyglot persistence strategy
+In `appsettings.json`:
 
-Each service uses the database engine best suited to its access patterns: relational for ACID-critical data, DynamoDB for high-read flexible schemas, MongoDB for variable document structures.
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "your-real-connection-string"
+}
+```
 
-### ADR-004 — Outbox Pattern for guaranteed delivery
+### 2. Implement the repository
 
-Domain events are written to an outbox table in the same transaction as business data, then published asynchronously. Prevents the dual-write problem — critical for financial event integrity.
+Open `Infrastructure/Repositories/ExampleRepository.cs` and implement the methods using your chosen persistence technology (EF Core, Dapper, MongoDB, etc.):
 
-### ADR-005 — Step Functions for workflow orchestration
+```csharp
+public sealed class ExampleRepository : IRepository<ExampleEntity, GetAllExampleRequest>
+{
+    // Your implementation here
+}
+```
 
-Long-running workflows (KYC, lease approval, refund) are orchestrated via Step Functions Standard Workflows, providing built-in state management, retries, timeouts, and visual debugging.
+### 3. Update CORS origins
 
-### ADR-006 — AWS Cognito for identity management
+In `appsettings.json`, replace the placeholder with your frontend URL:
 
-Custom JWT auth is implemented first for learning depth, then Cognito integration is added for MFA, social login, and federated identity — demonstrating both managed and custom auth patterns.
+```json
+"Cors": {
+  "AllowedOrigins": [ "https://your-frontend.com" ]
+}
+```
 
-### ADR-007 — CQRS + MediatR as the application layer
+### 4. Update OpenAPI contact info
 
-Separating reads from writes enables independent scaling and optimization. MediatR pipeline behaviors provide a clean cross-cutting concerns mechanism (validation, logging, caching) without polluting handlers.
+In `appsettings.json`:
 
-### ADR-008 — SQL Server for Leasing (financial contracts)
+```json
+"OpenApi": {
+  "ContactName": "your-name",
+  "ContactUrl": "https://github.com/your-handle"
+}
+```
 
-Lease agreements require the strongest ACID guarantees, row-level locking precision, and audit-friendly tooling. SQL Server is the standard in financial institutions and familiar to compliance teams.
+### 5. Configure observability (optional)
 
----
+Set `OTEL_EXPORTER_OTLP_ENDPOINT` to point to your collector. Leave it empty to disable export during local development.
 
-## Author
+### 6. Replace the Example stubs
 
-Built by **Eugênio Bandeira**
+The `Example*` files throughout the project are working stubs that demonstrate all patterns end-to-end. Use them as a reference, then replace them with your own features.
 
-Financial-grade engineering · 2026
+## Adding a New Feature
 
-> [github.com/eugeniobandeira](https://github.com/eugeniobandeira)
+The workflow for adding a feature (e.g. `Product`) mirrors the existing `Example` feature:
 
----
+**1. Domain** — add entity and error codes:
 
-<div align="center">
+```
+Domain/Entities/ProductEntity.cs
+Domain/Constants/ProductErrorCodes.cs
+```
 
-*RentifyX — Own less. Experience more.*
+**2. Application** — add handlers, requests, validators, mapper:
 
-</div>
+```
+Application/Features/Products/
+├── ProductResponse.cs
+├── Mapper/ProductMapper.cs
+└── Handlers/
+    ├── Create/
+    │   ├── CreateProductHandler.cs
+    │   ├── Request/CreateProductRequest.cs
+    │   └── Validator/CreateProductValidator.cs
+    ├── GetById/GetByIdProductHandler.cs
+    ├── GetAll/
+    │   ├── GetAllProductHandler.cs
+    │   └── Request/GetAllProductRequest.cs
+    ├── Update/
+    │   ├── UpdateProductHandler.cs
+    │   ├── Request/UpdateProductRequest.cs
+    │   └── Validator/UpdateProductValidator.cs
+    └── Delete/DeleteProductHandler.cs
+```
+
+**3. Infrastructure** — implement the repository:
+
+```csharp
+public sealed class ProductRepository : IRepository<ProductEntity, GetAllProductRequest>
+{
+    // EF Core, Dapper, etc.
+}
+```
+
+**4. IoC** — nenhuma alteração necessária. Handlers e repositórios são registrados automaticamente via reflection ao implementar `IHandler<,>` e `IRepository<,>`.
+
+**5. Api** — add one file per endpoint:
+
+```
+Api/Endpoints/Products/
+├── Create.cs
+├── GetById.cs
+├── GetAll.cs
+├── Update.cs
+└── Delete.cs
+```
+
+Endpoints are registered automatically via reflection — no additional wiring needed.
+
+## Running Locally
+
+With Aspire orchestration (recommended):
+
+```bash
+dotnet run --project "01-aspire/01-AppHost/RentifyxIdentity.AppHost"
+```
+
+Or directly:
+
+```bash
+dotnet run --project "02-src/01-Api/RentifyxIdentity.Api"
+```
+
+## Running with Docker
+
+```bash
+docker build -t myproject .
+docker run -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=Production myproject
+```
+
+## Running on Kubernetes
+
+```bash
+kubectl apply -k k8s/overlays/dev
+kubectl apply -k k8s/overlays/prod
+```
+
+## Contributing
+
+See [docs/](docs/) for architecture docs, ADRs, and contributor guides.
+
+## License
+
+MIT © eugeniobandeira
