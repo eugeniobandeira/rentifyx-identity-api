@@ -1,0 +1,46 @@
+<Solution>
+  <Folder Name="/00 - solution-items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Folder Name="/01-aspire/" />
+  <Folder Name="/01-aspire/01-AppHost/">
+    <Project Path="01-aspire/01-AppHost/RentifyxIdentity.AppHost/RentifyxIdentity.AppHost.csproj" />
+  </Folder>
+  <Folder Name="/01-aspire/02-ServiceDefaults/">
+    <Project Path="01-aspire/02-ServiceDefaults/RentifyxIdentity.ServiceDefaults/RentifyxIdentity.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/02-src/" />
+  <Folder Name="/02-src/01-Api/">
+    <Project Path="02-src/01-Api/RentifyxIdentity.Api/RentifyxIdentity.Api.csproj" />
+  </Folder>
+  <Folder Name="/02-src/02-Application/">
+    <Project Path="02-src/02-Application/RentifyxIdentity.Application/RentifyxIdentity.Application.csproj" />
+  </Folder>
+  <Folder Name="/02-src/03-Domain/">
+    <Project Path="02-src/03-Domain/RentifyxIdentity.Domain/RentifyxIdentity.Domain.csproj" />
+  </Folder>
+  <Folder Name="/02-src/04-IoC/">
+    <Project Path="02-src/04-IoC/RentifyxIdentity.IoC/RentifyxIdentity.IoC.csproj" />
+  </Folder>
+  <Folder Name="/02-src/05-Infrastructure/">
+    <Project Path="02-src/05-Infrastructure/RentifyxIdentity.Infrastructure/RentifyxIdentity.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/03-tests/" />
+  <Folder Name="/03-tests/01-Common/">
+    <Project Path="03-tests/01-Common/RentifyxIdentity.Tests.Common/RentifyxIdentity.Tests.Common.csproj" />
+  </Folder>
+  <Folder Name="/03-tests/02-Validators/">
+    <Project Path="03-tests/02-Validators/RentifyxIdentity.Tests.Validators/RentifyxIdentity.Tests.Validators.csproj" />
+  </Folder>
+  <Folder Name="/03-tests/03-Handlers/">
+    <Project Path="03-tests/03-Handlers/RentifyxIdentity.Tests.Handlers/RentifyxIdentity.Tests.Handlers.csproj" />
+  </Folder>
+  <Folder Name="/03-tests/04-Repositories/">
+    <Project Path="03-tests/04-Repositories/RentifyxIdentity.Tests.Repositories/RentifyxIdentity.Tests.Repositories.csproj" />
+  </Folder>
+  <Folder Name="/03-tests/05-Integration/">
+    <Project Path="03-tests/05-Integration/RentifyxIdentity.Tests.Integration/RentifyxIdentity.Tests.Integration.csproj" />
+  </Folder>
+</Solution>
