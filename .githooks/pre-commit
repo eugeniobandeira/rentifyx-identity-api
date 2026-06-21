@@ -1,7 +1,47 @@
 #!/bin/sh
-# Pre-commit hook: blocks commit if the solution does not compile.
+# Pre-commit hook:
+#   1. Scans staged files for secrets via gitleaks
+#   2. Blocks commit if the solution does not compile
 
-SOLUTION=$(git rev-parse --show-toplevel)/RentifyxIdentity.slnx
+set -e
+
+ROOT=$(git rev-parse --show-toplevel)
+
+# ──────────────────────────────────────────────
+# 1. Secret scanning with gitleaks
+# ──────────────────────────────────────────────
+echo "Scanning staged files for secrets..."
+
+if command -v gitleaks > /dev/null 2>&1; then
+  gitleaks protect --staged \
+    --config "$ROOT/.gitleaks.toml" \
+    --redact \
+    --verbose
+
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "Commit blocked: secrets detected in staged files."
+    echo "Review the findings above, remove the secrets, and try again."
+    echo "If this is a false positive, add an allowlist entry to .gitleaks.toml."
+    exit 1
+  fi
+
+  echo "No secrets found."
+else
+  echo ""
+  echo "WARNING: gitleaks is not installed — secret scanning was skipped."
+  echo "Install it to enable local secret detection:"
+  echo "  brew install gitleaks          (macOS)"
+  echo "  choco install gitleaks         (Windows)"
+  echo "  winget install gitleaks.gitleaks (Windows)"
+  echo "  https://github.com/gitleaks/gitleaks#installing"
+  echo ""
+fi
+
+# ──────────────────────────────────────────────
+# 2. Build check
+# ──────────────────────────────────────────────
+SOLUTION="$ROOT/RentifyxIdentity.slnx"
 
 echo "Running dotnet build before commit..."
 dotnet build "$SOLUTION" --no-incremental -v quiet 2>&1

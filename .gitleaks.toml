@@ -1,0 +1,88 @@
+# Gitleaks configuration
+# Docs: https://github.com/gitleaks/gitleaks
+
+title = "RentifyX Identity API - Secret Detection Rules"
+
+# ──────────────────────────────────────────────
+# Extend the default ruleset
+# ──────────────────────────────────────────────
+[extend]
+useDefault = true
+
+# ──────────────────────────────────────────────
+# Custom rules for .NET / SQL / cloud secrets
+# ──────────────────────────────────────────────
+
+[[rules]]
+id          = "dotnet-sql-server-connection-string"
+description = "SQL Server connection string with credentials"
+regex       = '''(?i)(Server|Data Source|Addr|Address|Network Address)\s*=\s*[^;]+;\s*(Database|Initial Catalog)[^;]+;\s*(User ID|UID|User)\s*=\s*[^;]+;\s*(Password|PWD)\s*=\s*[^;'"]{3,}'''
+tags        = ["secret", "database", "sql-server"]
+
+[[rules]]
+id          = "dotnet-postgres-connection-string"
+description = "PostgreSQL connection string with credentials"
+regex       = '''(?i)(Host|Server)\s*=\s*[^;]+;\s*(Database|Port)[^;]*;\s*(Username|User ID|UID)\s*=\s*[^;]+;\s*Password\s*=\s*[^;'"]{3,}'''
+tags        = ["secret", "database", "postgres"]
+
+[[rules]]
+id          = "dotnet-mysql-connection-string"
+description = "MySQL / MariaDB connection string with credentials"
+regex       = '''(?i)(Server|Host)\s*=\s*[^;]+;\s*(Database|Port)[^;]*;\s*(Uid|User|Username)\s*=\s*[^;]+;\s*(Pwd|Password)\s*=\s*[^;'"]{3,}'''
+tags        = ["secret", "database", "mysql"]
+
+[[rules]]
+id          = "dotnet-mongodb-connection-string"
+description = "MongoDB connection string with credentials"
+regex       = '''mongodb(\+srv)?://[^:]+:[^@]{3,}@'''
+tags        = ["secret", "database", "mongodb"]
+
+[[rules]]
+id          = "dotnet-redis-connection-string"
+description = "Redis connection string with password"
+regex       = '''(?i)[a-z0-9\-\.]+:\d+,password=[^,'"]{3,}'''
+tags        = ["secret", "database", "redis"]
+
+[[rules]]
+id          = "dotnet-jwt-secret"
+description = "JWT signing secret in appsettings or code"
+regex       = '''(?i)(JwtSecret|Jwt__Secret|TokenSecret|SigningKey|SecretKey)\s*[=:]\s*["']?[A-Za-z0-9+/=_\-]{16,}["']?'''
+tags        = ["secret", "jwt"]
+
+[[rules]]
+id          = "dotnet-azure-storage"
+description = "Azure Storage account connection string"
+regex       = '''DefaultEndpointsProtocol=https?;AccountName=[^;]+;AccountKey=[A-Za-z0-9+/=]{20,}'''
+tags        = ["secret", "azure", "storage"]
+
+[[rules]]
+id          = "dotnet-azure-servicebus"
+description = "Azure Service Bus connection string"
+regex       = '''Endpoint=sb://[^;]+;SharedAccessKeyName=[^;]+;SharedAccessKey=[A-Za-z0-9+/=]{20,}'''
+tags        = ["secret", "azure", "servicebus"]
+
+[[rules]]
+id          = "dotnet-appsettings-password"
+description = "Generic password field in appsettings JSON"
+regex       = '''(?i)"(Password|Pwd|Secret|ApiKey|ApiSecret|AccessKey|PrivateKey|ClientSecret)"\s*:\s*"[^"]{3,}"'''
+tags        = ["secret", "generic"]
+
+# ──────────────────────────────────────────────
+# Paths to always ignore
+# ──────────────────────────────────────────────
+[allowlist]
+description = "Global allowlist"
+paths       = [
+  ".gitleaks.toml",
+  ".gitignore",
+  "README.md",
+  "docs/",
+  '''\.md$''',
+]
+
+# Ignore placeholder / template values
+regexes = [
+  '''(?i)(Password|Secret|Key)\s*[=:]\s*["']?(YOUR_|CHANGE_ME|PLACEHOLDER|<.*?>|\*{3,}|xxx)''',
+  # EF Core migration snapshots and designer files
+  '''\.Designer\.cs$''',
+]

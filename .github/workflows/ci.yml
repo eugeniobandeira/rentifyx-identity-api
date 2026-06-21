@@ -2,13 +2,31 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
-  build-and-test:
+  secret-scan:
+    name: Secret Scanning
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history so gitleaks can diff the entire branch
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: detect --config .gitleaks.toml --redact --verbose
+
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    needs: secret-scan  # blocks if secrets are found
 
     steps:
       - name: Checkout
