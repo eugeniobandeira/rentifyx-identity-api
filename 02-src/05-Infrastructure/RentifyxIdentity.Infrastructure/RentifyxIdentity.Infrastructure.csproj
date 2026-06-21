@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\02-Application\RentifyxIdentity.Application\RentifyxIdentity.Application.csproj" />
+    <ProjectReference Include="..\..\03-Domain\RentifyxIdentity.Domain\RentifyxIdentity.Domain.csproj" />
+  </ItemGroup>
+</Project>

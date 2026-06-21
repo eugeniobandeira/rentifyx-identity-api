@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "Oy7lpJlawyU=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Eugenio\\Projects\\study\\rentifyx-identity-api\\02-src\\03-Domain\\RentifyxIdentity.Domain\\RentifyxIdentity.Domain.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Eugenio\\.nuget\\packages\\sonaranalyzer.csharp\\10.8.0.113526\\sonaranalyzer.csharp.10.8.0.113526.nupkg.sha512"
+  ],
+  "logs": []
+}
