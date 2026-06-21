@@ -16,6 +16,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" />
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="Common\" />
   </ItemGroup>
 </Project>
