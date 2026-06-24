@@ -104,5 +104,176 @@ namespace RentifyxIdentity.Domain.MessageResource {
                 return ResourceManager.GetString("EXAMPLE_NOT_FOUND", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Email is required..
+        /// </summary>
+        public static string EMAIL_REQUIRED {
+            get {
+                return ResourceManager.GetString("EMAIL_REQUIRED", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Email format is invalid..
+        /// </summary>
+        public static string EMAIL_INVALID_FORMAT {
+            get {
+                return ResourceManager.GetString("EMAIL_INVALID_FORMAT", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Disposable email domains are not allowed..
+        /// </summary>
+        public static string EMAIL_DISPOSABLE_DOMAIN {
+            get {
+                return ResourceManager.GetString("EMAIL_DISPOSABLE_DOMAIN", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Email must not exceed {MaxLength} characters..
+        /// </summary>
+        public static string EMAIL_MAX_LENGTH {
+            get {
+                return ResourceManager.GetString("EMAIL_MAX_LENGTH", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Password is required..
+        /// </summary>
+        public static string PASSWORD_REQUIRED {
+            get {
+                return ResourceManager.GetString("PASSWORD_REQUIRED", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Password must be at least {MinLength} characters..
+        /// </summary>
+        public static string PASSWORD_MIN_LENGTH {
+            get {
+                return ResourceManager.GetString("PASSWORD_MIN_LENGTH", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Password must contain at least one uppercase letter, one lowercase letter, one digit, and one symbol..
+        /// </summary>
+        public static string PASSWORD_COMPLEXITY {
+            get {
+                return ResourceManager.GetString("PASSWORD_COMPLEXITY", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Password must not exceed {MaxLength} characters..
+        /// </summary>
+        public static string PASSWORD_MAX_LENGTH {
+            get {
+                return ResourceManager.GetString("PASSWORD_MAX_LENGTH", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tax ID is required..
+        /// </summary>
+        public static string TAXID_REQUIRED {
+            get {
+                return ResourceManager.GetString("TAXID_REQUIRED", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tax ID must be a valid CPF or CNPJ..
+        /// </summary>
+        public static string TAXID_INVALID_FORMAT {
+            get {
+                return ResourceManager.GetString("TAXID_INVALID_FORMAT", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Role is required..
+        /// </summary>
+        public static string ROLE_REQUIRED {
+            get {
+                return ResourceManager.GetString("ROLE_REQUIRED", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Role must be one of: Owner, Renter, Admin..
+        /// </summary>
+        public static string ROLE_INVALID {
+            get {
+                return ResourceManager.GetString("ROLE_INVALID", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Token is required..
+        /// </summary>
+        public static string TOKEN_REQUIRED {
+            get {
+                return ResourceManager.GetString("TOKEN_REQUIRED", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to User not found..
+        /// </summary>
+        public static string USER_NOT_FOUND {
+            get {
+                return ResourceManager.GetString("USER_NOT_FOUND", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This email address is already registered..
+        /// </summary>
+        public static string USER_EMAIL_ALREADY_REGISTERED {
+            get {
+                return ResourceManager.GetString("USER_EMAIL_ALREADY_REGISTERED", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This Tax ID is already registered..
+        /// </summary>
+        public static string USER_TAXID_ALREADY_REGISTERED {
+            get {
+                return ResourceManager.GetString("USER_TAXID_ALREADY_REGISTERED", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid credentials..
+        /// </summary>
+        public static string USER_INVALID_CREDENTIALS {
+            get {
+                return ResourceManager.GetString("USER_INVALID_CREDENTIALS", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Account is not active..
+        /// </summary>
+        public static string USER_ACCOUNT_NOT_ACTIVE {
+            get {
+                return ResourceManager.GetString("USER_ACCOUNT_NOT_ACTIVE", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Token is invalid or has expired..
+        /// </summary>
+        public static string USER_TOKEN_INVALID_OR_EXPIRED {
+            get {
+                return ResourceManager.GetString("USER_TOKEN_INVALID_OR_EXPIRED", resourceCulture);
+            }
+        }
     }
 }
