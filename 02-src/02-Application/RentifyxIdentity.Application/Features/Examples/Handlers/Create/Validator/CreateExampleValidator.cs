@@ -1,7 +1,7 @@
+﻿using FluentValidation;
 using RentifyxIdentity.Application.Features.Examples.Handlers.Create.Request;
 using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.MessageResource;
-using FluentValidation;
 
 namespace RentifyxIdentity.Application.Features.Examples.Handlers.Create.Validator;
 
