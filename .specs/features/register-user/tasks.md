@@ -1,7 +1,7 @@
 # RegisterUser Tasks
 
 **Spec**: `.specs/features/register-user/spec.md`
-**Status**: Draft
+**Status**: Complete — T1–T18 done, 52 tests passing (14 validators + 32 handlers + 6 integration) — 2026-06-24
 
 ---
 

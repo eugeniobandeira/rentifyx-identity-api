@@ -43,29 +43,30 @@
 
 ### Features
 
-**User Aggregate** — PLANNED
+**User Aggregate** — COMPLETE ✅
 
 - `UserEntity` with `Id`, `Email`, `TaxId`, `PasswordHash`, `Role`, `Status`, `CreatedAt`
 - Token fields: `EmailVerificationTokenHash/Expiry`, `PasswordResetTokenHash/Expiry`
 - Status state machine: `PendingVerification → Active → Suspended | Deleted`
 - Factory `Create(...)` + mutation methods (`VerifyEmail`, `ResetPassword`, `Suspend`, `Anonymize`)
 
-**Value Objects** — PLANNED
+**Value Objects** — COMPLETE ✅
 
 - `Email` — RFC format validation, disposable-domain rejection, normalized lowercase
-- `TaxDocument` — CPF (11 digits) and CNPJ (14 digits) with mod-11 check, masked `ToString()`
+- `TaxDocument` — CPF (11 digits) and CNPJ (14 digits), length-only detection (mod-11 removed — D-002), masked `ToString()`
 - `Password` — OWASP complexity (12+ chars, upper/lower/digit/symbol), BCrypt hash, `[REDACTED]` `ToString()`
 
-**Domain Events** — PLANNED
+**Domain Events** — PARTIAL
 
-- `UserRegistered`, `UserEmailVerified`, `UserPasswordChanged`, `UserSuspended`
+- `UserRegistered` ✅
+- `UserEmailVerified`, `UserPasswordChanged`, `UserSuspended` — PLANNED
 
-**Domain Contracts** — PLANNED
+**Domain Contracts** — PARTIAL
 
-- `IUserRepository` (extends `IRepository<UserEntity>` + `GetByEmailAsync`, `GetByTaxIdAsync`)
-- `ITokenService` (access JWT, refresh token, HMAC hash, verify)
-- `IEmailService` (verification email, password reset email)
-- `UserErrorCodes`, `ValidationConstants.UserRules`, message resources
+- `IUserRepository` (extends `IRepository<UserEntity>` + `GetByEmailAsync`, `GetByTaxIdAsync`) ✅
+- `IEmailService` (verification email, password reset email) ✅
+- `ITokenService` (access JWT, refresh token, HMAC hash, verify) — PLANNED
+- `UserErrorCodes`, `ValidationConstants.UserRules`, message resources ✅
 
 ---
 
@@ -76,15 +77,15 @@
 
 ### Features
 
-**Auth Use Cases** — PLANNED
+**Auth Use Cases** — PARTIAL
 
-- `RegisterUser` — duplicate email/TaxId detection, verification token, `UserRegistered` event
-- `VerifyEmail` — HMAC token validation, 24h expiry, single-use, `Active` status transition
-- `Login` — credential verification, no-enumeration error, access JWT + refresh token issuance
-- `RefreshToken` — one-time-use rotation, replay protection
-- `Logout` — refresh token revocation (idempotent)
-- `ForgotPassword` — blind success (no enumeration), 1h reset token, email dispatch
-- `ResetPassword` — HMAC token validation, password update, `UserPasswordChanged` event
+- `RegisterUser` ✅ — duplicate email/TaxId detection, HMAC verification token, `UserRegistered` event logged, 52 tests
+- `VerifyEmail` — HMAC token validation, 24h expiry, single-use, `Active` status transition — PLANNED
+- `Login` — credential verification, no-enumeration error, access JWT + refresh token issuance — PLANNED
+- `RefreshToken` — one-time-use rotation, replay protection — PLANNED
+- `Logout` — refresh token revocation (idempotent) — PLANNED
+- `ForgotPassword` — blind success (no enumeration), 1h reset token, email dispatch — PLANNED
+- `ResetPassword` — HMAC token validation, password update, `UserPasswordChanged` event — PLANNED
 
 **User Use Cases (LGPD)** — PLANNED
 
@@ -137,10 +138,10 @@
 
 ### Features
 
-**Auth Endpoints (public)** — PLANNED
+**Auth Endpoints (public)** — PARTIAL
 
-- `POST /api/v1/auth/register` → 201
-- `POST /api/v1/auth/verify-email` → 200
+- `POST /api/v1/auth/register` → 201 ✅ (stub — UserRepository/EmailService throw NotImplementedException until E-04)
+- `POST /api/v1/auth/verify-email` → 200 — PLANNED
 - `POST /api/v1/auth/login` → 200 (JWT + refresh)
 - `POST /api/v1/auth/refresh` → 200
 - `POST /api/v1/auth/logout` → 204
