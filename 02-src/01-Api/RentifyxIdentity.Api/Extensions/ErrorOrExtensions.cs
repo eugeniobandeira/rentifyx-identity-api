@@ -1,5 +1,5 @@
+﻿using ErrorOr;
 using RentifyxIdentity.Domain.Constants;
-using ErrorOr;
 
 namespace RentifyxIdentity.Api.Extensions;
 

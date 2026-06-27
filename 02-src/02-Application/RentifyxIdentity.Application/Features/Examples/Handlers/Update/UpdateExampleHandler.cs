@@ -1,12 +1,12 @@
+﻿using ErrorOr;
+using FluentValidation;
+using Microsoft.Extensions.Logging;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Extensions;
 using RentifyxIdentity.Application.Features.Examples.Handlers.Update.Request;
 using RentifyxIdentity.Application.Features.Examples.Mapper;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Interfaces.Common;
-using ErrorOr;
-using FluentValidation;
-using Microsoft.Extensions.Logging;
 
 namespace RentifyxIdentity.Application.Features.Examples.Handlers.Update;
 

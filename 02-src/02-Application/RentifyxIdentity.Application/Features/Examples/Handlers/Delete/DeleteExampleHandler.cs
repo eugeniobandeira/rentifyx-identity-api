@@ -1,9 +1,9 @@
+﻿using ErrorOr;
+using Microsoft.Extensions.Logging;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Interfaces.Common;
-using ErrorOr;
-using Microsoft.Extensions.Logging;
 
 namespace RentifyxIdentity.Application.Features.Examples.Handlers.Delete;
 

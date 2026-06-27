@@ -1,8 +1,11 @@
-using RentifyxIdentity.Domain.Interfaces.Common;
-using RentifyxIdentity.Infrastructure;
+﻿using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
+using RentifyxIdentity.Domain.Interfaces.Common;
+using RentifyxIdentity.Domain.Interfaces.Users;
+using RentifyxIdentity.Infrastructure;
+using RentifyxIdentity.Infrastructure.Repositories;
+using RentifyxIdentity.Infrastructure.Services;
 
 namespace RentifyxIdentity.IoC;
 
@@ -13,11 +16,13 @@ internal static class InfrastructureDependencyInjection
         IConfiguration configuration)
     {
         services.AddRepositories();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IEmailService, EmailService>();
 
         return services;
     }
 
-    private static IServiceCollection AddRepositories(this IServiceCollection services)
+    private static void AddRepositories(this IServiceCollection services)
     {
         Assembly assembly = typeof(InfrastructureAssemblyMarker).Assembly;
 
@@ -38,7 +43,5 @@ internal static class InfrastructureDependencyInjection
                     .ToList()
                     .ForEach(iface => services.AddScoped(iface, sp => sp.GetRequiredService(repositoryType)));
             });
-
-        return services;
     }
 }

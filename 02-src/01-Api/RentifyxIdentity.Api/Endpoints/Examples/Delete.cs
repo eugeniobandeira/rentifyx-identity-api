@@ -1,7 +1,7 @@
+﻿using ErrorOr;
 using RentifyxIdentity.Api.Abstract;
 using RentifyxIdentity.Api.Extensions;
 using RentifyxIdentity.Application.Common.Handler;
-using ErrorOr;
 
 namespace RentifyxIdentity.Api.Endpoints.Examples;
 

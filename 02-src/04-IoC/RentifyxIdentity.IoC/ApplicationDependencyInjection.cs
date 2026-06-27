@@ -1,8 +1,8 @@
-using RentifyxIdentity.Application.Common.Handler;
-using RentifyxIdentity.Application.Features.Examples.Handlers.Create;
+﻿using System.Reflection;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
+using RentifyxIdentity.Application.Common.Handler;
+using RentifyxIdentity.Application.Features.Examples.Handlers.Create;
 
 namespace RentifyxIdentity.IoC;
 

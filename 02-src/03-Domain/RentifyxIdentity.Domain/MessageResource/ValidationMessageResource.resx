@@ -53,4 +53,61 @@
   <data name="DESCRIPTION_MAX_LENGTH" xml:space="preserve">
     <value>Description must not exceed {MaxLength} characters.</value>
   </data>
+  <data name="EMAIL_REQUIRED" xml:space="preserve">
+    <value>Email is required.</value>
+  </data>
+  <data name="EMAIL_INVALID_FORMAT" xml:space="preserve">
+    <value>Email format is invalid.</value>
+  </data>
+  <data name="EMAIL_DISPOSABLE_DOMAIN" xml:space="preserve">
+    <value>Disposable email domains are not allowed.</value>
+  </data>
+  <data name="EMAIL_MAX_LENGTH" xml:space="preserve">
+    <value>Email must not exceed {MaxLength} characters.</value>
+  </data>
+  <data name="PASSWORD_REQUIRED" xml:space="preserve">
+    <value>Password is required.</value>
+  </data>
+  <data name="PASSWORD_MIN_LENGTH" xml:space="preserve">
+    <value>Password must be at least {MinLength} characters.</value>
+  </data>
+  <data name="PASSWORD_COMPLEXITY" xml:space="preserve">
+    <value>Password must contain at least one uppercase letter, one lowercase letter, one digit, and one symbol.</value>
+  </data>
+  <data name="PASSWORD_MAX_LENGTH" xml:space="preserve">
+    <value>Password must not exceed {MaxLength} characters.</value>
+  </data>
+  <data name="TAXID_REQUIRED" xml:space="preserve">
+    <value>Tax ID is required.</value>
+  </data>
+  <data name="TAXID_INVALID_FORMAT" xml:space="preserve">
+    <value>Tax ID must be a valid CPF or CNPJ.</value>
+  </data>
+  <data name="ROLE_REQUIRED" xml:space="preserve">
+    <value>Role is required.</value>
+  </data>
+  <data name="ROLE_INVALID" xml:space="preserve">
+    <value>Role must be one of: Owner, Renter, Admin.</value>
+  </data>
+  <data name="TOKEN_REQUIRED" xml:space="preserve">
+    <value>Token is required.</value>
+  </data>
+  <data name="USER_NOT_FOUND" xml:space="preserve">
+    <value>User not found.</value>
+  </data>
+  <data name="USER_EMAIL_ALREADY_REGISTERED" xml:space="preserve">
+    <value>This email address is already registered.</value>
+  </data>
+  <data name="USER_TAXID_ALREADY_REGISTERED" xml:space="preserve">
+    <value>This Tax ID is already registered.</value>
+  </data>
+  <data name="USER_INVALID_CREDENTIALS" xml:space="preserve">
+    <value>Invalid credentials.</value>
+  </data>
+  <data name="USER_ACCOUNT_NOT_ACTIVE" xml:space="preserve">
+    <value>Account is not active.</value>
+  </data>
+  <data name="USER_TOKEN_INVALID_OR_EXPIRED" xml:space="preserve">
+    <value>Token is invalid or has expired.</value>
+  </data>
 </root>

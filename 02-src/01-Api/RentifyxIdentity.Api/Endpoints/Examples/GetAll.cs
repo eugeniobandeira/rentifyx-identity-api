@@ -1,3 +1,4 @@
+﻿using ErrorOr;
 using RentifyxIdentity.Api.Abstract;
 using RentifyxIdentity.Api.Extensions;
 using RentifyxIdentity.Application.Common.Handler;
@@ -6,7 +7,6 @@ using RentifyxIdentity.Application.Features.Examples.Handlers.GetAll.Request;
 using RentifyxIdentity.Application.Features.Examples.Mapper;
 using RentifyxIdentity.Domain.Common;
 using RentifyxIdentity.Domain.Entities;
-using ErrorOr;
 
 namespace RentifyxIdentity.Api.Endpoints.Examples;
 
