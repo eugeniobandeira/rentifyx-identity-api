@@ -12,9 +12,6 @@
   <ItemGroup Label="Security">
     <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
-  <ItemGroup Label="Security">
-    <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
-  </ItemGroup>
   <ItemGroup Label="Analyzers">
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.27.0.140913" />
   </ItemGroup>
