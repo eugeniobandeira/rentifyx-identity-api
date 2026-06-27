@@ -1,9 +1,9 @@
+﻿using FluentValidation;
 using RentifyxIdentity.Application.Features.Examples.Handlers.Update.Request;
 using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Interfaces.Common;
 using RentifyxIdentity.Domain.MessageResource;
-using FluentValidation;
 
 namespace RentifyxIdentity.Application.Features.Examples.Handlers.Update.Validator;
 

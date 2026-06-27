@@ -40,6 +40,9 @@ appsettings.*.json
 .DS_Store
 Thumbs.db
 
+# Claude Code agent workspace (worktrees, task outputs, memory)
+.claude/
+
 # Logs
 *.log
 logs/

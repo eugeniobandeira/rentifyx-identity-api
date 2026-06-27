@@ -1,10 +1,10 @@
-﻿using RentifyxIdentity.Api.Extensions;
+﻿using System.Globalization;
+using System.Reflection;
+using RentifyxIdentity.Api.Extensions;
 using RentifyxIdentity.Api.Middlewares;
 using RentifyxIdentity.IoC;
 using RentifyxIdentity.ServiceDefaults;
 using Serilog;
-using System.Globalization;
-using System.Reflection;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)

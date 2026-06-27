@@ -1,5 +1,5 @@
+﻿using System.Reflection;
 using RentifyxIdentity.Api.Abstract;
-using System.Reflection;
 
 namespace RentifyxIdentity.Api.Extensions;
 

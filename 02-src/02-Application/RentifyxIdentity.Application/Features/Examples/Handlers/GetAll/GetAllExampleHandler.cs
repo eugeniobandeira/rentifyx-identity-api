@@ -1,10 +1,10 @@
+﻿using ErrorOr;
+using Microsoft.Extensions.Logging;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Features.Examples.Handlers.GetAll.Request;
 using RentifyxIdentity.Domain.Common;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Interfaces.Common;
-using ErrorOr;
-using Microsoft.Extensions.Logging;
 
 namespace RentifyxIdentity.Application.Features.Examples.Handlers.GetAll;
 
@@ -20,6 +20,6 @@ public sealed class GetAllExampleHandler(
 
         logger.LogDebug("Fetched {Count} of {Total} examples.", result.Items.Count, result.Total);
 
-        return ErrorOrFactory.From(result);
+        return result;
     }
 }
