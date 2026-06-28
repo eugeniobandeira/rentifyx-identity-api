@@ -21,6 +21,11 @@ internal static class InfrastructureDependencyInjection
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<ITokenService, TokenService>();
 
+        // Authentication: no default scheme configured here — Cognito JWT bearer wired in E-04.
+        // Testing environment overrides this via CustomWebApplicationFactory + TestAuthHandler.
+        services.AddAuthentication();
+        services.AddAuthorization();
+
         return services;
     }
 
