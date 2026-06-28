@@ -112,6 +112,7 @@ jobs:
           args: >
             --failOnCVSS 7
             --enableRetired
+            --suppression .owasp-suppressions.xml
 
       - name: Upload OWASP report
         uses: actions/upload-artifact@v4
