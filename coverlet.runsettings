@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <!-- Exclude test helper assemblies — not production code -->
+          <Exclude>[RentifyxIdentity.Tests.*]*</Exclude>
+          <!-- Exclude Example scaffold files (living pattern guide, not features) and
+               Infrastructure stubs that throw NotImplementedException until E-04 (DynamoDB wiring) -->
+          <ExcludeByFile>
+            **/Examples/**/*.cs,
+            **/Entities/ExampleEntity.cs,
+            **/Constants/ExampleErrorCodes.cs,
+            **/Common/Response/ApiListResponse.cs,
+            **/Common/Mapper/ApiListResponseMapper.cs,
+            **/Repositories/ExampleRepository.cs,
+            **/Repositories/UserRepository.cs,
+            **/Services/EmailService.cs
+          </ExcludeByFile>
+          <!-- Exclude compiler/source-generated code -->
+          <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
