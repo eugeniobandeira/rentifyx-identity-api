@@ -1,6 +1,6 @@
 # Roadmap
 
-**Current Milestone:** M2 — Domain Model & Core Identity Logic
+**Current Milestone:** M4 — Infrastructure & AWS Integration
 **Status:** In Progress
 
 ---
@@ -56,16 +56,21 @@
 - `TaxDocument` — CPF (11 digits) and CNPJ (14 digits), length-only detection (mod-11 removed — D-002), masked `ToString()`
 - `Password` — OWASP complexity (12+ chars, upper/lower/digit/symbol), BCrypt hash, `[REDACTED]` `ToString()`
 
-**Domain Events** — PARTIAL
+**Domain Events** — COMPLETE ✅
 
 - `UserRegistered` ✅
-- `UserEmailVerified`, `UserPasswordChanged`, `UserSuspended` — PLANNED
+- `UserEmailVerified` ✅
+- `UserLoggedIn` ✅
+- `UserPasswordChanged` ✅
+- `UserSuspended` ✅
+- `UserAccountDeleted` ✅
 
-**Domain Contracts** — PARTIAL
+**Domain Contracts** — COMPLETE ✅
 
 - `IUserRepository` (extends `IRepository<UserEntity>` + `GetByEmailAsync`, `GetByTaxIdAsync`) ✅
 - `IEmailService` (verification email, password reset email) ✅
-- `ITokenService` (access JWT, refresh token, HMAC hash, verify) — PLANNED
+- `ITokenService` (access JWT, refresh token, HMAC hash, verify) ✅
+- `IPasswordHasher` ✅
 - `UserErrorCodes`, `ValidationConstants.UserRules`, message resources ✅
 
 ---
@@ -77,21 +82,21 @@
 
 ### Features
 
-**Auth Use Cases** — PARTIAL
+**Auth Use Cases** — COMPLETE ✅
 
 - `RegisterUser` ✅ — duplicate email/TaxId detection, HMAC verification token, `UserRegistered` event logged, 52 tests
-- `VerifyEmail` — HMAC token validation, 24h expiry, single-use, `Active` status transition — PLANNED
-- `Login` — credential verification, no-enumeration error, access JWT + refresh token issuance — PLANNED
-- `RefreshToken` — one-time-use rotation, replay protection — PLANNED
-- `Logout` — refresh token revocation (idempotent) — PLANNED
-- `ForgotPassword` — blind success (no enumeration), 1h reset token, email dispatch — PLANNED
-- `ResetPassword` — HMAC token validation, password update, `UserPasswordChanged` event — PLANNED
+- `VerifyEmail` ✅ — HMAC token validation, 24h expiry, single-use, `Active` status transition, 16 tests
+- `Login` ✅ — credential verification, no-enumeration error, access JWT + refresh token issuance, 17 tests
+- `RefreshToken` ✅ — one-time-use rotation, replay protection, 15 tests
+- `Logout` ✅ — refresh token revocation (idempotent), 11 tests
+- `ForgotPassword` ✅ — blind success (no enumeration), 1h reset token, email dispatch, 23 tests
+- `ResetPassword` ✅ — HMAC token validation, password update, `UserPasswordChanged` event, 23 tests
 
-**User Use Cases (LGPD)** — PLANNED
+**User Use Cases (LGPD)** — COMPLETE ✅
 
-- `GetProfile` (Art. 18) — return own profile from JWT claim
-- `DeleteAccount` (Art. 18 VI) — soft delete + PII anonymization
-- `ExportData` (Art. 18 IV) — full data export with masked TaxId
+- `GetProfile` ✅ (Art. 18) — return own profile from JWT claim
+- `DeleteAccount` ✅ (Art. 18 VI) — soft delete + PII anonymization
+- `ExportData` ✅ (Art. 18 IV) — full data export with masked TaxId
 
 ---
 
@@ -138,21 +143,21 @@
 
 ### Features
 
-**Auth Endpoints (public)** — PARTIAL
+**Auth Endpoints (public)** — COMPLETE ✅ (stubs — infrastructure throws NotImplementedException until E-04)
 
-- `POST /api/v1/auth/register` → 201 ✅ (stub — UserRepository/EmailService throw NotImplementedException until E-04)
-- `POST /api/v1/auth/verify-email` → 200 — PLANNED
-- `POST /api/v1/auth/login` → 200 (JWT + refresh)
-- `POST /api/v1/auth/refresh` → 200
-- `POST /api/v1/auth/logout` → 204
-- `POST /api/v1/auth/forgot-password` → 204
-- `POST /api/v1/auth/reset-password` → 200
+- `POST /api/v1/auth/register` → 201 ✅
+- `POST /api/v1/auth/verify-email` → 200 ✅
+- `POST /api/v1/auth/login` → 200 ✅ (JWT + refresh)
+- `POST /api/v1/auth/refresh` → 200 ✅
+- `POST /api/v1/auth/logout` → 204 ✅
+- `POST /api/v1/auth/forgot-password` → 204 ✅
+- `POST /api/v1/auth/reset-password` → 200 ✅
 
-**User Endpoints (authenticated)** — PLANNED
+**User Endpoints (authenticated)** — COMPLETE ✅ (stubs — infrastructure throws NotImplementedException until E-04)
 
-- `GET /api/v1/users/me` → 200 (Art. 18)
-- `DELETE /api/v1/users/me` → 204 (Art. 18 VI)
-- `GET /api/v1/users/me/data-export` → 200 (Art. 18 IV)
+- `GET /api/v1/users/me` → 200 ✅ (Art. 18)
+- `DELETE /api/v1/users/me` → 204 ✅ (Art. 18 VI)
+- `GET /api/v1/users/me/data-export` → 200 ✅ (Art. 18 IV)
 
 **Security Hardening** — PLANNED
 
