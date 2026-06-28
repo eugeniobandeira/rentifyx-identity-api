@@ -14,6 +14,9 @@ public static class TestConstants
     public const string HmacKey = "test-hmac-key-for-integration-tests!!";
     public const string HmacKeyConfigPath = "Hmac:Key";
 
+    // Tokens
+    public const string RawRefreshToken = "test-raw-refresh-token-abc123";
+
     // Passwords (invalid scenarios)
     public const string PasswordTooShort = "Short1!";      // 7 chars — fails min length
     public const string PasswordNoUpper = "p@ssword123!";  // no uppercase — fails complexity
