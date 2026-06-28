@@ -27,6 +27,7 @@ public static class TestConstants
 
     // Entity status strings (must match UserStatus enum names)
     public const string StatusPendingVerification = "PendingVerification";
+    public const string StatusActive = "Active";
 
     // Validation error codes
     public const string ValidationErrorCodeNotEmpty = "NotEmpty";
