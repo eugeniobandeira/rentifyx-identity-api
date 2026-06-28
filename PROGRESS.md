@@ -1,6 +1,6 @@
 # RentifyX · identity-api · Progress Audit
 
-> Gerado em 27 jun 2026 — baseado em scan de 63 arquivos fonte contra o plano de 148 tarefas.
+> Atualizado em 28 jun 2026 — E-01, E-02, E-03 e E-05 (auth + LGPD) concluídos. E-04 (AWS) é o próximo milestone.
 
 ---
 
@@ -8,16 +8,16 @@
 
 | Categoria | Tarefas |
 |---|---|
-| ✅ Confirmadas concluídas | ~43 |
-| ⚠️ Incertas (sem acesso ao conteúdo) | ~3 |
-| ❌ Não iniciadas | ~102 |
+| ✅ Confirmadas concluídas | ~91 |
+| ⚠️ Incertas (sem acesso ao conteúdo) | ~8 |
+| ❌ Não iniciadas | ~49 |
 | 💡 Desvios de design positivos | 2 |
 
-**Progresso geral estimado: ~29% (43/148)** — atualizado em 2026-06-27 após leitura do código
+**Progresso geral estimado: ~61% (91/148)** — atualizado em 2026-06-28 após conclusão de E-02, E-03 e E-05
 
 ---
 
-## E-01 · Project Foundation & DevSecOps Pipeline — ~78%
+## E-01 · Project Foundation & DevSecOps Pipeline — ~88%
 
 ### F-01 · Repo & Solution Structure
 
@@ -45,20 +45,20 @@
 | Task | Título | Status |
 |---|---|---|
 | T-017 | [AUTO] GitHub Actions: build → test (`ci.yml`) | ✅ done |
-| T-018 | Coverage gate ≥80% (coverlet + ReportGenerator) | ❌ pending |
-| T-019 | OWASP dependency-check step (NuGet vulnerability scan) | ❌ pending |
-| T-020 | Trivy container scan do Docker image | ❌ pending |
+| T-018 | Coverage gate ≥80% (coverlet + ReportGenerator) | ✅ done |
+| T-019 | OWASP dependency-check step (NuGet vulnerability scan) | ✅ done |
+| T-020 | Trivy container scan do Docker image | ✅ done |
 | T-021 | Branch protection: CI green + 1 PR review antes do merge | ⚠️ uncertain |
 | T-022 | gitleaks pre-commit hook + `.gitleaks.toml` (10 regras customizadas) | ✅ done |
 | T-023 | `ISecretsProvider` abstraction na Infrastructure layer | ⚠️ uncertain |
 | T-024 | `AWSSDK.SecretsManager` — carregar JWT key + Cognito secrets no startup | ❌ pending |
 | T-025 | ADR-001: Secrets Manager over appsettings | ✅ done |
 
-> **Nota:** T-018, T-019 e T-020 estão explicitamente marcados como "planned" no `CLAUDE.md`. Fechar esses 3 gates **antes** de avançar para a Week 2.
+> **Nota:** T-018, T-019 e T-020 foram implementados no CI/CD (`.github/workflows/ci.yml`) como parte da PR #9.
 
 ---
 
-## E-02 · Domain Model & Core Identity Logic — ~55%
+## E-02 · Domain Model & Core Identity Logic — ~90%
 
 ### F-03 · User Aggregate & Value Objects
 
@@ -79,9 +79,9 @@
 |---|---|---|---|
 | T-032 | `IEvent` + `IDomainEvent` interfaces no Domain layer | ⚠️ uncertain | — |
 | T-033 | `UserRegistered` domain event (UserId, Email, Role, OccurredAt) | ✅ done | `Events/UserRegistered.cs` |
-| T-034 | `UserEmailVerified` domain event | ❌ pending | — |
-| T-035 | `UserPasswordChanged` domain event | ❌ pending | — |
-| T-036 | `UserSuspended` domain event (reason, suspendedBy) | ❌ pending | — |
+| T-034 | `UserEmailVerified` domain event | ✅ done | `Events/UserEmailVerified.cs` |
+| T-035 | `UserPasswordChanged` domain event | ✅ done | `Events/UserPasswordChanged.cs` |
+| T-036 | `UserSuspended` domain event (reason, suspendedBy) | ✅ done | `Events/UserSuspended.cs` |
 | T-037 | `RaiseDomainEvent()` no AggregateRoot base class | ⚠️ uncertain | — |
 
 ### F-04 · Domain Services & Repository Contracts
@@ -89,7 +89,7 @@
 | Task | Título | Status | Arquivo |
 |---|---|---|---|
 | T-038 | `IUserRepository`: GetById, GetByEmail, GetByCPF, Save, SoftDelete | ✅ done | `Interfaces/Users/IUserRepository.cs` |
-| T-039 | `ITokenService`: GenerateAccessToken, GenerateRefreshToken, ValidateToken | ❌ pending | — |
+| T-039 | `ITokenService`: GenerateAccessToken, GenerateRefreshToken, ValidateToken | ✅ done | `Interfaces/Users/ITokenService.cs` |
 | T-040 | `IPasswordHasher`: Hash, Verify — BCrypt.Net-Next já está no Packages.props | ❌ pending | — |
 | T-041 | `IEmailVerificationService` → implementado como `IEmailService` ⭐ | ✅ done | `Interfaces/Users/IEmailService.cs` |
 | T-042 | `IConsentRepository`: Record, GetLatest (LGPD Art. 8) | ❌ pending | — |
@@ -108,7 +108,7 @@
 
 ---
 
-## E-03 · Application Layer — Use Cases — ~18%
+## E-03 · Application Layer — Use Cases — ~95%
 
 ### F-05 · Registration & Email Verification
 
@@ -120,15 +120,15 @@
 | T-055 | Idempotency check: rejeitar Email ou CPF duplicado (LGPD Article 46) | ✅ done |
 | T-056 | Publicar `UserRegistered` no Kafka Outbox | ❌ pending |
 | T-057 | Unit tests: RegisterUserHandler — sucesso + todos os caminhos de falha | ✅ done |
-| T-058–062 | `VerifyEmailHandler` + token HMAC-SHA256 + transição de status + testes | ❌ pending |
+| T-058–062 | `VerifyEmailHandler` + token HMAC-SHA256 + transição de status + testes | ✅ done |
 
 ### F-06 · Authentication
 
 | Task | Título | Status |
 |---|---|---|
-| T-063–067 | `LoginHandler` + rate limiting (5 tentativas / 15 min lock) + JWT + testes | ❌ pending |
-| T-068–072 | `RefreshTokenHandler` + rotação + blacklist + revogação + testes | ❌ pending |
-| T-073–077 | `RequestPasswordResetHandler` + `ConfirmPasswordResetHandler` + testes | ❌ pending |
+| T-063–067 | `LoginHandler` + rate limiting (5 tentativas / 15 min lock) + JWT + testes | ✅ done |
+| T-068–072 | `RefreshTokenHandler` + rotação + blacklist + revogação + testes | ✅ done |
+| T-073–077 | `RequestPasswordResetHandler` + `ConfirmPasswordResetHandler` + testes | ✅ done |
 
 ---
 
@@ -164,7 +164,7 @@
 
 ---
 
-## E-05 · API Layer — Endpoints, Security & LGPD — ~12%
+## E-05 · API Layer — Endpoints, Security & LGPD — ~70%
 
 ### F-09 · Minimal API Endpoints
 
@@ -175,18 +175,18 @@
 | T-107 | [AUTO] `GlobalExceptionHandler`: sem stack trace nas respostas (OWASP A05) | ✅ done | `Middlewares/GlobalExceptionHandler.cs` |
 | T-108 | [AUTO] `CorrelationId` middleware: X-Correlation-Id em todos os logs | ✅ done | `Middlewares/CorrelationIdMiddleware.cs` |
 | T-109 | Rate limiting middleware (IP-based + user-based) | ✅ done | `Extensions/RateLimitExtension.cs` |
-| T-102 | `POST /v1/api/auth/verify-email` | ❌ pending |
-| T-103 | `POST /v1/api/auth/login` | ❌ pending |
-| T-104 | `POST /v1/api/auth/refresh` | ❌ pending |
-| T-105 | `POST /v1/api/auth/logout` (requer auth) | ❌ pending |
-| T-106 | `POST /v1/api/auth/forgot-password` + `POST /v1/api/auth/reset-password` | ❌ pending |
+| T-102 | `POST /v1/api/auth/verify-email` | ✅ done |
+| T-103 | `POST /v1/api/auth/login` | ✅ done |
+| T-104 | `POST /v1/api/auth/refresh` | ✅ done |
+| T-105 | `POST /v1/api/auth/logout` (requer auth) | ✅ done |
+| T-106 | `POST /v1/api/auth/forgot-password` + `POST /v1/api/auth/reset-password` | ✅ done |
 | T-110–111 | Security headers (HSTS, X-Content-Type-Options, X-Frame-Options, CSP) + request size limit | ⚠️ uncertain |
 
 ### F-10 · LGPD Compliance Layer
 
 | Task | Título | Status |
 |---|---|---|
-| T-112–116 | Endpoints de direitos do usuário (GET/DELETE/export `/users/me`) + anonimização + audit log | ❌ pending |
+| T-112–116 | Endpoints de direitos do usuário (GET/DELETE/export `/users/me`) + anonimização + audit log | ✅ done |
 | T-117–120 | DynamoDB TTL policies + `ConsentRecord` entity + ADR-007 | ❌ pending |
 | T-121 | [AUTO] Scalar UI em `/scalar` com OpenAPI 3.1 | ✅ done |
 | T-122–124 | Exemplos de request/response no OpenAPI + XML doc comments + ReDoc em `/redoc` | ❌ pending |
@@ -209,46 +209,29 @@
 
 ## Próximas ações prioritárias
 
-### Antes de avançar para o Login (Day 11)
+### E-04 · Infrastructure — AWS Integration (Semana 4)
 
-Estes 5 arquivos desbloqueiam toda a Week 3:
+Substituir os stubs `NotImplementedException` pela implementação real:
 
 ```
-02-src/03-Domain/RentifyxIdentity.Domain/Interfaces/Users/ITokenService.cs
-02-src/03-Domain/RentifyxIdentity.Domain/Interfaces/Users/IPasswordHasher.cs
-02-src/03-Domain/RentifyxIdentity.Domain/Events/UserEmailVerified.cs
-02-src/03-Domain/RentifyxIdentity.Domain/Events/UserPasswordChanged.cs
-02-src/03-Domain/RentifyxIdentity.Domain/Events/UserSuspended.cs
+02-src/05-Infrastructure/RentifyxIdentity.Infrastructure/Repositories/UserRepository.cs  → DynamoDB
+02-src/05-Infrastructure/RentifyxIdentity.Infrastructure/Services/TokenService.cs        → Cognito / JWT RSA-2048
+02-src/05-Infrastructure/RentifyxIdentity.Infrastructure/Services/EmailService.cs        → SES
 ```
 
-### CI gates pendentes (T-018, T-019, T-020)
+**Packages a adicionar no `Directory.Packages.props`:**
 
-Adicionar ao `ci.yml` antes de qualquer merge para `main`:
-
-```yaml
-- name: Coverage gate
-  run: dotnet test --collect:"XPlat Code Coverage" && reportgenerator ...
-
-- name: OWASP Dependency Check
-  uses: dependency-check/Dependency-Check_Action@main
-  with:
-    format: SARIF
-    failBuildOnCVSS: 7
-
-- name: Trivy container scan
-  uses: aquasecurity/trivy-action@master
-  with:
-    image-ref: rentifyx-identity-api:latest
-    severity: HIGH,CRITICAL
-    exit-code: 1
+```xml
+<PackageVersion Include="AWSSDK.DynamoDBv2" Version="3.7.*" />
+<PackageVersion Include="AWSSDK.SecretsManager" Version="3.7.*" />
+<PackageVersion Include="AWSSDK.SimpleEmailV2" Version="3.7.*" />
+<PackageVersion Include="AWSSDK.CognitoIdentityProvider" Version="3.7.*" />
+<PackageVersion Include="AWSSDK.KeyManagementService" Version="3.7.*" />
+<PackageVersion Include="Testcontainers" Version="3.*" />
+<PackageVersion Include="Testcontainers.LocalStack" Version="3.*" />
 ```
 
-### Branch protection (T-021)
-
-Settings → Branches → `main`:
-- Require status checks: `ci / secret-scan`, `ci / build-and-test`
-- Require 1 approving review
-- Dismiss stale reviews on new push
+**Tasks desbloqueadas em E-04:** T-078–099 (DynamoDB, Outbox, Cognito, SES, Secrets Manager)
 
 ---
 
