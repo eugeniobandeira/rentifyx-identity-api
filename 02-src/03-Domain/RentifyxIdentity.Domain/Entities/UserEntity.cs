@@ -67,6 +67,12 @@ public sealed class UserEntity
         RefreshTokenExpiry = expiry;
     }
 
+    public void ClearRefreshToken()
+    {
+        RefreshTokenHash = null;
+        RefreshTokenExpiry = null;
+    }
+
     public void Suspend()
     {
         Status = UserStatus.Suspended;
