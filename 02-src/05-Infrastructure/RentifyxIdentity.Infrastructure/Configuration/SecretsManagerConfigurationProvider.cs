@@ -18,8 +18,6 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
 
     public override void Load()
     {
-        // "environment" is the host config key set by IHostBuilder.UseEnvironment() — this is
-        // what WebApplicationFactory sets, which does NOT write to the OS env var.
         string? env = _bootstrapConfig["environment"]
             ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
             ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");

@@ -10,6 +10,7 @@ using RentifyxIdentity.Tests.Repositories.Infrastructure;
 
 namespace RentifyxIdentity.Tests.Repositories.Features.Identity;
 
+[Trait("Category", "RequiresDocker")]
 public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
 {
     private readonly LocalStackFixture _fixture;
