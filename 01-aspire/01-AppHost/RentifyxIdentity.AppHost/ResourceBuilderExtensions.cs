@@ -35,7 +35,7 @@ internal static class ResourceBuilderExtensions
                     return new ExecuteCommandResult
                     {
                         Success = false,
-                        Message = "Invalid operation: " + ex.Message
+                        ErrorMessage = "Invalid operation: " + ex.Message
                     };
                 }
             },
