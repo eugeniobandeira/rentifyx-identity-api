@@ -6,7 +6,7 @@
 
 ## Current Work
 
-`refresh-token` — complete. Next: logout or CI gates (T-018/T-019/T-020).
+`logout` — complete. Next: password reset or CI gates (T-018/T-019/T-020).
 
 ## Decisions
 
@@ -59,3 +59,4 @@ _None active._
 | verify-email | T-01–T-14 (14/14) | 16 (4 validators + 9 handlers + 3 integration) | 2026-06-27 |
 | login | T-01–T-12 (12/12) | 17 (4 validators + 7 handlers + 3 integration + builder) | 2026-06-27 |
 | refresh-token | T-01–T-08 (8/8) | 15 (4 validators + 9 handlers + 2 integration + builder) | 2026-06-27 |
+| logout | T-01–T-08 (8/8) | 11 (4 validators + 5 handlers + 2 integration) | 2026-06-27 |
