@@ -10,4 +10,5 @@ public static class UserErrorCodes
     public const string AccountNotVerified = "User.AccountNotVerified";
     public const string TokenInvalidOrExpired = "User.TokenInvalidOrExpired";
     public const string AccountNotVerifiable = "User.AccountNotVerifiable";
+    public const string AlreadyDeleted = "User.AlreadyDeleted";
 }

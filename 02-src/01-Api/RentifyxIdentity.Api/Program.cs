@@ -60,6 +60,7 @@ try
     if (!app.Environment.IsDevelopment())
         app.UseHttpsRedirection();
     app.UseCorsPolicy();
+    app.UseAuthentication();
     app.MapEndpoints();
 
     await app.RunAsync();
