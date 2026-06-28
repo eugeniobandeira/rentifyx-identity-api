@@ -78,6 +78,39 @@ public sealed class UserEntity
         Status = UserStatus.Suspended;
     }
 
+    internal static UserEntity Reconstitute(
+        Guid id,
+        Email email,
+        TaxDocument taxId,
+        Password passwordHash,
+        UserRole role,
+        UserStatus status,
+        DateTimeOffset createdAt,
+        string? emailVerificationTokenHash,
+        DateTimeOffset? emailVerificationTokenExpiry,
+        string? passwordResetTokenHash,
+        DateTimeOffset? passwordResetTokenExpiry,
+        string? refreshTokenHash,
+        DateTimeOffset? refreshTokenExpiry)
+    {
+        return new UserEntity
+        {
+            Id = id,
+            Email = email,
+            TaxId = taxId,
+            PasswordHash = passwordHash,
+            Role = role,
+            Status = status,
+            CreatedAt = createdAt,
+            EmailVerificationTokenHash = emailVerificationTokenHash,
+            EmailVerificationTokenExpiry = emailVerificationTokenExpiry,
+            PasswordResetTokenHash = passwordResetTokenHash,
+            PasswordResetTokenExpiry = passwordResetTokenExpiry,
+            RefreshTokenHash = refreshTokenHash,
+            RefreshTokenExpiry = refreshTokenExpiry
+        };
+    }
+
     public void Anonymize()
     {
         Status = UserStatus.Deleted;
