@@ -6,7 +6,7 @@
 
 ## Current Work
 
-M3 complete. Next: M4 — Infrastructure & AWS Integration (E-04): DynamoDB persistence, Cognito TokenService, SES EmailService, KMS, Testcontainers repository tests.
+E-04 in progress — aws-integration feature. Tasks defined in `.specs/features/aws-integration/tasks.md`. 18 atomic tasks across 6 phases. Next: execute T01 (packages).
 
 ## Decisions
 
@@ -15,7 +15,7 @@ M3 complete. Next: M4 — Infrastructure & AWS Integration (E-04): DynamoDB pers
 | D-001 | ErrorOr<T> over exceptions for handler results | Explicit error modeling without exception overhead; maps cleanly to HTTP status codes | 2026-06-21 |
 | D-002 | TaxId (CPF/CNPJ) detected by digit count only, no mod-11 | Study project scope — length-only detection (11 digits = CPF, 14 = CNPJ) is sufficient; mod-11 algorithm removed from both VO and validator | 2026-06-24 |
 | D-003 | DynamoDB single-table design | ADR-005; schema-less, pay-per-use, no migration overhead | 2026-06-21 |
-| D-004 | Cognito for JWT issuance, not custom JWT | ADR-006; managed key rotation, no custom signing key ops | 2026-06-21 |
+| D-004 | Custom RS256 JWT for internal access tokens; Cognito for user-facing auth deferred to E-05 | ADR-006 hybrid model: identity-api issues short-lived RS256 JWTs (15 min) for service-to-service calls; Cognito handles MFA/social login for end users — not yet wired | 2026-06-28 |
 | D-005 | Refresh tokens stored as HMAC-SHA256 hash | Raw token only transmitted over HTTPS, never persisted | 2026-06-21 |
 | D-006 | Soft delete + PII anonymization for account erasure | LGPD Art. 18 VI — hard delete breaks audit trails | 2026-06-21 |
 | D-007 | Everything in English | User preference — no Portuguese in code, docs, or specs | 2026-06-21 |
