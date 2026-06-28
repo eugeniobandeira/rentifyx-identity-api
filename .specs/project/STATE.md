@@ -2,11 +2,11 @@
 
 ## Last Updated
 
-2026-06-24
+2026-06-27
 
 ## Current Work
 
-`password-reset` — complete. Next: CI gates (T-018/T-019/T-020) or LGPD endpoints.
+`ci-gates` — complete (T-018/T-019/T-020). Next: LGPD endpoints (GetProfile, DeleteAccount, ExportData) or DynamoDB wiring (E-04).
 
 ## Decisions
 
@@ -22,6 +22,7 @@
 | D-008 | Enums always stored as string values in DynamoDB, never as integers | Readability in DB and avoid int/value drift bugs; applies to UserRole and UserStatus | 2026-06-21 |
 | D-009 | `ct` as CancellationToken parameter name in our own interfaces | Shorter, less noise in method signatures. Constraint: methods overriding a base interface (IRepository<T>, IHandler<,>) must keep `cancellationToken` to satisfy CA1725/S927 | 2026-06-24 |
 | D-010 | TaxId stored as plaintext for now | KMS encryption + HMAC blind index deferred to E-04 (DynamoDB wiring epic); acceptable for a study project in local/dev stage | 2026-06-24 |
+| D-011 | Coverage gate excludes Example scaffold + Infrastructure stubs | Example files are living-pattern templates, not features; UserRepository/EmailService throw NotImplementedException until E-04 — measuring 0% stubs would give a false signal. Revisit exclusions when stubs are replaced | 2026-06-27 |
 
 ## Blockers
 
@@ -61,3 +62,4 @@ _None active._
 | refresh-token | T-01–T-08 (8/8) | 15 (4 validators + 9 handlers + 2 integration + builder) | 2026-06-27 |
 | logout | T-01–T-08 (8/8) | 11 (4 validators + 5 handlers + 2 integration) | 2026-06-27 |
 | password-reset | T-01–T-14 (14/14) | 23 (7 validators + 13 handlers + 3 integration) | 2026-06-27 |
+| ci-gates | T-018–T-020 (3/3) | — (CI-only; 95.6% line coverage verified locally) | 2026-06-27 |

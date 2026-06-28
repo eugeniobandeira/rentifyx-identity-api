@@ -20,13 +20,13 @@
 - `.slnx` solution file with all projects referenced
 - Reference implementation (`Example*`) as living pattern guide
 
-**CI / Security Gates** — IN PROGRESS
+**CI / Security Gates** — COMPLETE ✅
 
 - GitHub Actions pipeline on PRs: gitleaks secret scan + build + test
 - Pre-commit gitleaks hook via `.githooks/`
-- Coverage gate ≥ 80% enforced in CI (`dotnet test --threshold 80`) ← **not yet wired**
-- OWASP dependency-check ← **not yet wired**
-- Trivy container scan ← **not yet wired**
+- Coverage gate ≥ 80% (`coverlet.collector` → `reportgenerator` merge → bash threshold check) — **95.6% line coverage**
+- OWASP dependency-check (`dependency-check/Dependency-Check_Action`, fail on CVSS ≥ 7)
+- Trivy container scan (`aquasecurity/trivy-action`, CRITICAL/HIGH, ignore-unfixed)
 
 **Local Infrastructure** — PLANNED
 
