@@ -55,6 +55,7 @@ jobs:
           --settings coverlet.runsettings
           --collect:"XPlat Code Coverage"
           --results-directory coverage
+          --filter "Category!=RequiresDocker"
 
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool

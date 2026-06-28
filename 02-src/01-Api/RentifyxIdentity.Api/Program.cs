@@ -2,6 +2,7 @@
 using System.Reflection;
 using RentifyxIdentity.Api.Extensions;
 using RentifyxIdentity.Api.Middlewares;
+using RentifyxIdentity.Infrastructure.Configuration;
 using RentifyxIdentity.IoC;
 using RentifyxIdentity.ServiceDefaults;
 using Serilog;
@@ -26,6 +27,8 @@ try
         .WriteTo.Console(
             formatProvider: CultureInfo.InvariantCulture,
             outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{CorrelationId}] {Message:lj}{NewLine}{Exception}"));
+
+    builder.Configuration.AddSecretsManager(builder.Configuration);
 
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
@@ -61,6 +64,7 @@ try
         app.UseHttpsRedirection();
     app.UseCorsPolicy();
     app.UseAuthentication();
+    app.UseAuthorization();
     app.MapEndpoints();
 
     await app.RunAsync();

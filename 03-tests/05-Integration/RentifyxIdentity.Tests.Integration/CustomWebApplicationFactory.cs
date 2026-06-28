@@ -37,6 +37,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddSingleton<IUserRepository>(UserRepository);
             services.AddSingleton<IEmailService>(EmailService);
+            services.AddSingleton<ITokenService>(new FakeTokenService());
         });
     }
 }

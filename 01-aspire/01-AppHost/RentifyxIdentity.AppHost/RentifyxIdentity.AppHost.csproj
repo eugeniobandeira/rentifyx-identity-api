@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.AWS" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\01-aspire\02-ServiceDefaults\RentifyxIdentity.ServiceDefaults\RentifyxIdentity.ServiceDefaults.csproj" />
