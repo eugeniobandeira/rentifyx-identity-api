@@ -6,7 +6,7 @@
 
 ## Current Work
 
-`ci-gates` — complete (T-018/T-019/T-020). Next: LGPD endpoints (GetProfile, DeleteAccount, ExportData) or DynamoDB wiring (E-04).
+M3 complete. Next: M4 — Infrastructure & AWS Integration (E-04): DynamoDB persistence, Cognito TokenService, SES EmailService, KMS, Testcontainers repository tests.
 
 ## Decisions
 
@@ -63,3 +63,4 @@ _None active._
 | logout | T-01–T-08 (8/8) | 11 (4 validators + 5 handlers + 2 integration) | 2026-06-27 |
 | password-reset | T-01–T-14 (14/14) | 23 (7 validators + 13 handlers + 3 integration) | 2026-06-27 |
 | ci-gates | T-018–T-020 (3/3) | — (CI-only; 95.6% line coverage verified locally) | 2026-06-27 |
+| lgpd-endpoints | all tasks | 28 (6 validators + 14 handlers + 8 integration) | 2026-06-27 |
