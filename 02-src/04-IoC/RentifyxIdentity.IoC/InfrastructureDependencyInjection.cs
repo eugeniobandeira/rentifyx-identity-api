@@ -18,6 +18,7 @@ internal static class InfrastructureDependencyInjection
         services.AddRepositories();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
         return services;
     }

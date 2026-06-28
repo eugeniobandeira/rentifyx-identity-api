@@ -9,4 +9,5 @@ public static class UserErrorCodes
     public const string AccountNotActive = "User.AccountNotActive";
     public const string AccountNotVerified = "User.AccountNotVerified";
     public const string TokenInvalidOrExpired = "User.TokenInvalidOrExpired";
+    public const string AccountNotVerifiable = "User.AccountNotVerifiable";
 }

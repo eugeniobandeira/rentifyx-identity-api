@@ -9,8 +9,8 @@ using Xunit;
 
 namespace RentifyxIdentity.Tests.Integration.Api.Identity;
 
+[Collection("Integration")]
 public sealed class RegisterEndpointTests(CustomWebApplicationFactory factory)
-    : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client = factory.CreateClient();
     private const string RegisterEndpoint = "/api/v1/auth/register";
