@@ -16,7 +16,7 @@ public sealed class LocalStackFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _container = new LocalStackBuilder("localstack/localstack:latest")
+        _container = new LocalStackBuilder("localstack/localstack:3")
             .WithEnvironment("SERVICES", "dynamodb")
             .Build();
 

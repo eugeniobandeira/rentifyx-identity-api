@@ -7,7 +7,7 @@ IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(ar
 IAWSSDKConfig awsConfig = builder.AddAWSSDKConfig()
     .WithRegion(RegionEndpoint.SAEast1);
 
-builder.AddContainer("localstack", "localstack/localstack")
+builder.AddContainer("localstack", "localstack/localstack:3")
     .WithEnvironment("SERVICES", "dynamodb,ses,secretsmanager,kms")
     .WithEnvironment("AWS_DEFAULT_REGION", "sa-east-1")
     .WithEnvironment("LOCALSTACK_HOST", "localhost")
