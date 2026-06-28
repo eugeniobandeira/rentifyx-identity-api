@@ -18,12 +18,16 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
 
     public override void Load()
     {
-        string? env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        // "environment" is the host config key set by IHostBuilder.UseEnvironment() — this is
+        // what WebApplicationFactory sets, which does NOT write to the OS env var.
+        string? env = _bootstrapConfig["environment"]
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+            ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
 
         if (string.Equals(env, "Testing", StringComparison.OrdinalIgnoreCase))
             return;
 
-        string resolvedEnv = env ?? "development";
+        string resolvedEnv = env ?? "Development";
 
         string secretNameTemplate = _bootstrapConfig["AWS:SecretsManager:SecretName"] ?? string.Empty;
         string secretName = secretNameTemplate.Replace("{environment}", resolvedEnv, StringComparison.OrdinalIgnoreCase);
