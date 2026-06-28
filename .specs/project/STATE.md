@@ -6,7 +6,7 @@
 
 ## Current Work
 
-`login` — next feature. verify-email is complete. Domain prerequisites for Login are in place: `ITokenService`, `IPasswordHasher`, all domain events.
+`login` — complete. Next: refresh-token endpoint or CI gates (T-018/T-019/T-020).
 
 ## Decisions
 
@@ -57,3 +57,4 @@ _None active._
 |---|---|---|---|
 | register-user | T1–T18 (18/18) | 52 (14 validators + 32 handlers + 6 integration) | 2026-06-24 |
 | verify-email | T-01–T-14 (14/14) | 16 (4 validators + 9 handlers + 3 integration) | 2026-06-27 |
+| login | T-01–T-12 (12/12) | 17 (4 validators + 7 handlers + 3 integration + builder) | 2026-06-27 |

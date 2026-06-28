@@ -16,6 +16,8 @@ public sealed class UserEntity
     public DateTimeOffset? EmailVerificationTokenExpiry { get; private set; }
     public string? PasswordResetTokenHash { get; private set; }
     public DateTimeOffset? PasswordResetTokenExpiry { get; private set; }
+    public string? RefreshTokenHash { get; private set; }
+    public DateTimeOffset? RefreshTokenExpiry { get; private set; }
 
     private UserEntity() { }
 
@@ -57,6 +59,12 @@ public sealed class UserEntity
         PasswordHash = newPassword;
         PasswordResetTokenHash = null;
         PasswordResetTokenExpiry = null;
+    }
+
+    public void SetRefreshToken(string hash, DateTimeOffset expiry)
+    {
+        RefreshTokenHash = hash;
+        RefreshTokenExpiry = expiry;
     }
 
     public void Suspend()
