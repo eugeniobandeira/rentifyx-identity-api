@@ -1,8 +1,5 @@
-using System.Security.Cryptography;
-using System.Text;
 using ErrorOr;
 using FluentValidation;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Extensions;
@@ -18,8 +15,8 @@ namespace RentifyxIdentity.Application.Features.Identity.Auth.ResetPassword;
 
 public sealed class ResetPasswordHandler(
     IUserRepository repository,
+    ITokenService tokenService,
     IValidator<ResetPasswordRequest> validator,
-    IConfiguration configuration,
     ILogger<ResetPasswordHandler> logger) : IHandler<ResetPasswordRequest, Success>
 {
     public async Task<ErrorOr<Success>> Handle(
@@ -42,11 +39,7 @@ public sealed class ResetPasswordHandler(
         if (user.PasswordResetTokenHash is null || user.PasswordResetTokenExpiry < DateTimeOffset.UtcNow)
             return Error.Validation(UserErrorCodes.TokenInvalidOrExpired, "The reset token is invalid or has expired.");
 
-        string hmacKey = configuration["Hmac:Key"] ?? "dev-hmac-key";
-        using HMACSHA256 hmac = new(Encoding.UTF8.GetBytes(hmacKey));
-        string tokenHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(request.Token)));
-
-        if (tokenHash != user.PasswordResetTokenHash)
+        if (!tokenService.VerifyTokenHash(request.Token, user.PasswordResetTokenHash))
             return Error.Validation(UserErrorCodes.TokenInvalidOrExpired, "The reset token is invalid or has expired.");
 
         user.ResetPassword(Password.FromPlaintext(request.NewPassword));

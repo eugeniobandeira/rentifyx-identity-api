@@ -1,10 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using ErrorOr;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RentifyxIdentity.Application.Features.Identity.Auth.ResetPassword;
@@ -22,19 +19,23 @@ namespace RentifyxIdentity.Tests.Handlers.Features.Identity;
 public sealed class ResetPasswordHandlerTests
 {
     private const string RawToken = "test-password-reset-token-xyz";
+    private const string StoredHash = "stored-password-reset-hash";
 
     private readonly Mock<IUserRepository> _repositoryMock = new();
+    private readonly Mock<ITokenService> _tokenServiceMock = new();
     private readonly Mock<IValidator<ResetPasswordRequest>> _validatorMock = new();
-    private readonly Mock<IConfiguration> _configurationMock = new();
     private readonly Mock<ILogger<ResetPasswordHandler>> _loggerMock = new();
     private readonly ResetPasswordHandler _handler;
-    private readonly string _tokenHash;
 
     public ResetPasswordHandlerTests()
     {
-        _configurationMock
-            .Setup(c => c[TestConstants.HmacKeyConfigPath])
-            .Returns(TestConstants.HmacKey);
+        _tokenServiceMock
+            .Setup(t => t.VerifyTokenHash(RawToken, It.IsAny<string>()))
+            .Returns(true);
+
+        _tokenServiceMock
+            .Setup(t => t.VerifyTokenHash(It.Is<string>(s => s != RawToken), It.IsAny<string>()))
+            .Returns(false);
 
         _validatorMock
             .Setup(v => v.ValidateAsync(
@@ -44,12 +45,9 @@ public sealed class ResetPasswordHandlerTests
 
         _handler = new ResetPasswordHandler(
             _repositoryMock.Object,
+            _tokenServiceMock.Object,
             _validatorMock.Object,
-            _configurationMock.Object,
             _loggerMock.Object);
-
-        using HMACSHA256 hmac = new(Encoding.UTF8.GetBytes(TestConstants.HmacKey));
-        _tokenHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(RawToken)));
     }
 
     private static UserEntity BuildUser(UserStatus status = UserStatus.Active)
@@ -74,7 +72,7 @@ public sealed class ResetPasswordHandlerTests
     public async Task HappyPath_ValidToken_ResetsPassword()
     {
         UserEntity user = BuildUser();
-        user.SetPasswordResetToken(_tokenHash, DateTimeOffset.UtcNow.AddHours(1));
+        user.SetPasswordResetToken(StoredHash, DateTimeOffset.UtcNow.AddHours(1));
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -111,7 +109,7 @@ public sealed class ResetPasswordHandlerTests
     public async Task WrongToken_ReturnsTokenInvalidOrExpired()
     {
         UserEntity user = BuildUser();
-        user.SetPasswordResetToken(_tokenHash, DateTimeOffset.UtcNow.AddHours(1));
+        user.SetPasswordResetToken(StoredHash, DateTimeOffset.UtcNow.AddHours(1));
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -130,7 +128,7 @@ public sealed class ResetPasswordHandlerTests
     public async Task ExpiredToken_ReturnsTokenInvalidOrExpired()
     {
         UserEntity user = BuildUser();
-        user.SetPasswordResetToken(_tokenHash, DateTimeOffset.UtcNow.AddHours(-1));
+        user.SetPasswordResetToken(StoredHash, DateTimeOffset.UtcNow.AddHours(-1));
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -149,7 +147,6 @@ public sealed class ResetPasswordHandlerTests
     public async Task NullTokenHash_ReturnsTokenInvalidOrExpired()
     {
         UserEntity user = BuildUser();
-        // PasswordResetTokenHash remains null
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

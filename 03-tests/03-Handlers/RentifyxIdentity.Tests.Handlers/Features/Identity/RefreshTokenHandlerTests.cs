@@ -164,7 +164,6 @@ public sealed class RefreshTokenHandlerTests
             UserRole.Owner);
 
         user.VerifyEmail();
-        // RefreshTokenHash remains null — no SetRefreshToken called
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -235,8 +234,6 @@ public sealed class RefreshTokenHandlerTests
             TaxDocument.Create(TestConstants.TaxIdCpfRaw),
             Password.FromPlaintext(TestConstants.ValidPassword),
             UserRole.Owner);
-
-        // Status remains PendingVerification
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

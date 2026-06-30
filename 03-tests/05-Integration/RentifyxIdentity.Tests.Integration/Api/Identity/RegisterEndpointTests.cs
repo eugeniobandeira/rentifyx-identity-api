@@ -46,7 +46,6 @@ public sealed class RegisterEndpointTests(CustomWebApplicationFactory factory)
         root.TryGetProperty("taxId", out _).Should().BeFalse();
         root.TryGetProperty("passwordHash", out _).Should().BeFalse();
 
-        // IClassFixture shares the factory; assert the specific email was sent
         factory.EmailService.SentVerificationEmails
             .Should().Contain(e => e.Recipient == request.Email.ToLowerInvariant());
     }
@@ -131,6 +130,18 @@ public sealed class RegisterEndpointTests(CustomWebApplicationFactory factory)
 
         string content = await response.Content.ReadAsStringAsync();
         content.Should().Contain("Password");
+    }
+
+    [Fact]
+    public async Task RegisterUser_WithConsentFalse_Returns422()
+    {
+        RegisterUserRequest request = new RegisterUserRequestBuilder()
+            .WithConsentGiven(false)
+            .Build();
+
+        HttpResponseMessage response = await _client.PostAsJsonAsync(RegisterEndpoint, request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
     [Fact]

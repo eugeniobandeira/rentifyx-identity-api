@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Amazon.DynamoDBv2.Model;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
@@ -42,6 +42,9 @@ internal static class UserDynamoDbMapper
 
         if (entity.RefreshTokenExpiry.HasValue)
             item["RefreshTokenExpiry"] = new AttributeValue { S = entity.RefreshTokenExpiry.Value.ToString("O") };
+
+        if (entity.ConsentGivenAt.HasValue)
+            item["ConsentGivenAt"] = new AttributeValue { S = entity.ConsentGivenAt.Value.ToString("O") };
 
         if (entity.Status == UserStatus.PendingVerification)
         {
@@ -89,6 +92,11 @@ internal static class UserDynamoDbMapper
             ? DateTimeOffset.Parse(rteAttr.S, CultureInfo.InvariantCulture)
             : null;
 
+        item.TryGetValue("ConsentGivenAt", out AttributeValue? cgaAttr);
+        DateTimeOffset? consentGivenAt = cgaAttr is not null
+            ? DateTimeOffset.Parse(cgaAttr.S, CultureInfo.InvariantCulture)
+            : null;
+
         return UserEntity.Reconstitute(
             id: Guid.Parse(item["Id"].S),
             email: email,
@@ -102,6 +110,7 @@ internal static class UserDynamoDbMapper
             passwordResetTokenHash: passwordResetTokenHash,
             passwordResetTokenExpiry: passwordResetTokenExpiry,
             refreshTokenHash: refreshTokenHash,
-            refreshTokenExpiry: refreshTokenExpiry);
+            refreshTokenExpiry: refreshTokenExpiry,
+            consentGivenAt: consentGivenAt);
     }
 }

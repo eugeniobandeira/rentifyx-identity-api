@@ -18,8 +18,14 @@ public sealed class UserEntity
     public DateTimeOffset? PasswordResetTokenExpiry { get; private set; }
     public string? RefreshTokenHash { get; private set; }
     public DateTimeOffset? RefreshTokenExpiry { get; private set; }
+    public DateTimeOffset? ConsentGivenAt { get; private set; }
 
     private UserEntity() { }
+
+    public void SetConsent(DateTimeOffset timestamp)
+    {
+        ConsentGivenAt = timestamp;
+    }
 
     public static UserEntity Create(Email email, TaxDocument taxId, Password passwordHash, UserRole role)
     {
@@ -91,7 +97,8 @@ public sealed class UserEntity
         string? passwordResetTokenHash,
         DateTimeOffset? passwordResetTokenExpiry,
         string? refreshTokenHash,
-        DateTimeOffset? refreshTokenExpiry)
+        DateTimeOffset? refreshTokenExpiry,
+        DateTimeOffset? consentGivenAt = null)
     {
         return new UserEntity
         {
@@ -107,7 +114,8 @@ public sealed class UserEntity
             PasswordResetTokenHash = passwordResetTokenHash,
             PasswordResetTokenExpiry = passwordResetTokenExpiry,
             RefreshTokenHash = refreshTokenHash,
-            RefreshTokenExpiry = refreshTokenExpiry
+            RefreshTokenExpiry = refreshTokenExpiry,
+            ConsentGivenAt = consentGivenAt
         };
     }
 

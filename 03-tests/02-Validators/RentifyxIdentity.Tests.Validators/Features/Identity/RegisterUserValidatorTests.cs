@@ -20,7 +20,8 @@ public sealed class RegisterUserValidatorTests
             TestConstants.ValidEmail,
             TestConstants.TaxIdCpfFormatted,
             TestConstants.ValidPassword,
-            TestConstants.ValidRoles[0]);
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeTrue();
@@ -33,7 +34,8 @@ public sealed class RegisterUserValidatorTests
             string.Empty,
             TestConstants.TaxIdCpfFormatted,
             TestConstants.ValidPassword,
-            TestConstants.ValidRoles[0]);
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -47,7 +49,8 @@ public sealed class RegisterUserValidatorTests
             "notanemail",
             TestConstants.TaxIdCpfFormatted,
             TestConstants.ValidPassword,
-            TestConstants.ValidRoles[0]);
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -61,7 +64,8 @@ public sealed class RegisterUserValidatorTests
             TestConstants.DisposableDomainEmail,
             TestConstants.TaxIdCpfFormatted,
             TestConstants.ValidPassword,
-            TestConstants.ValidRoles[0]);
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -71,13 +75,13 @@ public sealed class RegisterUserValidatorTests
     [Fact]
     public async Task Email_ExceedsMaxLength_ShouldReturnEmailMaxLengthError()
     {
-        // Build an email that exceeds EmailMaxLength (320): fill local part so total > 320
         string email = new string('a', ValidationConstants.UserRules.EmailMaxLength - 5) + "@b.com";
         RegisterUserRequest request = new(
             email,
             TestConstants.TaxIdCpfFormatted,
             TestConstants.ValidPassword,
-            TestConstants.ValidRoles[0]);
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -94,7 +98,8 @@ public sealed class RegisterUserValidatorTests
             TestConstants.ValidEmail,
             string.Empty,
             TestConstants.ValidPassword,
-            TestConstants.ValidRoles[0]);
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -108,7 +113,8 @@ public sealed class RegisterUserValidatorTests
             TestConstants.ValidEmail,
             TestConstants.TaxIdCpfFormatted,
             string.Empty,
-            TestConstants.ValidRoles[0]);
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -122,7 +128,8 @@ public sealed class RegisterUserValidatorTests
             TestConstants.ValidEmail,
             TestConstants.TaxIdCpfFormatted,
             TestConstants.PasswordTooShort,
-            TestConstants.ValidRoles[0]);
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -139,7 +146,8 @@ public sealed class RegisterUserValidatorTests
             TestConstants.ValidEmail,
             TestConstants.TaxIdCpfFormatted,
             "alllowercase123!",
-            TestConstants.ValidRoles[0]);
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -149,13 +157,13 @@ public sealed class RegisterUserValidatorTests
     [Fact]
     public async Task Password_ExceedsMaxLength_ShouldReturnPasswordMaxLengthError()
     {
-        // Build a password that exceeds PasswordMaxLength (128)
         string password = new string('A', ValidationConstants.UserRules.PasswordMaxLength) + "a1!";
         RegisterUserRequest request = new(
             TestConstants.ValidEmail,
             TestConstants.TaxIdCpfFormatted,
             password,
-            TestConstants.ValidRoles[0]);
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -172,7 +180,8 @@ public sealed class RegisterUserValidatorTests
             TestConstants.ValidEmail,
             TestConstants.TaxIdCpfFormatted,
             TestConstants.ValidPassword,
-            string.Empty);
+            string.Empty,
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -186,11 +195,27 @@ public sealed class RegisterUserValidatorTests
             TestConstants.ValidEmail,
             TestConstants.TaxIdCpfFormatted,
             TestConstants.ValidPassword,
-            "owner"); // lowercase — not a valid enum name
+            "owner",
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.ErrorMessage == ValidationMessageResource.ROLE_INVALID);
+    }
+
+    [Fact]
+    public async Task ConsentGiven_False_ShouldReturnConsentRequiredError()
+    {
+        RegisterUserRequest request = new(
+            TestConstants.ValidEmail,
+            TestConstants.TaxIdCpfFormatted,
+            TestConstants.ValidPassword,
+            TestConstants.ValidRoles[0],
+            ConsentGiven: false);
+
+        ValidationResult result = await _validator.ValidateAsync(request);
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.ErrorMessage == ValidationMessageResource.CONSENT_REQUIRED);
     }
 
     [Fact]
@@ -200,7 +225,8 @@ public sealed class RegisterUserValidatorTests
             string.Empty,
             string.Empty,
             string.Empty,
-            string.Empty);
+            string.Empty,
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
@@ -213,12 +239,12 @@ public sealed class RegisterUserValidatorTests
     [Fact]
     public async Task Password_ExactlyMinLength_WithComplexity_ShouldPassValidation()
     {
-        // "Ab1!Ab1!Ab1!" is exactly 12 characters: uppercase, lowercase, digit, symbol
         RegisterUserRequest request = new(
             TestConstants.ValidEmail,
             TestConstants.TaxIdCpfFormatted,
             "Ab1!Ab1!Ab1!",
-            TestConstants.ValidRoles[1]); // Renter
+            TestConstants.ValidRoles[1],
+            ConsentGiven: true);
 
         ValidationResult result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeTrue();

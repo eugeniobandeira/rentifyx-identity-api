@@ -14,6 +14,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     public FakeUserRepository UserRepository { get; } = new();
     public FakeEmailService EmailService { get; } = new();
+    public FakeAuditLogService AuditLogService { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -29,8 +30,6 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // Override authentication with a test handler that reads the user ID
-            // from "Authorization: Bearer <guid>" — replaced by Cognito JWT in E-04.
             services.AddAuthentication(TestAuthHandler.SchemeName)
                     .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
                         TestAuthHandler.SchemeName, _ => { });
@@ -38,6 +37,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.AddSingleton<IUserRepository>(UserRepository);
             services.AddSingleton<IEmailService>(EmailService);
             services.AddSingleton<ITokenService>(new FakeTokenService());
+            services.AddSingleton<IAuditLogService>(AuditLogService);
         });
     }
 }

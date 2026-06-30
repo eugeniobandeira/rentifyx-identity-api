@@ -46,6 +46,7 @@ try
     app.MapDefaultEndpoints();
 
     app.UseExceptionHandler();
+    app.UseSecurityHeaders();
     app.UseCorrelationId();
     app.UseRateLimiting();
     app.UseSerilogRequestLogging(options =>

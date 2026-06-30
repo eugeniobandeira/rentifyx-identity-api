@@ -58,7 +58,6 @@ public sealed class VerifyEmailEndpointTests(CustomWebApplicationFactory factory
             .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
             .Token;
 
-        // Expire the token by mutating the entity in the fake store (reference semantics)
         UserEntity? user = await factory.UserRepository.GetByEmailAsync(registerRequest.Email);
         user!.SetEmailVerificationToken(user.EmailVerificationTokenHash!, DateTimeOffset.UtcNow.AddHours(-1));
 

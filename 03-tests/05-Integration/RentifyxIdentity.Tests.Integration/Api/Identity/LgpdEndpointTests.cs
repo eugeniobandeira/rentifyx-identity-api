@@ -7,6 +7,7 @@ using RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword.Request
 using RentifyxIdentity.Application.Features.Identity.Auth.Register.Request;
 using RentifyxIdentity.Application.Features.Identity.Auth.VerifyEmail.Request;
 using RentifyxIdentity.Application.Features.Identity.User.ExportData;
+using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Tests.Common.Builders;
 using Xunit;
 
@@ -103,7 +104,6 @@ public sealed class LgpdEndpointTests(CustomWebApplicationFactory factory)
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        // Subsequent GetProfile returns 404 — account is anonymized
         HttpResponseMessage profileResponse = await _client.GetAsync(GetProfileEndpoint);
         profileResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -132,6 +132,42 @@ public sealed class LgpdEndpointTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
+    public async Task GetProfile_Authenticated_AuditsProfileAccessed()
+    {
+        (Guid userId, _) = await RegisterAndVerifyAsync();
+        AuthenticateAs(userId);
+
+        await _client.GetAsync(GetProfileEndpoint);
+
+        factory.AuditLogService.Entries
+            .Should().Contain(e => e.UserId == userId && e.EventType == AuditEvents.ProfileAccessed);
+    }
+
+    [Fact]
+    public async Task ExportData_Authenticated_AuditsDataExported()
+    {
+        (Guid userId, _) = await RegisterAndVerifyAsync();
+        AuthenticateAs(userId);
+
+        await _client.GetAsync(ExportDataEndpoint);
+
+        factory.AuditLogService.Entries
+            .Should().Contain(e => e.UserId == userId && e.EventType == AuditEvents.DataExported);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_Authenticated_AuditsAccountDeleted()
+    {
+        (Guid userId, _) = await RegisterAndVerifyAsync();
+        AuthenticateAs(userId);
+
+        await _client.DeleteAsync(DeleteAccountEndpoint);
+
+        factory.AuditLogService.Entries
+            .Should().Contain(e => e.UserId == userId && e.EventType == AuditEvents.AccountDeleted);
+    }
+
+    [Fact]
     public async Task ForgotPassword_DeletedAccount_Returns204()
     {
         (Guid userId, RegisterUserRequest registered) = await RegisterAndVerifyAsync();
@@ -139,7 +175,6 @@ public sealed class LgpdEndpointTests(CustomWebApplicationFactory factory)
         await _client.DeleteAsync(DeleteAccountEndpoint);
         RemoveAuthentication();
 
-        // ForgotPassword must remain blind even for deleted accounts
         HttpResponseMessage response = await _client.PostAsJsonAsync(
             ForgotPasswordEndpoint,
             new ForgotPasswordRequest(registered.Email));

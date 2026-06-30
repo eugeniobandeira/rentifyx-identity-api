@@ -14,6 +14,7 @@ namespace RentifyxIdentity.Application.Features.Identity.User.GetProfile;
 
 public sealed class GetProfileHandler(
     IUserRepository repository,
+    IAuditLogService auditLogService,
     IValidator<GetProfileRequest> validator,
     ILogger<GetProfileHandler> logger) : IHandler<GetProfileRequest, UserResponse>
 {
@@ -33,6 +34,15 @@ public sealed class GetProfileHandler(
             return Error.NotFound(UserErrorCodes.NotFound, "User not found.");
 
         logger.LogInformation("Profile retrieved. UserId={UserId}", user.Id);
+
+        try
+        {
+            await auditLogService.LogAsync(user.Id, AuditEvents.ProfileAccessed, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Audit log failed for UserId={UserId}", user.Id);
+        }
 
         return UserMapper.ToResponse(user);
     }

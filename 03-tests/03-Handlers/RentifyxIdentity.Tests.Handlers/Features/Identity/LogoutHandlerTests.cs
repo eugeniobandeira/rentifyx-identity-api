@@ -104,7 +104,6 @@ public sealed class LogoutHandlerTests
             UserRole.Owner);
 
         user.VerifyEmail();
-        // RefreshTokenHash remains null
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

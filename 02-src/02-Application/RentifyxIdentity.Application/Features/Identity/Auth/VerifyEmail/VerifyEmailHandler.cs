@@ -1,8 +1,5 @@
-using System.Security.Cryptography;
-using System.Text;
 using ErrorOr;
 using FluentValidation;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Extensions;
@@ -18,8 +15,8 @@ namespace RentifyxIdentity.Application.Features.Identity.Auth.VerifyEmail;
 
 public sealed class VerifyEmailHandler(
     IUserRepository repository,
+    ITokenService tokenService,
     IValidator<VerifyEmailRequest> validator,
-    IConfiguration configuration,
     ILogger<VerifyEmailHandler> logger) : IHandler<VerifyEmailRequest, UserResponse>
 {
     public async Task<ErrorOr<UserResponse>> Handle(
@@ -45,11 +42,7 @@ public sealed class VerifyEmailHandler(
             return UserMapper.ToResponse(user);
         }
 
-        string hmacKey = configuration["Hmac:Key"] ?? "dev-hmac-key";
-        using HMACSHA256 hmac = new(Encoding.UTF8.GetBytes(hmacKey));
-        string tokenHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(request.Token)));
-
-        if (tokenHash != user.EmailVerificationTokenHash || user.EmailVerificationTokenExpiry < DateTimeOffset.UtcNow)
+        if (!tokenService.VerifyTokenHash(request.Token, user.EmailVerificationTokenHash!) || user.EmailVerificationTokenExpiry < DateTimeOffset.UtcNow)
             return Error.Validation(UserErrorCodes.TokenInvalidOrExpired, "The verification token is invalid or has expired.");
 
         user.VerifyEmail();
