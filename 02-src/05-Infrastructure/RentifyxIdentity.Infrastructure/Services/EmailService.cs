@@ -9,7 +9,7 @@ namespace RentifyxIdentity.Infrastructure.Services;
 public sealed class EmailService : IEmailService
 {
     private readonly IAmazonSimpleEmailServiceV2 _sesClient;
-    private readonly IConfiguration _configuration;
+    private readonly string _fromAddress;
     private readonly ILogger<EmailService> _logger;
 
     public EmailService(
@@ -18,7 +18,8 @@ public sealed class EmailService : IEmailService
         ILogger<EmailService> logger)
     {
         _sesClient = sesClient;
-        _configuration = configuration;
+        _fromAddress = configuration["Ses:FromAddress"]
+            ?? throw new InvalidOperationException("Ses:FromAddress is not configured.");
         _logger = logger;
     }
 
@@ -65,7 +66,7 @@ public sealed class EmailService : IEmailService
     {
         return new SendEmailRequest
         {
-            FromEmailAddress = _configuration["Ses:FromAddress"],
+            FromEmailAddress = _fromAddress,
             Destination = new Destination
             {
                 ToAddresses = new List<string> { recipient }
