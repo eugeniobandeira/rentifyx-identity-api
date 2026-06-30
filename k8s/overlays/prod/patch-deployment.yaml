@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 3
+  template:
+    metadata:
+      annotations:
+        # Value comes from `terraform output iam_role_arn`. Replace before applying.
+        eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/rentifyx-identity-production-api-role"
+    spec:
+      serviceAccountName: rentifyx-identity-api
+      containers:
+        - name: api
+          env:
+            - name: Jwt__PrivateKeyPem
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: jwt-private-key-pem
+            - name: Hmac__Key
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: hmac-key
+            - name: Ses__FromAddress
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: ses-from-address
+          volumeMounts:
+            - name: secrets-store
+              mountPath: /mnt/secrets
+              readOnly: true
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: api-secrets

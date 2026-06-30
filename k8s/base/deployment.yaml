@@ -7,6 +7,11 @@ spec:
   selector:
     matchLabels:
       app: api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -17,19 +22,12 @@ spec:
           image: api:latest
           ports:
             - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: api-config
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: Production
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: ""
-            - name: OTEL_EXPORTER_OTLP_PROTOCOL
-              value: http/protobuf
-            - name: OTEL_EXPORTER_OTLP_HEADERS
-              value: ""
-            - name: OTEL_SERVICE_NAME
-              value: RentifyxIdentity.Api
-            - name: OTEL_RESOURCE_ATTRIBUTES
-              value: deployment.environment=production
           resources:
             requests:
               cpu: 100m
@@ -37,3 +35,17 @@ spec:
             limits:
               cpu: 500m
               memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
