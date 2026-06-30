@@ -1,135 +1,94 @@
-using Amazon.DynamoDBv2;
-using Amazon.DynamoDBv2.Model;
-using Microsoft.Extensions.Configuration;
+using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DocumentModel;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Interfaces.Users;
-using RentifyxIdentity.Infrastructure.Constants;
 using RentifyxIdentity.Infrastructure.Mapping;
+using RentifyxIdentity.Infrastructure.Models;
 
 namespace RentifyxIdentity.Infrastructure.Repositories;
 
 public sealed class UserRepository : IUserRepository
 {
-    private readonly IAmazonDynamoDB _client;
-    private readonly string _tableName;
+    private readonly IDynamoDBContext _context;
 
-    public UserRepository(
-        IAmazonDynamoDB client,
-        IConfiguration configuration)
+    public UserRepository(IDynamoDBContext context)
     {
-        _client = client;
-        _tableName = configuration[DynamoDbConstants.TableNameConfigKey] ?? DynamoDbConstants.DefaultTableName;
+        _context = context;
     }
 
     public async Task AddAsync(
         UserEntity entity,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        Dictionary<string, AttributeValue> item = UserDynamoDbMapper.ToItem(entity);
-
-        PutItemRequest request = new()
-        {
-            TableName = _tableName,
-            Item = item,
-            ConditionExpression = "attribute_not_exists(PK)"
-        };
-
-        await _client.PutItemAsync(request, cancellationToken);
+        UserDynamoDbItem item = UserDynamoDbMapper.ToItem(entity);
+        await _context.SaveAsync(item, ct);
     }
 
     public async Task<UserEntity?> GetByIdAsync(
         Guid id,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        GetItemRequest request = new()
-        {
-            TableName = _tableName,
-            Key = new Dictionary<string, AttributeValue>
-            {
-                ["PK"] = new AttributeValue { S = $"USER#{id}" }
-            }
-        };
-
-        GetItemResponse response = await _client.GetItemAsync(request, cancellationToken);
-
-        if (!response.IsItemSet)
-            return null;
-
-        return UserDynamoDbMapper.ToEntity(response.Item);
+        string pk = $"USER#{id}";
+        UserDynamoDbItem? item = await _context.LoadAsync<UserDynamoDbItem>(pk, pk, ct);
+        return item is null ? null : UserDynamoDbMapper.ToEntity(item);
     }
 
     public async Task<UserEntity?> GetByEmailAsync(
         string email,
         CancellationToken ct = default)
     {
-        QueryRequest request = new()
-        {
-            TableName = _tableName,
-            IndexName = "GSI_Email",
-            KeyConditionExpression = "GSI_Email_PK = :pk",
-            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
-            {
-                [":pk"] = new AttributeValue { S = $"EMAIL#{email.ToLowerInvariant()}" }
-            }
-        };
-
-        QueryResponse response = await _client.QueryAsync(request, ct);
-
-        return response.Items.Count == 0
-            ? null
-            : UserDynamoDbMapper.ToEntity(response.Items[0]);
+        return await QueryByGsiAsync(
+            indexName: "GSI_Email",
+            gsiAttribute: "GSI_Email_PK",
+            gsiValue: $"EMAIL#{email.ToLowerInvariant()}",
+            ct);
     }
 
     public async Task<UserEntity?> GetByTaxIdAsync(
         string taxId,
         CancellationToken ct = default)
     {
-        QueryRequest request = new()
-        {
-            TableName = _tableName,
-            IndexName = "GSI_TaxId",
-            KeyConditionExpression = "GSI_TaxId_PK = :pk",
-            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
-            {
-                [":pk"] = new AttributeValue { S = $"TAXID#{taxId.ToUpperInvariant()}" }
-            }
-        };
-
-        QueryResponse response = await _client.QueryAsync(request, ct);
-
-        return response.Items.Count == 0
-            ? null
-            : UserDynamoDbMapper.ToEntity(response.Items[0]);
+        return await QueryByGsiAsync(
+            indexName: "GSI_TaxId",
+            gsiAttribute: "GSI_TaxId_PK",
+            gsiValue: $"TAXID#{taxId.ToUpperInvariant()}",
+            ct);
     }
 
-    public async Task UpdateAsync(
+    public Task UpdateAsync(
         UserEntity entity,
-        CancellationToken cancellationToken = default)
-    {
-        Dictionary<string, AttributeValue> item = UserDynamoDbMapper.ToItem(entity);
-
-        PutItemRequest request = new()
-        {
-            TableName = _tableName,
-            Item = item
-        };
-
-        await _client.PutItemAsync(request, cancellationToken);
-    }
+        CancellationToken ct = default)
+        => AddAsync(entity, ct);
 
     public async Task DeleteAsync(
         UserEntity entity,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        DeleteItemRequest request = new()
+        string pk = $"USER#{entity.Id}";
+        await _context.DeleteAsync<UserDynamoDbItem>(pk, pk, ct);
+    }
+
+    private async Task<UserEntity?> QueryByGsiAsync(
+        string indexName,
+        string gsiAttribute,
+        string gsiValue,
+        CancellationToken ct)
+    {
+        QueryOperationConfig config = new()
         {
-            TableName = _tableName,
-            Key = new Dictionary<string, AttributeValue>
+            IndexName = indexName,
+            KeyExpression = new Expression
             {
-                ["PK"] = new AttributeValue { S = $"USER#{entity.Id}" }
-            }
+                ExpressionStatement = $"{gsiAttribute} = :v",
+                ExpressionAttributeValues = { [":v"] = gsiValue }
+            },
+            Limit = 1
         };
 
-        await _client.DeleteItemAsync(request, cancellationToken);
+        List<UserDynamoDbItem> results = await _context
+            .FromQueryAsync<UserDynamoDbItem>(config)
+            .GetRemainingAsync(ct);
+
+        return results.Count == 0 ? null : UserDynamoDbMapper.ToEntity(results[0]);
     }
 }

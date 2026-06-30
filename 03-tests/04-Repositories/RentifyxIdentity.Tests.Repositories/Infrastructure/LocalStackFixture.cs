@@ -1,5 +1,6 @@
 using Amazon;
 using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
 using Amazon.Runtime;
 using Testcontainers.LocalStack;
@@ -12,6 +13,7 @@ public sealed class LocalStackFixture : IAsyncLifetime
     private LocalStackContainer _container = null!;
 
     public IAmazonDynamoDB Client { get; private set; } = null!;
+    public IDynamoDBContext Context { get; private set; } = null!;
     public string TableName { get; } = "rentifyx-identity";
 
     public async Task InitializeAsync()
@@ -34,6 +36,10 @@ public sealed class LocalStackFixture : IAsyncLifetime
             new BasicAWSCredentials("test", "test"),
             config);
 
+        Context = new DynamoDBContextBuilder()
+            .WithDynamoDBClient(() => Client)
+            .Build();
+
         await CreateTableAsync();
         await WaitUntilTableActiveAsync();
     }
@@ -53,12 +59,14 @@ public sealed class LocalStackFixture : IAsyncLifetime
             AttributeDefinitions =
             [
                 new AttributeDefinition { AttributeName = "PK", AttributeType = ScalarAttributeType.S },
+                new AttributeDefinition { AttributeName = "SK", AttributeType = ScalarAttributeType.S },
                 new AttributeDefinition { AttributeName = "GSI_Email_PK", AttributeType = ScalarAttributeType.S },
                 new AttributeDefinition { AttributeName = "GSI_TaxId_PK", AttributeType = ScalarAttributeType.S }
             ],
             KeySchema =
             [
-                new KeySchemaElement { AttributeName = "PK", KeyType = KeyType.HASH }
+                new KeySchemaElement { AttributeName = "PK", KeyType = KeyType.HASH },
+                new KeySchemaElement { AttributeName = "SK", KeyType = KeyType.RANGE }
             ],
             GlobalSecondaryIndexes =
             [

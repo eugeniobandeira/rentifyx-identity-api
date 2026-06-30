@@ -1,6 +1,5 @@
 using Amazon.DynamoDBv2.Model;
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using RentifyxIdentity.Domain.Entities;
 using Xunit;
 using RentifyxIdentity.Domain.Enums;
@@ -19,17 +18,7 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
     public UserRepositoryTests(LocalStackFixture fixture)
     {
         _fixture = fixture;
-
-        IConfiguration configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["AWS:DynamoDB:TableName"] = "rentifyx-identity"
-            })
-            .Build();
-
-        _sut = new UserRepository(
-            _fixture.Client,
-            configuration);
+        _sut = new UserRepository(_fixture.Context);
     }
 
     [Fact]
@@ -151,7 +140,8 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
                 _fixture.TableName,
                 new Dictionary<string, AttributeValue>
                 {
-                    ["PK"] = new AttributeValue { S = $"USER#{user.Id}" }
+                    ["PK"] = new AttributeValue { S = $"USER#{user.Id}" },
+                    ["SK"] = new AttributeValue { S = $"USER#{user.Id}" }
                 });
 
             raw.Item.Should().ContainKey("TTL");
@@ -178,7 +168,8 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
                 _fixture.TableName,
                 new Dictionary<string, AttributeValue>
                 {
-                    ["PK"] = new AttributeValue { S = $"USER#{user.Id}" }
+                    ["PK"] = new AttributeValue { S = $"USER#{user.Id}" },
+                    ["SK"] = new AttributeValue { S = $"USER#{user.Id}" }
                 });
 
             raw.Item.Should().NotContainKey("TTL");
@@ -206,7 +197,8 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
             _fixture.TableName,
             new Dictionary<string, AttributeValue>
             {
-                ["PK"] = new AttributeValue { S = $"USER#{id}" }
+                ["PK"] = new AttributeValue { S = $"USER#{id}" },
+                ["SK"] = new AttributeValue { S = $"USER#{id}" }
             });
     }
 }
