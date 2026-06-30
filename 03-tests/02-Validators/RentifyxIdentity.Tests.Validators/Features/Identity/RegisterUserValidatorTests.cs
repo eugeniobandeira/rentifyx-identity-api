@@ -204,6 +204,20 @@ public sealed class RegisterUserValidatorTests
     }
 
     [Fact]
+    public async Task ConsentGiven_True_ShouldPassValidation()
+    {
+        RegisterUserRequest request = new(
+            TestConstants.ValidEmail,
+            TestConstants.TaxIdCpfFormatted,
+            TestConstants.ValidPassword,
+            TestConstants.ValidRoles[0],
+            ConsentGiven: true);
+
+        ValidationResult result = await _validator.ValidateAsync(request);
+        result.Errors.Should().NotContain(e => e.PropertyName == "ConsentGiven");
+    }
+
+    [Fact]
     public async Task ConsentGiven_False_ShouldReturnConsentRequiredError()
     {
         RegisterUserRequest request = new(

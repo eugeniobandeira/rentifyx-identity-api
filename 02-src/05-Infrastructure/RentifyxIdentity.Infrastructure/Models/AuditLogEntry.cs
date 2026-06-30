@@ -1,8 +1,9 @@
 using Amazon.DynamoDBv2.DataModel;
+using RentifyxIdentity.Infrastructure.Constants;
 
 namespace RentifyxIdentity.Infrastructure.Models;
 
-[DynamoDBTable("placeholder")]
+[DynamoDBTable(DynamoDbConstants.AuditLogTablePlaceholder)]
 public sealed class AuditLogEntry
 {
     [DynamoDBHashKey("PK")]
