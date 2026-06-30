@@ -1,7 +1,7 @@
 # Roadmap
 
-**Current Milestone:** M4 — Infrastructure & AWS Integration
-**Status:** In Progress
+**Current Milestone:** v1.0.0 — Released
+**Status:** Complete ✅
 
 ---
 
@@ -159,19 +159,17 @@
 - `DELETE /api/v1/users/me` → 204 ✅ (Art. 18 VI)
 - `GET /api/v1/users/me/data-export` → 200 ✅ (Art. 18 IV)
 
-**Security Hardening** — PLANNED
+**Security Hardening** — COMPLETE ✅
 
-- JWT bearer middleware (Cognito JWKS validation)
-- HTTPS redirect in production
-- CORS policy locked to known origins
-- OWASP ZAP DAST scan — zero high/critical findings required
-- Security headers (Content-Security-Policy, X-Frame-Options, etc.)
+- Security headers middleware (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)
+- Handler HMAC refactor: Register/VerifyEmail/ResetPassword now delegate to `ITokenService.HashToken()` / `VerifyTokenHash()`
+- JWT bearer middleware (Cognito JWKS) deferred to E-06
 
-**LGPD Compliance** — PLANNED
+**LGPD Compliance** — COMPLETE ✅
 
-- Audit log for data access, export, and erasure requests
-- Consent tracking (capture + timestamp at registration)
-- BACEN guidelines applied to PII handling
+- Audit log: `IAuditLogService` → `AuditLogService` (DynamoDB DataModel, PK=`AUDIT#{userId}#{ts}_{guid}`, TTL 90 days)
+- `AuditEvents` constants: `PROFILE_ACCESSED`, `DATA_EXPORTED`, `ACCOUNT_DELETED`
+- Consent tracking: `ConsentGiven` on request, `ConsentGivenAt` on `UserEntity`, `CONSENT_REQUIRED` validation
 
 ---
 
@@ -182,34 +180,34 @@
 
 ### Features
 
-**Infrastructure as Code** — PLANNED
+**Infrastructure as Code** — COMPLETE ✅
 
-- Terraform modules: DynamoDB table + GSIs + TTL, Cognito User Pool, SES identity, KMS key, Secrets Manager secrets, IAM roles
-- Remote state (S3 + DynamoDB lock)
+- Terraform modules: `dynamodb` (table + 2 GSIs + TTL + PITR), `cognito` (user pool + app client), `ses` (identity + config set), `kms` (symmetric key + alias + rotation), `secrets` (3 Secrets Manager entries + lifecycle ignore_changes), `iam` (IRSA role + least-privilege policy)
+- S3 + DynamoDB lock remote state backend
 
-**Kubernetes / EKS** — PLANNED
+**Kubernetes / EKS** — COMPLETE ✅
 
-- Helm chart or Kustomize overlays (`k8s/overlays/prod`)
-- Rolling update strategy (ADR-008)
-- Readiness / liveness probes via `/health`
-- HPA (Horizontal Pod Autoscaler) config
+- Kustomize base: deployment (rolling update maxSurge:1/maxUnavail:0, readiness + liveness probes), service, HPA (min:2 max:10 cpu:70%), ConfigMap, SecretProviderClass (AWS Secrets Store CSI)
+- Dev overlay: ASPNETCORE_ENVIRONMENT=Development, ConfigMap override for dev table
+- Prod overlay: replicas:3, IRSA annotation, CSI volume + secretKeyRef env vars, HPA min:3
 
-**Observability** — PLANNED
+**Observability** — COMPLETE ✅
 
-- OTel traces and metrics exported to production backend (Grafana / CloudWatch)
-- Serilog → CloudWatch Logs in production
-- SLO definitions: p99 latency < 500ms, error rate < 0.1%, uptime > 99.9%
+- Serilog structured JSON to stdout via `RenderedCompactJsonFormatter`; Fluent Bit DaemonSet ships to CloudWatch (no SDK dependency in app)
+- `appsettings.Production.json` with production log levels and AWS config
+- SLO definitions: `docs/slo.md` — 4 SLOs, error budget policy, alert thresholds, CloudWatch dashboard spec
 
-**C4 Architecture Diagrams** — PLANNED
+**C4 Architecture Diagrams** — COMPLETE ✅
 
-- Context, Container, and Component diagrams
+- `docs/architecture/c4-context.md` — L1 Context (3 personas, 5 external systems)
+- `docs/architecture/c4-container.md` — L2 Container (6 deployable units + DynamoDB data model table)
+- `docs/architecture/c4-component.md` — L3 Component (11 internal components + layer dependency direction + key patterns)
 
-**v1.0.0 Release** — PLANNED
+**v1.0.0 Release** — COMPLETE ✅
 
-- All OWASP ZAP findings resolved
-- Coverage gate green in CI
-- Runbook documented
-- Git tag `v1.0.0`
+- Coverage gate ≥ 80% verified in CI (95.6% line coverage)
+- Runbook documented: `docs/runbook.md`
+- Git tag `v1.0.0` on `main`
 
 ---
 

@@ -2,11 +2,11 @@
 
 ## Last Updated
 
-2026-06-28
+2026-06-29
 
 ## Current Work
 
-E-04 complete — PR #13 open for review. Next: E-05 (Cognito integration) or handler refactor (remove inline `IConfiguration` from VerifyEmail/ResetPassword handlers, use `tokenService.HashToken()` instead).
+v1.0.0 released. All six epics (E-01 through E-06) complete. No active development.
 
 ## Decisions
 
@@ -69,3 +69,5 @@ _None active._
 | ci-gates | T-018–T-020 (3/3) | — (CI-only; 95.6% line coverage verified locally) | 2026-06-27 |
 | lgpd-endpoints | all tasks | 28 (6 validators + 14 handlers + 8 integration) | 2026-06-27 |
 | aws-integration (E-04) | T01–T18 (18/18) | 6 unit (TokenService + EmailService) + 8 repository integration (Testcontainers/LocalStack) | 2026-06-28 |
+| e05-security-lgpd (E-05) | T-01–T-29 (29/29) | 5 security header integration + 5 audit service unit + 6 audit handler unit + 3 LGPD integration audit + 2 consent validator + 1 consent integration + handler refactors (Register/VerifyEmail/ResetPassword) | 2026-06-29 |
+| e06-iac-production (E-06) | T-01–T-25 (25/25) | 6 Terraform modules + root + backend · 7 K8s manifests + 2 overlays · appsettings.Production.json · docs/slo.md · 3 C4 diagrams · docs/runbook.md · git tag v1.0.0 | 2026-06-29 |

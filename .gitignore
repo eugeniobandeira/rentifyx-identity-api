@@ -35,6 +35,7 @@ appsettings.*.json
 !appsettings.json
 !appsettings.Development.json
 !appsettings.Test.json
+!appsettings.Production.json
 
 # OS
 .DS_Store
@@ -42,6 +43,15 @@ Thumbs.db
 
 # Claude Code agent workspace (worktrees, task outputs, memory)
 .claude/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+override.tf
+override.tf.json
 
 # Logs
 *.log
