@@ -275,5 +275,14 @@ namespace RentifyxIdentity.Domain.MessageResource {
                 return ResourceManager.GetString("USER_TOKEN_INVALID_OR_EXPIRED", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to You must provide consent to register..
+        /// </summary>
+        public static string CONSENT_REQUIRED {
+            get {
+                return ResourceManager.GetString("CONSENT_REQUIRED", resourceCulture);
+            }
+        }
     }
 }

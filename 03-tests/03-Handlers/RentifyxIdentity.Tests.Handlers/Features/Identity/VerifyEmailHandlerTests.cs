@@ -1,10 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using ErrorOr;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RentifyxIdentity.Application.Features.Identity;
@@ -23,19 +20,23 @@ namespace RentifyxIdentity.Tests.Handlers.Features.Identity;
 public sealed class VerifyEmailHandlerTests
 {
     private const string RawToken = "test-verification-token-abc123";
+    private const string StoredHash = "stored-email-verification-hash";
 
     private readonly Mock<IUserRepository> _repositoryMock = new();
+    private readonly Mock<ITokenService> _tokenServiceMock = new();
     private readonly Mock<IValidator<VerifyEmailRequest>> _validatorMock = new();
-    private readonly Mock<IConfiguration> _configurationMock = new();
     private readonly Mock<ILogger<VerifyEmailHandler>> _loggerMock = new();
     private readonly VerifyEmailHandler _handler;
-    private readonly string _tokenHash;
 
     public VerifyEmailHandlerTests()
     {
-        _configurationMock
-            .Setup(c => c[TestConstants.HmacKeyConfigPath])
-            .Returns(TestConstants.HmacKey);
+        _tokenServiceMock
+            .Setup(t => t.VerifyTokenHash(RawToken, It.IsAny<string>()))
+            .Returns(true);
+
+        _tokenServiceMock
+            .Setup(t => t.VerifyTokenHash(It.Is<string>(s => s != RawToken), It.IsAny<string>()))
+            .Returns(false);
 
         _validatorMock
             .Setup(v => v.ValidateAsync(
@@ -45,12 +46,9 @@ public sealed class VerifyEmailHandlerTests
 
         _handler = new VerifyEmailHandler(
             _repositoryMock.Object,
+            _tokenServiceMock.Object,
             _validatorMock.Object,
-            _configurationMock.Object,
             _loggerMock.Object);
-
-        using HMACSHA256 hmac = new(Encoding.UTF8.GetBytes(TestConstants.HmacKey));
-        _tokenHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(RawToken)));
     }
 
     private static UserEntity BuildUser(UserStatus status = UserStatus.PendingVerification)
@@ -73,7 +71,7 @@ public sealed class VerifyEmailHandlerTests
     public async Task HappyPath_ValidToken_ReturnsActiveUserResponse()
     {
         UserEntity user = BuildUser();
-        user.SetEmailVerificationToken(_tokenHash, DateTimeOffset.UtcNow.AddHours(24));
+        user.SetEmailVerificationToken(StoredHash, DateTimeOffset.UtcNow.AddHours(24));
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -95,7 +93,7 @@ public sealed class VerifyEmailHandlerTests
     public async Task ExpiredToken_ReturnsValidationError()
     {
         UserEntity user = BuildUser();
-        user.SetEmailVerificationToken(_tokenHash, DateTimeOffset.UtcNow.AddHours(-1));
+        user.SetEmailVerificationToken(StoredHash, DateTimeOffset.UtcNow.AddHours(-1));
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -114,7 +112,7 @@ public sealed class VerifyEmailHandlerTests
     public async Task WrongToken_ReturnsValidationError()
     {
         UserEntity user = BuildUser();
-        user.SetEmailVerificationToken(_tokenHash, DateTimeOffset.UtcNow.AddHours(24));
+        user.SetEmailVerificationToken(StoredHash, DateTimeOffset.UtcNow.AddHours(24));
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

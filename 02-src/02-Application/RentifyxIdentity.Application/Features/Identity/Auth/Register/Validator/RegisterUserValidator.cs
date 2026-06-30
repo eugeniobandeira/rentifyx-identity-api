@@ -56,6 +56,10 @@ public sealed class RegisterUserValidator : AbstractValidator<RegisterUserReques
             .Must(role => role is "Owner" or "Renter" or "Admin")
                 .WithMessage(ValidationMessageResource.ROLE_INVALID)
             .When(x => !string.IsNullOrEmpty(x.Role));
+
+        RuleFor(x => x.ConsentGiven)
+            .Equal(true)
+                .WithMessage(ValidationMessageResource.CONSENT_REQUIRED);
     }
 
     private static bool IsDisposableDomain(string email)

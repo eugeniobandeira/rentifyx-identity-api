@@ -19,18 +19,24 @@ namespace RentifyxIdentity.Tests.Handlers.Features.Identity;
 public sealed class ExportDataHandlerTests
 {
     private readonly Mock<IUserRepository> _repositoryMock = new();
+    private readonly Mock<IAuditLogService> _auditLogServiceMock = new();
     private readonly Mock<IValidator<ExportDataRequest>> _validatorMock = new();
     private readonly Mock<ILogger<ExportDataHandler>> _loggerMock = new();
     private readonly ExportDataHandler _handler;
 
     public ExportDataHandlerTests()
     {
+        _auditLogServiceMock
+            .Setup(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         _validatorMock
             .Setup(v => v.ValidateAsync(It.IsAny<ExportDataRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
 
         _handler = new ExportDataHandler(
             _repositoryMock.Object,
+            _auditLogServiceMock.Object,
             _validatorMock.Object,
             _loggerMock.Object);
     }
@@ -54,7 +60,7 @@ public sealed class ExportDataHandlerTests
     }
 
     [Fact]
-    public async Task HappyPath_ActiveUser_ReturnsExport()
+    public async Task HappyPath_ActiveUser_ReturnsExport_AndAudits()
     {
         UserEntity user = BuildUser();
         _repositoryMock
@@ -68,10 +74,14 @@ public sealed class ExportDataHandlerTests
         result.Value.TaxId.Should().Be("***.***.***-**");
         result.Value.Role.Should().Be("Owner");
         result.Value.Status.Should().Be(TestConstants.StatusActive);
+
+        _auditLogServiceMock.Verify(
+            a => a.LogAsync(user.Id, AuditEvents.DataExported, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
-    public async Task SuspendedUser_ReturnsExport()
+    public async Task SuspendedUser_ReturnsExport_AndAudits()
     {
         UserEntity user = BuildUser(UserStatus.Suspended);
         _repositoryMock
@@ -82,10 +92,14 @@ public sealed class ExportDataHandlerTests
 
         result.IsError.Should().BeFalse();
         result.Value.Status.Should().Be("Suspended");
+
+        _auditLogServiceMock.Verify(
+            a => a.LogAsync(user.Id, AuditEvents.DataExported, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
-    public async Task UserNotFound_ReturnsNotFound()
+    public async Task UserNotFound_ReturnsNotFound_AndDoesNotAudit()
     {
         _repositoryMock
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -96,10 +110,14 @@ public sealed class ExportDataHandlerTests
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.NotFound);
         result.FirstError.Code.Should().Be(UserErrorCodes.NotFound);
+
+        _auditLogServiceMock.Verify(
+            a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task DeletedUser_ReturnsNotFound()
+    public async Task DeletedUser_ReturnsNotFound_AndDoesNotAudit()
     {
         UserEntity user = BuildUser(UserStatus.Deleted);
         _repositoryMock
@@ -111,6 +129,27 @@ public sealed class ExportDataHandlerTests
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.NotFound);
         result.FirstError.Code.Should().Be(UserErrorCodes.NotFound);
+
+        _auditLogServiceMock.Verify(
+            a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task AuditLogFails_StillReturnsSuccess()
+    {
+        UserEntity user = BuildUser();
+        _repositoryMock
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _auditLogServiceMock
+            .Setup(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("DynamoDB unavailable"));
+
+        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(user.Id));
+
+        result.IsError.Should().BeFalse();
     }
 
     [Fact]

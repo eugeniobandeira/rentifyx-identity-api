@@ -11,12 +11,11 @@ public sealed class RegisterUserRequestBuilder
     private string _taxId;
     private string _password = TestConstants.ValidPassword;
     private string _role;
+    private bool _consentGiven = true;
 
     public RegisterUserRequestBuilder()
     {
-        // faker.Internet.Email() uses safe domains (gmail, yahoo, etc.) — not in disposable list
         _email = _faker.Internet.Email();
-        // 11 random digits = valid CPF length (mod-11 not validated)
         _taxId = _faker.Random.ReplaceNumbers("###########");
         _role = _faker.PickRandom(TestConstants.ValidRoles);
     }
@@ -25,10 +24,12 @@ public sealed class RegisterUserRequestBuilder
     public RegisterUserRequestBuilder WithTaxId(string taxId) { _taxId = taxId; return this; }
     public RegisterUserRequestBuilder WithPassword(string password) { _password = password; return this; }
     public RegisterUserRequestBuilder WithRole(string role) { _role = role; return this; }
+    public RegisterUserRequestBuilder WithConsentGiven(bool consent) { _consentGiven = consent; return this; }
 
     public RegisterUserRequest Build() => new(
         _email,
         _taxId,
         _password,
-        _role);
+        _role,
+        _consentGiven);
 }

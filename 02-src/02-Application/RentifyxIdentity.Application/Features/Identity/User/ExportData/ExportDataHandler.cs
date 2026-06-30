@@ -13,6 +13,7 @@ namespace RentifyxIdentity.Application.Features.Identity.User.ExportData;
 
 public sealed class ExportDataHandler(
     IUserRepository repository,
+    IAuditLogService auditLogService,
     IValidator<ExportDataRequest> validator,
     ILogger<ExportDataHandler> logger) : IHandler<ExportDataRequest, UserDataExportResponse>
 {
@@ -32,6 +33,15 @@ public sealed class ExportDataHandler(
             return Error.NotFound(UserErrorCodes.NotFound, "User not found.");
 
         logger.LogInformation("Data export prepared. UserId={UserId}", user.Id);
+
+        try
+        {
+            await auditLogService.LogAsync(user.Id, AuditEvents.DataExported, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Audit log failed for UserId={UserId}", user.Id);
+        }
 
         return new UserDataExportResponse(
             user.Id,

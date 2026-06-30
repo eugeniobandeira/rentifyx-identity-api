@@ -19,18 +19,24 @@ namespace RentifyxIdentity.Tests.Handlers.Features.Identity;
 public sealed class DeleteAccountHandlerTests
 {
     private readonly Mock<IUserRepository> _repositoryMock = new();
+    private readonly Mock<IAuditLogService> _auditLogServiceMock = new();
     private readonly Mock<IValidator<DeleteAccountRequest>> _validatorMock = new();
     private readonly Mock<ILogger<DeleteAccountHandler>> _loggerMock = new();
     private readonly DeleteAccountHandler _handler;
 
     public DeleteAccountHandlerTests()
     {
+        _auditLogServiceMock
+            .Setup(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         _validatorMock
             .Setup(v => v.ValidateAsync(It.IsAny<DeleteAccountRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
 
         _handler = new DeleteAccountHandler(
             _repositoryMock.Object,
+            _auditLogServiceMock.Object,
             _validatorMock.Object,
             _loggerMock.Object);
     }
@@ -54,7 +60,7 @@ public sealed class DeleteAccountHandlerTests
     }
 
     [Fact]
-    public async Task HappyPath_ActiveUser_AnonymizesAndReturnsSuccess()
+    public async Task HappyPath_ActiveUser_AnonymizesAndReturnsSuccess_AndAudits()
     {
         UserEntity user = BuildUser();
         _repositoryMock
@@ -68,10 +74,14 @@ public sealed class DeleteAccountHandlerTests
         _repositoryMock.Verify(
             r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()),
             Times.Once);
+
+        _auditLogServiceMock.Verify(
+            a => a.LogAsync(user.Id, AuditEvents.AccountDeleted, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
-    public async Task UserNotFound_ReturnsNotFound()
+    public async Task UserNotFound_ReturnsNotFound_AndDoesNotAudit()
     {
         _repositoryMock
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -86,10 +96,14 @@ public sealed class DeleteAccountHandlerTests
         _repositoryMock.Verify(
             r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()),
             Times.Never);
+
+        _auditLogServiceMock.Verify(
+            a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
-    public async Task AlreadyDeletedUser_ReturnsConflict()
+    public async Task AlreadyDeletedUser_ReturnsConflict_AndDoesNotAudit()
     {
         UserEntity user = BuildUser(UserStatus.Deleted);
         _repositoryMock
@@ -105,6 +119,27 @@ public sealed class DeleteAccountHandlerTests
         _repositoryMock.Verify(
             r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()),
             Times.Never);
+
+        _auditLogServiceMock.Verify(
+            a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task AuditLogFails_StillReturnsSuccess()
+    {
+        UserEntity user = BuildUser();
+        _repositoryMock
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _auditLogServiceMock
+            .Setup(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("DynamoDB unavailable"));
+
+        ErrorOr<Success> result = await _handler.Handle(new DeleteAccountRequest(user.Id));
+
+        result.IsError.Should().BeFalse();
     }
 
     [Fact]

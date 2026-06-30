@@ -1,6 +1,5 @@
 ﻿using ErrorOr;
 using FluentValidation;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Extensions;
@@ -18,8 +17,8 @@ namespace RentifyxIdentity.Application.Features.Identity.Auth.Register;
 public sealed class RegisterUserHandler(
     IUserRepository repository,
     IEmailService emailService,
+    ITokenService tokenService,
     IValidator<RegisterUserRequest> validator,
-    IConfiguration configuration,
     ILogger<RegisterUserHandler> logger) : IHandler<RegisterUserRequest, UserResponse>
 {
     public async Task<ErrorOr<UserResponse>> Handle(
@@ -46,10 +45,10 @@ public sealed class RegisterUserHandler(
             Password.FromPlaintext(request.Password),
             Enum.Parse<UserRole>(request.Role));
 
+        user.SetConsent(DateTimeOffset.UtcNow);
+
         string rawToken = Guid.NewGuid().ToString();
-        string hmacKey = configuration["Hmac:Key"] ?? "dev-hmac-key";
-        using System.Security.Cryptography.HMACSHA256 hmac = new(System.Text.Encoding.UTF8.GetBytes(hmacKey));
-        string tokenHash = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawToken)));
+        string tokenHash = tokenService.HashToken(rawToken);
         user.SetEmailVerificationToken(tokenHash, DateTimeOffset.UtcNow.AddHours(24));
 
         await repository.AddAsync(user, cancellationToken);

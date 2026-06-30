@@ -40,10 +40,8 @@ public sealed class EmailServiceTests
     [Fact]
     public async Task SendVerificationEmail_ValidRecipient_CallsSendEmailOnceWithCorrectRecipient()
     {
-        // Act
         await _sut.SendVerificationEmailAsync(Recipient, "abc123");
 
-        // Assert
         _sesClientMock.Verify(
             s => s.SendEmailAsync(
                 It.IsAny<SendEmailRequest>(),
@@ -61,10 +59,8 @@ public sealed class EmailServiceTests
     [Fact]
     public async Task SendPasswordResetEmail_ValidRecipient_CallsSendEmailWithResetSubject()
     {
-        // Act
         await _sut.SendPasswordResetEmailAsync(Recipient, "xyz789");
 
-        // Assert
         _sesClientMock.Verify(
             s => s.SendEmailAsync(
                 It.IsAny<SendEmailRequest>(),

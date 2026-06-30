@@ -2,7 +2,6 @@ using ErrorOr;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RentifyxIdentity.Application.Features.Identity;
@@ -23,16 +22,16 @@ public sealed class RegisterUserHandlerTests
 {
     private readonly Mock<IUserRepository> _repositoryMock = new();
     private readonly Mock<IEmailService> _emailServiceMock = new();
+    private readonly Mock<ITokenService> _tokenServiceMock = new();
     private readonly Mock<IValidator<RegisterUserRequest>> _validatorMock = new();
-    private readonly Mock<IConfiguration> _configurationMock = new();
     private readonly Mock<ILogger<RegisterUserHandler>> _loggerMock = new();
     private readonly RegisterUserHandler _handler;
 
     public RegisterUserHandlerTests()
     {
-        _configurationMock
-            .Setup(c => c[TestConstants.HmacKeyConfigPath])
-            .Returns(TestConstants.HmacKey);
+        _tokenServiceMock
+            .Setup(t => t.HashToken(It.IsAny<string>()))
+            .Returns("test-token-hash");
 
         _validatorMock
             .Setup(v => v.ValidateAsync(
@@ -43,13 +42,13 @@ public sealed class RegisterUserHandlerTests
         _handler = new RegisterUserHandler(
             _repositoryMock.Object,
             _emailServiceMock.Object,
+            _tokenServiceMock.Object,
             _validatorMock.Object,
-            _configurationMock.Object,
             _loggerMock.Object);
     }
 
     [Fact]
-    public async Task HappyPath_RegistersUser_ReturnsUserResponse()
+    public async Task HappyPath_RegistersUser_ReturnsUserResponse_AndSetsConsentGivenAt()
     {
         // Arrange
         _repositoryMock
@@ -64,12 +63,15 @@ public sealed class RegisterUserHandlerTests
             .Setup(e => e.SendVerificationEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        RegisterUserRequest request = new RegisterUserRequestBuilder().Build();
+        UserEntity? capturedUser = null;
+        _repositoryMock
+            .Setup(r => r.AddAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()))
+            .Callback<UserEntity, CancellationToken>((u, _) => capturedUser = u);
 
-        // Act
+        RegisterUserRequest request = new RegisterUserRequestBuilder().WithConsentGiven(true).Build();
+
         ErrorOr<UserResponse> result = await _handler.Handle(request);
 
-        // Assert
         result.IsError.Should().BeFalse();
         result.Value.Email.Should().Be(request.Email.ToLowerInvariant());
         result.Value.Role.Should().Be(request.Role);
@@ -78,12 +80,15 @@ public sealed class RegisterUserHandlerTests
         _repositoryMock.Verify(
             r => r.AddAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()),
             Times.Once);
+
+        _tokenServiceMock.Verify(t => t.HashToken(It.IsAny<string>()), Times.Once);
+
+        capturedUser!.ConsentGivenAt.Should().NotBeNull();
     }
 
     [Fact]
     public async Task DuplicateEmail_ReturnsConflictError_AndDoesNotCallAddAsync()
     {
-        // Arrange
         UserEntity stubUser = UserEntity.Create(
             Email.Create(TestConstants.ValidEmail),
             TaxDocument.Create(TestConstants.TaxIdCpfRaw),
@@ -98,10 +103,8 @@ public sealed class RegisterUserHandlerTests
             .WithEmail(TestConstants.ValidEmail)
             .Build();
 
-        // Act
         ErrorOr<UserResponse> result = await _handler.Handle(request);
 
-        // Assert
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
         result.FirstError.Code.Should().Be(UserErrorCodes.EmailAlreadyRegistered);
@@ -114,7 +117,6 @@ public sealed class RegisterUserHandlerTests
     [Fact]
     public async Task DuplicateTaxId_ReturnsConflictError_AndDoesNotCallAddAsync()
     {
-        // Arrange
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserEntity?)null);
@@ -133,10 +135,8 @@ public sealed class RegisterUserHandlerTests
             .WithTaxId(TestConstants.TaxIdCpfRaw)
             .Build();
 
-        // Act
         ErrorOr<UserResponse> result = await _handler.Handle(request);
 
-        // Assert
         result.IsError.Should().BeTrue();
         result.FirstError.Code.Should().Be(UserErrorCodes.TaxIdAlreadyRegistered);
 
@@ -148,7 +148,6 @@ public sealed class RegisterUserHandlerTests
     [Fact]
     public async Task ValidationFailure_ReturnsErrors_AndDoesNotCallRepository()
     {
-        // Arrange
         _validatorMock
             .Setup(v => v.ValidateAsync(
                 It.IsAny<RegisterUserRequest>(),
@@ -165,10 +164,8 @@ public sealed class RegisterUserHandlerTests
             .WithEmail(string.Empty)
             .Build();
 
-        // Act
         ErrorOr<UserResponse> result = await _handler.Handle(request);
 
-        // Assert
         result.IsError.Should().BeTrue();
 
         _repositoryMock.Verify(
@@ -183,7 +180,6 @@ public sealed class RegisterUserHandlerTests
     [Fact]
     public async Task EmailServiceThrows_StillReturnsSuccess()
     {
-        // Arrange
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserEntity?)null);
@@ -198,10 +194,8 @@ public sealed class RegisterUserHandlerTests
 
         RegisterUserRequest request = new RegisterUserRequestBuilder().Build();
 
-        // Act
         ErrorOr<UserResponse> result = await _handler.Handle(request);
 
-        // Assert
         result.IsError.Should().BeFalse();
         result.Value.Should().BeOfType<UserResponse>();
     }

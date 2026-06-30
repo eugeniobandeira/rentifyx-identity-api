@@ -42,7 +42,6 @@ public sealed class ResetPasswordValidatorTests
         ValidationResult result = await _validator.ValidateAsync(request);
 
         result.IsValid.Should().BeFalse();
-        // ErrorMessage has {MinLength} substituted at runtime; check PropertyName and ErrorCode instead
         result.Errors.Should().Contain(e => e.PropertyName == "NewPassword"
             && e.ErrorCode == "MinimumLengthValidator");
     }

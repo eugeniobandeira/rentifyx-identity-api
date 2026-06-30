@@ -110,4 +110,7 @@
   <data name="USER_TOKEN_INVALID_OR_EXPIRED" xml:space="preserve">
     <value>Token is invalid or has expired.</value>
   </data>
+  <data name="CONSENT_REQUIRED" xml:space="preserve">
+    <value>You must provide consent to register.</value>
+  </data>
 </root>

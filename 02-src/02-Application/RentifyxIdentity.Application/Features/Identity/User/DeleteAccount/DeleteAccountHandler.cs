@@ -14,6 +14,7 @@ namespace RentifyxIdentity.Application.Features.Identity.User.DeleteAccount;
 
 public sealed class DeleteAccountHandler(
     IUserRepository repository,
+    IAuditLogService auditLogService,
     IValidator<DeleteAccountRequest> validator,
     ILogger<DeleteAccountHandler> logger) : IHandler<DeleteAccountRequest, Success>
 {
@@ -44,6 +45,15 @@ public sealed class DeleteAccountHandler(
         logger.LogInformation("Domain event: {Event}", domainEvent);
 
         logger.LogInformation("Account deleted. UserId={UserId}", request.UserId);
+
+        try
+        {
+            await auditLogService.LogAsync(request.UserId, AuditEvents.AccountDeleted, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Audit log failed for UserId={UserId}", request.UserId);
+        }
 
         return Result.Success;
     }

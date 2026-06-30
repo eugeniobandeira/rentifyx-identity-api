@@ -3,6 +3,7 @@ using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Interfaces.Users;
+using RentifyxIdentity.Infrastructure.Constants;
 using RentifyxIdentity.Infrastructure.Mapping;
 
 namespace RentifyxIdentity.Infrastructure.Repositories;
@@ -17,7 +18,7 @@ public sealed class UserRepository : IUserRepository
         IConfiguration configuration)
     {
         _client = client;
-        _tableName = configuration["AWS:DynamoDB:TableName"] ?? "rentifyx-identity";
+        _tableName = configuration[DynamoDbConstants.TableNameConfigKey] ?? DynamoDbConstants.DefaultTableName;
     }
 
     public async Task AddAsync(
