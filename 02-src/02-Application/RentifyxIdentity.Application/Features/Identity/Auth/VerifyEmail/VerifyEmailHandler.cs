@@ -21,15 +21,15 @@ public sealed class VerifyEmailHandler(
 {
     public async Task<ErrorOr<UserResponse>> Handle(
         VerifyEmailRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Verifying email. Email={Email}", request.Email);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        UserEntity? user = await repository.GetByEmailAsync(request.Email, cancellationToken);
+        UserEntity? user = await repository.GetByEmailAsync(request.Email, ct);
         if (user is null)
             return Error.Validation(UserErrorCodes.TokenInvalidOrExpired, "The verification token is invalid or has expired.");
 
@@ -46,7 +46,7 @@ public sealed class VerifyEmailHandler(
             return Error.Validation(UserErrorCodes.TokenInvalidOrExpired, "The verification token is invalid or has expired.");
 
         user.VerifyEmail();
-        await repository.UpdateAsync(user, cancellationToken);
+        await repository.UpdateAsync(user, ct);
 
         UserEmailVerified domainEvent = new(user.Id, user.Email.ToString(), DateTimeOffset.UtcNow);
         logger.LogInformation("Domain event: {Event}", domainEvent);

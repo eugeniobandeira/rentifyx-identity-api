@@ -9,9 +9,9 @@ internal static class ValidationExtensions
     public static async Task<List<Error>?> ValidateToErrorsAsync<T>(
         this IValidator<T> validator,
         T instance,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        ValidationResult result = await validator.ValidateAsync(instance, cancellationToken);
+        ValidationResult result = await validator.ValidateAsync(instance, ct);
 
         return result.IsValid
             ? null

@@ -21,15 +21,15 @@ public sealed class ResetPasswordHandler(
 {
     public async Task<ErrorOr<Success>> Handle(
         ResetPasswordRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Password reset confirmation. Email={Email}", request.Email);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        UserEntity? user = await repository.GetByEmailAsync(request.Email, cancellationToken);
+        UserEntity? user = await repository.GetByEmailAsync(request.Email, ct);
         if (user is null)
             return Error.Validation(UserErrorCodes.TokenInvalidOrExpired, "The reset token is invalid or has expired.");
 
@@ -43,7 +43,7 @@ public sealed class ResetPasswordHandler(
             return Error.Validation(UserErrorCodes.TokenInvalidOrExpired, "The reset token is invalid or has expired.");
 
         user.ResetPassword(Password.FromPlaintext(request.NewPassword));
-        await repository.UpdateAsync(user, cancellationToken);
+        await repository.UpdateAsync(user, ct);
 
         UserPasswordChanged domainEvent = new(user.Id, DateTimeOffset.UtcNow);
         logger.LogInformation("Domain event: {Event}", domainEvent);

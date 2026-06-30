@@ -19,15 +19,15 @@ public sealed class ExportDataHandler(
 {
     public async Task<ErrorOr<UserDataExportResponse>> Handle(
         ExportDataRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Exporting data. UserId={UserId}", request.UserId);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        UserEntity? user = await repository.GetByIdAsync(request.UserId, cancellationToken);
+        UserEntity? user = await repository.GetByIdAsync(request.UserId, ct);
 
         if (user is null || user.Status is UserStatus.Deleted)
             return Error.NotFound(UserErrorCodes.NotFound, "User not found.");
@@ -36,7 +36,7 @@ public sealed class ExportDataHandler(
 
         try
         {
-            await auditLogService.LogAsync(user.Id, AuditEvents.DataExported, cancellationToken);
+            await auditLogService.LogAsync(user.Id, AuditEvents.DataExported, ct);
         }
         catch (Exception ex)
         {

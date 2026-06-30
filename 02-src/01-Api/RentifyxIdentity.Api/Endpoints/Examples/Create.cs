@@ -22,9 +22,9 @@ internal sealed class Create : IEndpoint
         CreateExampleRequest request,
         IHandler<CreateExampleRequest, ExampleEntity> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        ErrorOr<ExampleEntity> result = await handler.Handle(request, cancellationToken);
+        ErrorOr<ExampleEntity> result = await handler.Handle(request, ct);
 
         return result.Match(
             entity => Results.Created($"/api/v1/examples/{entity.Id}", ExampleMapper.ToResponse(entity)),

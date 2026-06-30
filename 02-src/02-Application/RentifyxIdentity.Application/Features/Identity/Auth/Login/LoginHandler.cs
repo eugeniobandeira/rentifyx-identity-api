@@ -24,15 +24,15 @@ public sealed class LoginHandler(
 
     public async Task<ErrorOr<LoginResponse>> Handle(
         LoginRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Login attempt. Email={Email}", request.Email);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        UserEntity? user = await repository.GetByEmailAsync(request.Email, cancellationToken);
+        UserEntity? user = await repository.GetByEmailAsync(request.Email, ct);
         if (user is null)
             return Error.Validation(UserErrorCodes.InvalidCredentials, "Invalid email or password.");
 
@@ -54,7 +54,7 @@ public sealed class LoginHandler(
         string refreshTokenHash = tokenService.HashToken(rawRefreshToken);
         user.SetRefreshToken(refreshTokenHash, DateTimeOffset.UtcNow.Add(RefreshTokenLifetime));
 
-        await repository.UpdateAsync(user, cancellationToken);
+        await repository.UpdateAsync(user, ct);
 
         UserLoggedIn domainEvent = new(user.Id, user.Email.ToString(), DateTimeOffset.UtcNow);
         logger.LogInformation("Domain event: {Event}", domainEvent);

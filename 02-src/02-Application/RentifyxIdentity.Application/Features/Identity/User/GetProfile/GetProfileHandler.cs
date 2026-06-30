@@ -20,15 +20,15 @@ public sealed class GetProfileHandler(
 {
     public async Task<ErrorOr<UserResponse>> Handle(
         GetProfileRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Getting profile. UserId={UserId}", request.UserId);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        UserEntity? user = await repository.GetByIdAsync(request.UserId, cancellationToken);
+        UserEntity? user = await repository.GetByIdAsync(request.UserId, ct);
 
         if (user is null || user.Status is UserStatus.Deleted)
             return Error.NotFound(UserErrorCodes.NotFound, "User not found.");
@@ -37,7 +37,7 @@ public sealed class GetProfileHandler(
 
         try
         {
-            await auditLogService.LogAsync(user.Id, AuditEvents.ProfileAccessed, cancellationToken);
+            await auditLogService.LogAsync(user.Id, AuditEvents.ProfileAccessed, ct);
         }
         catch (Exception ex)
         {

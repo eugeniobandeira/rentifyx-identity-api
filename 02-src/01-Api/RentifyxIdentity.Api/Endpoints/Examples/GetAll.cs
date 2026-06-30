@@ -24,9 +24,9 @@ internal sealed class GetAll : IEndpoint
         [AsParameters] GetAllExampleRequest request,
         IHandler<GetAllExampleRequest, PagedResult<ExampleEntity>> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        ErrorOr<PagedResult<ExampleEntity>> result = await handler.Handle(request, cancellationToken);
+        ErrorOr<PagedResult<ExampleEntity>> result = await handler.Handle(request, ct);
 
         return result.Match(
             pagedResult => Results.Ok(ApiListResponseMapper.ToListResponse(

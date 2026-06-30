@@ -19,9 +19,9 @@ internal sealed class Delete : IEndpoint
         Guid id,
         IHandler<Guid, Deleted> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        ErrorOr<Deleted> result = await handler.Handle(id, cancellationToken);
+        ErrorOr<Deleted> result = await handler.Handle(id, ct);
 
         return result.Match(
             _ => Results.NoContent(),

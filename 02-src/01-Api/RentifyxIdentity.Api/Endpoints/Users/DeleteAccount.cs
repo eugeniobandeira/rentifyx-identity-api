@@ -20,14 +20,14 @@ internal sealed class DeleteAccount : IEndpoint
     private static async Task<IResult> HandleAsync(
         IHandler<DeleteAccountRequest, Success> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         if (!Guid.TryParse(httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId))
             return Results.Unauthorized();
 
         ErrorOr<Success> result = await handler.Handle(
             new DeleteAccountRequest(userId),
-            cancellationToken);
+            ct);
 
         return result.Match(
             _ => Results.NoContent(),

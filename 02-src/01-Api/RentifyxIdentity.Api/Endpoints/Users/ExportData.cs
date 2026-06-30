@@ -21,14 +21,14 @@ internal sealed class ExportData : IEndpoint
     private static async Task<IResult> HandleAsync(
         IHandler<ExportDataRequest, UserDataExportResponse> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         if (!Guid.TryParse(httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId))
             return Results.Unauthorized();
 
         ErrorOr<UserDataExportResponse> result = await handler.Handle(
             new ExportDataRequest(userId),
-            cancellationToken);
+            ct);
 
         return result.Match(
             response => Results.Ok(response),

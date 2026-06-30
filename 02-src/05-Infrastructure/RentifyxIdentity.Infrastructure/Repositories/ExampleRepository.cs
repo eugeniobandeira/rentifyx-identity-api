@@ -7,27 +7,27 @@ namespace RentifyxIdentity.Infrastructure.Repositories;
 
 public sealed class ExampleRepository : IRepository<ExampleEntity, GetAllExampleRequest>
 {
-    public Task AddAsync(ExampleEntity entity, CancellationToken cancellationToken = default)
+    public Task AddAsync(ExampleEntity entity, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<ExampleEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task<ExampleEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<PagedResult<ExampleEntity>> GetAllAsync(GetAllExampleRequest filter, CancellationToken cancellationToken = default)
+    public Task<PagedResult<ExampleEntity>> GetAllAsync(GetAllExampleRequest filter, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task UpdateAsync(ExampleEntity entity, CancellationToken cancellationToken = default)
+    public Task UpdateAsync(ExampleEntity entity, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task DeleteAsync(ExampleEntity entity, CancellationToken cancellationToken = default)
+    public Task DeleteAsync(ExampleEntity entity, CancellationToken ct = default)
     {
         throw new NotImplementedException();
     }

@@ -17,17 +17,17 @@ public sealed class CreateExampleHandler(
 {
     public async Task<ErrorOr<ExampleEntity>> Handle(
         CreateExampleRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Creating example. Payload={@Payload}", request);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
         ExampleEntity entity = ExampleMapper.CreateExample(request);
 
-        await repository.AddAsync(entity, cancellationToken);
+        await repository.AddAsync(entity, ct);
 
         logger.LogInformation("Example created successfully. Response={@Response}", entity);
 
