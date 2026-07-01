@@ -10,8 +10,8 @@ patches:
   - path: patch-deployment.yaml
     target:
       kind: Deployment
-      name: api
+      name: rentifyx-identity-api
   - path: patch-hpa.yaml
     target:
       kind: HorizontalPodAutoscaler
-      name: api
+      name: rentifyx-identity-api

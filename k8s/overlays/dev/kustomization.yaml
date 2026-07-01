@@ -10,8 +10,8 @@ patches:
   - path: patch-deployment.yaml
     target:
       kind: Deployment
-      name: api
+      name: rentifyx-identity-api
   - path: patch-configmap.yaml
     target:
       kind: ConfigMap
-      name: api-config
+      name: rentifyx-identity-api-config

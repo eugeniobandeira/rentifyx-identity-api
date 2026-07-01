@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api
+  name: rentifyx-identity-api
 spec:
   replicas: 3
   template:
@@ -12,22 +12,22 @@ spec:
     spec:
       serviceAccountName: rentifyx-identity-api
       containers:
-        - name: api
+        - name: rentifyx-identity-api
           env:
             - name: Jwt__PrivateKeyPem
               valueFrom:
                 secretKeyRef:
-                  name: api-secrets
+                  name: rentifyx-identity-api-secrets
                   key: jwt-private-key-pem
             - name: Hmac__Key
               valueFrom:
                 secretKeyRef:
-                  name: api-secrets
+                  name: rentifyx-identity-api-secrets
                   key: hmac-key
             - name: Ses__FromAddress
               valueFrom:
                 secretKeyRef:
-                  name: api-secrets
+                  name: rentifyx-identity-api-secrets
                   key: ses-from-address
           volumeMounts:
             - name: secrets-store
@@ -39,4 +39,4 @@ spec:
             driver: secrets-store.csi.k8s.io
             readOnly: true
             volumeAttributes:
-              secretProviderClass: api-secrets
+              secretProviderClass: rentifyx-identity-api-secrets

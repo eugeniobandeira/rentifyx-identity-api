@@ -1,6 +1,6 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: api
+  name: rentifyx-identity-api
 spec:
   minReplicas: 3
