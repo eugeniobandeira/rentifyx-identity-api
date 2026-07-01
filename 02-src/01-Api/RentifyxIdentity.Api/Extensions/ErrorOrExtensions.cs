@@ -9,14 +9,16 @@ internal static class ErrorOrExtensions
     {
         Error firstError = errors[0];
 
-        int statusCode = firstError.Type switch
-        {
-            ErrorType.Validation => StatusCodes.Status422UnprocessableEntity,
-            ErrorType.NotFound => StatusCodes.Status404NotFound,
-            ErrorType.Conflict => StatusCodes.Status409Conflict,
-            ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
-            _ => StatusCodes.Status500InternalServerError
-        };
+        int statusCode = firstError.NumericType is >= 400 and <= 599
+            ? firstError.NumericType
+            : firstError.Type switch
+            {
+                ErrorType.Validation => StatusCodes.Status422UnprocessableEntity,
+                ErrorType.NotFound => StatusCodes.Status404NotFound,
+                ErrorType.Conflict => StatusCodes.Status409Conflict,
+                ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
+                _ => StatusCodes.Status500InternalServerError
+            };
 
         string? correlationId = httpContext.Items[CorrelationIdConstants.Key]?.ToString();
 

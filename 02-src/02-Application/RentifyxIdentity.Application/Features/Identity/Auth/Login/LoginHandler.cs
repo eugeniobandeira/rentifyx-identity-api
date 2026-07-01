@@ -8,7 +8,6 @@ using RentifyxIdentity.Application.Features.Identity.Mapper;
 using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
-using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
 
 namespace RentifyxIdentity.Application.Features.Identity.Auth.Login;
@@ -17,6 +16,7 @@ public sealed class LoginHandler(
     IUserRepository repository,
     IPasswordHasher passwordHasher,
     ITokenService tokenService,
+    IAuditLogService auditLogService,
     IValidator<LoginRequest> validator,
     ILogger<LoginHandler> logger) : IHandler<LoginRequest, LoginResponse>
 {
@@ -24,17 +24,23 @@ public sealed class LoginHandler(
 
     public async Task<ErrorOr<LoginResponse>> Handle(
         LoginRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Login attempt. Email={Email}", request.Email);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        UserEntity? user = await repository.GetByEmailAsync(request.Email, cancellationToken);
+        UserEntity? user = await repository.GetByEmailAsync(request.Email, ct);
         if (user is null)
             return Error.Validation(UserErrorCodes.InvalidCredentials, "Invalid email or password.");
+
+        if (user.IsLockedOut(DateTimeOffset.UtcNow))
+            return Error.Custom(
+                429,
+                UserErrorCodes.LoginLocked,
+                "Account is temporarily locked due to too many failed login attempts.");
 
         if (user.Status is UserStatus.PendingVerification)
             return Error.Validation(UserErrorCodes.AccountNotVerified, "Email address has not been verified yet.");
@@ -43,7 +49,13 @@ public sealed class LoginHandler(
             return Error.Conflict(UserErrorCodes.AccountNotVerifiable, "This account cannot be accessed.");
 
         if (!passwordHasher.Verify(request.Password, user.PasswordHash.HashValue))
+        {
+            user.RecordFailedLogin(DateTimeOffset.UtcNow);
+            await repository.UpdateAsync(user, ct);
             return Error.Validation(UserErrorCodes.InvalidCredentials, "Invalid email or password.");
+        }
+
+        user.ClearLockout();
 
         string accessToken = tokenService.GenerateAccessToken(
             user.Id,
@@ -54,12 +66,18 @@ public sealed class LoginHandler(
         string refreshTokenHash = tokenService.HashToken(rawRefreshToken);
         user.SetRefreshToken(refreshTokenHash, DateTimeOffset.UtcNow.Add(RefreshTokenLifetime));
 
-        await repository.UpdateAsync(user, cancellationToken);
-
-        UserLoggedIn domainEvent = new(user.Id, user.Email.ToString(), DateTimeOffset.UtcNow);
-        logger.LogInformation("Domain event: {Event}", domainEvent);
+        await repository.UpdateAsync(user, ct);
 
         logger.LogInformation("Login successful. UserId={UserId}", user.Id);
+
+        try
+        {
+            await auditLogService.LogAsync(user.Id, AuditEvents.UserLoggedIn, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Audit log failed for UserId={UserId}", user.Id);
+        }
 
         return new LoginResponse(
             accessToken,

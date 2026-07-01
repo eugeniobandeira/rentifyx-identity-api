@@ -22,9 +22,9 @@ internal sealed class VerifyEmail : IEndpoint
         VerifyEmailRequest request,
         IHandler<VerifyEmailRequest, UserResponse> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        ErrorOr<UserResponse> result = await handler.Handle(request, cancellationToken);
+        ErrorOr<UserResponse> result = await handler.Handle(request, ct);
 
         return result.Match(
             response => Results.Ok(response),

@@ -1,8 +1,5 @@
-using System.Security.Cryptography;
-using System.Text;
 using ErrorOr;
 using FluentValidation;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Extensions;
@@ -16,23 +13,23 @@ namespace RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword;
 public sealed class ForgotPasswordHandler(
     IUserRepository repository,
     IEmailService emailService,
+    ITokenService tokenService,
     IValidator<ForgotPasswordRequest> validator,
-    IConfiguration configuration,
     ILogger<ForgotPasswordHandler> logger) : IHandler<ForgotPasswordRequest, Success>
 {
     private static readonly TimeSpan TokenLifetime = TimeSpan.FromHours(1);
 
     public async Task<ErrorOr<Success>> Handle(
         ForgotPasswordRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Password reset requested. Email={Email}", request.Email);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        UserEntity? user = await repository.GetByEmailAsync(request.Email, cancellationToken);
+        UserEntity? user = await repository.GetByEmailAsync(request.Email, ct);
         if (user is null)
         {
             logger.LogInformation("Password reset no-op: user not found. Email={Email}", request.Email);
@@ -46,16 +43,14 @@ public sealed class ForgotPasswordHandler(
         }
 
         string rawToken = Guid.NewGuid().ToString();
-        string hmacKey = configuration["Hmac:Key"] ?? "dev-hmac-key";
-        using HMACSHA256 hmac = new(Encoding.UTF8.GetBytes(hmacKey));
-        string tokenHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(rawToken)));
+        string tokenHash = tokenService.HashToken(rawToken);
 
         user.SetPasswordResetToken(tokenHash, DateTimeOffset.UtcNow.Add(TokenLifetime));
-        await repository.UpdateAsync(user, cancellationToken);
+        await repository.UpdateAsync(user, ct);
 
         try
         {
-            await emailService.SendPasswordResetEmailAsync(user.Email.ToString(), rawToken, cancellationToken);
+            await emailService.SendPasswordResetEmailAsync(user.Email.ToString(), rawToken, ct);
         }
         catch (Exception ex)
         {

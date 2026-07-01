@@ -2,7 +2,6 @@ using ErrorOr;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword;
@@ -20,16 +19,16 @@ public sealed class ForgotPasswordHandlerTests
 {
     private readonly Mock<IUserRepository> _repositoryMock = new();
     private readonly Mock<IEmailService> _emailServiceMock = new();
+    private readonly Mock<ITokenService> _tokenServiceMock = new();
     private readonly Mock<IValidator<ForgotPasswordRequest>> _validatorMock = new();
-    private readonly Mock<IConfiguration> _configurationMock = new();
     private readonly Mock<ILogger<ForgotPasswordHandler>> _loggerMock = new();
     private readonly ForgotPasswordHandler _handler;
 
     public ForgotPasswordHandlerTests()
     {
-        _configurationMock
-            .Setup(c => c[TestConstants.HmacKeyConfigPath])
-            .Returns(TestConstants.HmacKey);
+        _tokenServiceMock
+            .Setup(t => t.HashToken(It.IsAny<string>()))
+            .Returns("hashed-token");
 
         _validatorMock
             .Setup(v => v.ValidateAsync(
@@ -40,8 +39,8 @@ public sealed class ForgotPasswordHandlerTests
         _handler = new ForgotPasswordHandler(
             _repositoryMock.Object,
             _emailServiceMock.Object,
+            _tokenServiceMock.Object,
             _validatorMock.Object,
-            _configurationMock.Object,
             _loggerMock.Object);
     }
 

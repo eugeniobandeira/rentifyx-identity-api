@@ -17,19 +17,19 @@ public sealed class UpdateExampleHandler(
 {
     public async Task<ErrorOr<ExampleEntity>> Handle(
         UpdateExampleRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Updating example. Payload={@Payload}", request);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        ExampleEntity? entity = await repository.GetByIdAsync(request.Id, cancellationToken);
+        ExampleEntity? entity = await repository.GetByIdAsync(request.Id, ct);
 
         ExampleMapper.UpdateExample(entity!, request);
 
-        await repository.UpdateAsync(entity!, cancellationToken);
+        await repository.UpdateAsync(entity!, ct);
 
         logger.LogInformation("Example updated successfully. Response={@Response}", entity);
 

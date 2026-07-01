@@ -11,11 +11,11 @@ public sealed class GetByIdExampleHandler(
     IRepository<ExampleEntity> repository,
     ILogger<GetByIdExampleHandler> logger) : IHandler<Guid, ExampleEntity>
 {
-    public async Task<ErrorOr<ExampleEntity>> Handle(Guid id, CancellationToken cancellationToken = default)
+    public async Task<ErrorOr<ExampleEntity>> Handle(Guid id, CancellationToken ct = default)
     {
         logger.LogDebug("Fetching example. Id={Id}", id);
 
-        ExampleEntity? entity = await repository.GetByIdAsync(id, cancellationToken);
+        ExampleEntity? entity = await repository.GetByIdAsync(id, ct);
 
         if (entity is null)
         {

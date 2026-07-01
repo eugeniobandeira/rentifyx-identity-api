@@ -1,3 +1,5 @@
+using RentifyxIdentity.Domain.Contracts;
+
 namespace RentifyxIdentity.Application.Features.Identity.User.ExportData;
 
 public sealed record UserDataExportResponse(
@@ -6,5 +8,7 @@ public sealed record UserDataExportResponse(
     string TaxId,
     string Role,
     string Status,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    DateTimeOffset? ConsentGivenAt,
+    IReadOnlyList<AuditLogEntryRecord> AuditHistory
 );

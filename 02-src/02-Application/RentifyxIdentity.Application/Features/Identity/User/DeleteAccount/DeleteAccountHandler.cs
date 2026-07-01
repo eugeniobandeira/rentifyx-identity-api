@@ -20,15 +20,15 @@ public sealed class DeleteAccountHandler(
 {
     public async Task<ErrorOr<Success>> Handle(
         DeleteAccountRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Deleting account. UserId={UserId}", request.UserId);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        UserEntity? user = await repository.GetByIdAsync(request.UserId, cancellationToken);
+        UserEntity? user = await repository.GetByIdAsync(request.UserId, ct);
 
         if (user is null)
             return Error.NotFound(UserErrorCodes.NotFound, "User not found.");
@@ -39,7 +39,7 @@ public sealed class DeleteAccountHandler(
         user.ClearRefreshToken();
         user.Anonymize();
 
-        await repository.UpdateAsync(user, cancellationToken);
+        await repository.UpdateAsync(user, ct);
 
         UserAccountDeleted domainEvent = new(user.Id, DateTimeOffset.UtcNow);
         logger.LogInformation("Domain event: {Event}", domainEvent);
@@ -48,7 +48,7 @@ public sealed class DeleteAccountHandler(
 
         try
         {
-            await auditLogService.LogAsync(request.UserId, AuditEvents.AccountDeleted, cancellationToken);
+            await auditLogService.LogAsync(request.UserId, AuditEvents.AccountDeleted, ct);
         }
         catch (Exception ex)
         {

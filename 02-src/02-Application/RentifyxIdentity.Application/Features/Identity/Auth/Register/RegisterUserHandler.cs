@@ -23,19 +23,19 @@ public sealed class RegisterUserHandler(
 {
     public async Task<ErrorOr<UserResponse>> Handle(
         RegisterUserRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Registering user. Payload={@Payload}", request);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        UserEntity? existing = await repository.GetByEmailAsync(request.Email, cancellationToken);
+        UserEntity? existing = await repository.GetByEmailAsync(request.Email, ct);
         if (existing is not null)
             return Error.Conflict(UserErrorCodes.EmailAlreadyRegistered, "This email address is already registered.");
 
-        UserEntity? existingTaxId = await repository.GetByTaxIdAsync(request.TaxId, cancellationToken);
+        UserEntity? existingTaxId = await repository.GetByTaxIdAsync(request.TaxId, ct);
         if (existingTaxId is not null)
             return Error.Conflict(UserErrorCodes.TaxIdAlreadyRegistered, "This Tax ID is already registered.");
 
@@ -51,11 +51,11 @@ public sealed class RegisterUserHandler(
         string tokenHash = tokenService.HashToken(rawToken);
         user.SetEmailVerificationToken(tokenHash, DateTimeOffset.UtcNow.AddHours(24));
 
-        await repository.AddAsync(user, cancellationToken);
+        await repository.AddAsync(user, ct);
 
         try
         {
-            await emailService.SendVerificationEmailAsync(user.Email.ToString(), rawToken, cancellationToken);
+            await emailService.SendVerificationEmailAsync(user.Email.ToString(), rawToken, ct);
         }
         catch (Exception ex)
         {

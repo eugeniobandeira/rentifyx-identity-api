@@ -23,9 +23,9 @@ internal sealed class Update : IEndpoint
         UpdateExampleRequest request,
         IHandler<UpdateExampleRequest, ExampleEntity> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        ErrorOr<ExampleEntity> result = await handler.Handle(request with { Id = id }, cancellationToken);
+        ErrorOr<ExampleEntity> result = await handler.Handle(request with { Id = id }, ct);
 
         return result.Match(
             entity => Results.Ok(ExampleMapper.ToResponse(entity)),

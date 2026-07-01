@@ -19,6 +19,6 @@ public sealed class VerifyEmailValidator : AbstractValidator<VerifyEmailRequest>
 
         RuleFor(x => x.Token)
             .NotEmpty()
-                .WithMessage("Token is required.");
+                .WithMessage(ValidationMessageResource.TOKEN_REQUIRED);
     }
 }

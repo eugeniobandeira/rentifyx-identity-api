@@ -7,19 +7,19 @@ public sealed class FakeUserRepository : IUserRepository
 {
     private readonly Dictionary<Guid, UserEntity> _store = new();
 
-    public Task AddAsync(UserEntity entity, CancellationToken cancellationToken = default)
+    public Task AddAsync(UserEntity entity, CancellationToken ct = default)
     {
         _store[entity.Id] = entity;
         return Task.CompletedTask;
     }
 
-    public Task<UserEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task<UserEntity?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         _store.TryGetValue(id, out UserEntity? entity);
         return Task.FromResult(entity);
     }
 
-    public Task UpdateAsync(UserEntity entity, CancellationToken cancellationToken = default)
+    public Task UpdateAsync(UserEntity entity, CancellationToken ct = default)
     {
         if (!_store.ContainsKey(entity.Id))
             throw new InvalidOperationException($"Entity {entity.Id} not found for update.");
@@ -28,7 +28,7 @@ public sealed class FakeUserRepository : IUserRepository
         return Task.CompletedTask;
     }
 
-    public Task DeleteAsync(UserEntity entity, CancellationToken cancellationToken = default)
+    public Task DeleteAsync(UserEntity entity, CancellationToken ct = default)
     {
         _store.Remove(entity.Id);
         return Task.CompletedTask;

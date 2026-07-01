@@ -21,14 +21,14 @@ internal sealed class GetProfile : IEndpoint
     private static async Task<IResult> HandleAsync(
         IHandler<GetProfileRequest, UserResponse> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         if (!Guid.TryParse(httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId))
             return Results.Unauthorized();
 
         ErrorOr<UserResponse> result = await handler.Handle(
             new GetProfileRequest(userId),
-            cancellationToken);
+            ct);
 
         return result.Match(
             response => Results.Ok(response),

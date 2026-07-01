@@ -1,17 +1,20 @@
-# Clean Architecture Template
+# RentifyX Identity API
 
-[![CI](https://github.com/eugeniobandeira/clean-arch-template/actions/workflows/ci.yml/badge.svg)](https://github.com/eugeniobandeira/clean-arch-template/actions/workflows/ci.yml)
+[![CI](https://github.com/eugeniobandeira/rentifyx-identity-api/actions/workflows/ci.yml/badge.svg)](https://github.com/eugeniobandeira/rentifyx-identity-api/actions/workflows/ci.yml)
 ![.NET](https://img.shields.io/badge/.NET-10-512BD4)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-eugeniobandeira-0077B5?logo=linkedin)](https://linkedin.com/in/eugeniobandeira)
 
-A .NET 10 project template for building production-ready Web APIs using Clean Architecture.
+Production-grade Identity microservice for the RentifyX platform. Built with .NET 10 Minimal APIs, Clean Architecture, DDD, and TDD.
+
+Covers user registration, email verification, login, token refresh, logout, password reset, and LGPD compliance (data access, erasure, export, consent, audit).
 
 ## Tech Stack
 
 | Concern | Library / Technology |
 |---|---|
 | Framework | ASP.NET Core 10 Minimal APIs |
+| Architecture | Clean Architecture · DDD · TDD |
 | Error Handling | ErrorOr 2.0.1 |
 | Validation | FluentValidation 12.1.1 |
 | Logging | Serilog 10.0.0 |
@@ -19,62 +22,89 @@ A .NET 10 project template for building production-ready Web APIs using Clean Ar
 | API Documentation | Scalar + Microsoft.AspNetCore.OpenApi |
 | Orchestration | .NET Aspire 9.3.1 |
 | Observability | OpenTelemetry (traces, metrics, logs) |
-| Testing | xUnit, Moq, FluentAssertions, Bogus |
+| Auth | JWT RS256 · AWS Cognito |
+| Database | AWS DynamoDB (single-table design) |
+| Email | AWS SES v2 |
+| Secrets | AWS Secrets Manager |
+| Encryption | AWS KMS |
+| Local Cloud | LocalStack via Testcontainers |
+| Testing | xUnit · Moq · FluentAssertions · Bogus · Testcontainers |
 | Code Analysis | SonarAnalyzer.CSharp |
+| Security | OWASP Top 10 · gitleaks · Trivy |
+| Compliance | LGPD · BACEN |
 
 ## Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- [Docker](https://www.docker.com/) (required for LocalStack and repository integration tests)
 - .NET Aspire workload:
 
 ```bash
 dotnet workload install aspire
 ```
 
-## Quick Start
+## Running Locally
+
+Start the API with Aspire orchestration (recommended — includes dashboard and Scalar UI):
 
 ```bash
-dotnet new install EugenioBandeira.RentifyxIdentityTemplate
-dotnet new clean-arch -n MyProject
+dotnet run --project 01-aspire/01-AppHost/RentifyxIdentity.AppHost
+```
+
+Or directly without Aspire:
+
+```bash
+dotnet run --project 02-src/01-Api/RentifyxIdentity.Api
+```
+
+## Running Tests
+
+```bash
+# All tests
+dotnet test RentifyxIdentity.slnx
+
+# Skip Docker-dependent tests
+dotnet test RentifyxIdentity.slnx --filter "Category!=RequiresDocker"
+```
+
+## Running with Docker
+
+```bash
+docker build -t rentifyx-identity .
+docker run -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=Production rentifyx-identity
+```
+
+## Running on Kubernetes
+
+```bash
+kubectl apply -k k8s/overlays/dev
+kubectl apply -k k8s/overlays/prod
 ```
 
 ## Project Structure
 
 ```
-MyProject/
-├── 01-aspire/
-│   ├── 01-AppHost/
-│   │   └── MyProject.AppHost/              # .NET Aspire orchestration
-│   └── 02-ServiceDefaults/
-│       └── MyProject.ServiceDefaults/      # OpenTelemetry, health checks, service discovery
-├── 02-src/
-│   ├── 01-Api/
-│   │   └── MyProject.Api/                  # Endpoints, middlewares, extensions
-│   ├── 02-Application/
-│   │   └── MyProject.Application/          # Handlers, validators, DTOs, mappers
-│   ├── 03-Domain/
-│   │   └── MyProject.Domain/               # Entities, repository interfaces, constants
-│   ├── 04-IoC/
-│   │   └── MyProject.IoC/                  # Dependency injection wiring
-│   └── 05-Infrastructure/
-│       └── MyProject.Infrastructure/       # Repository implementations
-├── 03-tests/
-│   ├── 01-Common/                          # Shared builders (Bogus)
-│   ├── 02-Validators/                      # FluentValidation unit tests
-│   ├── 03-Handlers/                        # Handler unit tests
-│   ├── 04-Repositories/                    # Repository tests
-│   └── 05-Integration/                     # API integration tests (WebApplicationFactory)
-├── docs/                                   # Architecture docs, ADRs, feature specs
-├── iac/                                    # Infrastructure as Code (Terraform, Bicep, etc.)
-├── k8s/                                    # Kubernetes manifests (Kustomize)
-│   ├── base/
-│   └── overlays/
-│       ├── dev/
-│       └── prod/
-├── Directory.Build.props                   # Shared build settings for all projects
-├── Directory.Packages.props                # Centralized NuGet package versions
-├── Dockerfile
-└── RentifyxIdentity.slnx
+01-aspire/
+  01-AppHost/             – .NET Aspire orchestration (starts API + LocalStack)
+  02-ServiceDefaults/     – OTel traces/metrics, health checks, service discovery
+02-src/
+  01-Api/                 – Minimal API endpoints, middlewares, extensions
+  02-Application/         – Use cases via IHandler<TRequest,TResponse>, FluentValidation validators
+  03-Domain/              – Entities, value objects, domain events, repository contracts
+  04-IoC/                 – DI wiring (ApplicationDependencyInjection, InfrastructureDependencyInjection)
+  05-Infrastructure/      – Repository implementations, AWS SDK adapters
+03-tests/
+  01-Common/              – Shared builders (Bogus)
+  02-Validators/          – FluentValidation unit tests
+  03-Handlers/            – Handler unit tests (Moq)
+  04-Repositories/        – Repository integration tests (Testcontainers + LocalStack)
+  05-Integration/         – End-to-end via CustomWebApplicationFactory
+docs/
+  architecture/           – Architecture overview and C4 diagrams
+  decisions/              – ADRs (ADR-001 to ADR-008)
+  guides/                 – adding-a-new-feature.md
+iac/                      – Terraform modules
+k8s/                      – Kustomize base + dev/prod overlays
 ```
 
 ## Architecture
@@ -83,9 +113,9 @@ MyProject/
 
 | Layer | Responsibility | Allowed dependencies |
 |---|---|---|
-| Domain | Entities, repository interfaces, error codes | None |
+| Domain | Entities, value objects, domain events, repository interfaces | None |
 | Application | Handlers, validators, DTOs, mappers | Domain |
-| Infrastructure | Repository implementations | Domain |
+| Infrastructure | Repository implementations, AWS SDK adapters | Domain |
 | IoC | DI registration | All layers |
 | Api | Endpoints, middlewares, HTTP mapping | Application, Domain |
 
@@ -97,11 +127,10 @@ Api → Application → Domain ← Infrastructure
               IoC (wires all layers)
 ```
 
-- **Domain** has no outbound dependencies — it defines interfaces, not implementations.
+- **Domain** has zero outbound dependencies and zero AWS/framework references.
 - **Infrastructure** implements Domain interfaces. It never references Application.
 - **Application** depends only on Domain interfaces, never on Infrastructure directly.
 - **IoC** is the only layer that references all others — it is the composition root.
-- **Api** depends on Application (handlers) and IoC.
 
 ### Handler pattern
 
@@ -114,178 +143,94 @@ public interface IHandler<TRequest, TResponse>
 }
 ```
 
-Handlers are registered automatically via reflection scan in IoC — no manual wiring needed when adding new features:
+Handlers are registered automatically via reflection — no manual wiring needed when adding new features.
+
+### DynamoDB single-table design
+
+All user data is stored in a single DynamoDB table using the following key schema:
+
+| Key | Pattern | Purpose |
+|---|---|---|
+| PK (hash) | `USER#{id}` | Primary access by user ID |
+| SK (range) | `USER#{id}` | Composite key (equals PK for user items) |
+| GSI_Email | `EMAIL#{email}` | Lookup by email address |
+| GSI_TaxId | `TAXID#{taxId}` | Lookup by CPF/CNPJ |
+
+Unverified accounts have a DynamoDB TTL set to 48h — they are automatically deleted if the user never verifies their email.
+
+### Endpoint pattern
 
 ```csharp
-assembly.GetTypes()
-    .Where(t => !t.IsAbstract && !t.IsInterface)
-    .SelectMany(t => t.GetInterfaces()
-        .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IHandler<,>))
-        .Select(i => (Implementation: t, Interface: i)))
-    .ToList()
-    .ForEach(x => services.AddScoped(x.Interface, x.Implementation));
-```
-
-### Repository interfaces
-
-Two interfaces cover all repository needs:
-
-```csharp
-// Basic CRUD — used by most handlers
-IRepository<TEntity>
-
-// Extends with pagination — used by GetAll handlers
-IRepository<TEntity, TFilter> : IRepository<TEntity>
-```
-
-A concrete repository implements the extended interface, satisfying both:
-
-```csharp
-public sealed class ExampleRepository : IRepository<ExampleEntity, GetAllExampleRequest>
-{ ... }
-```
-
-IoC registration is automatic — any class in the Infrastructure assembly that implements `IRepository<T>` or `IRepository<T, TFilter>` is discovered and registered via reflection. No manual wiring needed.
-
-### Feature organization
-
-Features are organized by name inside `Application/Features/{Feature}/`:
-
-```
-Application/Features/Example/
-├── ExampleResponse.cs
-├── Mapper/ExampleMapper.cs
-└── Handlers/
-    ├── Create/
-    │   ├── CreateExampleHandler.cs
-    │   ├── Request/CreateExampleRequest.cs
-    │   └── Validator/CreateExampleValidator.cs
-    ├── GetById/GetByIdExampleHandler.cs
-    ├── GetAll/
-    │   ├── GetAllExampleHandler.cs
-    │   └── Request/GetAllExampleRequest.cs
-    ├── Update/
-    │   ├── UpdateExampleHandler.cs
-    │   ├── Request/UpdateExampleRequest.cs
-    │   └── Validator/UpdateExampleValidator.cs
-    └── Delete/DeleteExampleHandler.cs
-```
-
-Endpoints follow the same convention in the Api layer:
-
-```
-Api/Endpoints/Example/
-├── Create.cs
-├── GetById.cs
-├── GetAll.cs
-├── Update.cs
-└── Delete.cs
-```
-
-### Endpoints
-
-Each endpoint is a single file implementing `IEndpoint` and is auto-registered via reflection — no manual wiring:
-
-```csharp
-internal sealed class Create : IEndpoint
+internal sealed class MyAction : IEndpoint
 {
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("/examples", HandleAsync)
-           .WithName("CreateExample")
-           .WithTags(Tags.EXAMPLE);
+        app.MapPost("/resource", HandleAsync)
+           .WithName("...").WithTags(Tags.XXX);
+    }
+
+    private static async Task<IResult> HandleAsync(
+        MyRequest request,
+        IHandler<MyRequest, MyResponse> handler,
+        HttpContext httpContext,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await handler.Handle(request, cancellationToken);
+        return result.Match(r => Results.Ok(r), e => e.ToProblem(httpContext));
     }
 }
 ```
 
-All endpoints are mounted under `/api/v1` with rate limiting applied automatically.
+All endpoints are discovered and registered automatically via reflection — no manual wiring needed.
 
-## Centralized Package Management
+## Adding a New Feature
 
-All NuGet package versions are declared once in `Directory.Packages.props` at the solution root. Individual `.csproj` files reference packages **without specifying versions** — versions are resolved centrally.
+Follow this order every time:
 
-```xml
-<!-- Directory.Packages.props -->
-<Project>
-  <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  </PropertyGroup>
+**1. Domain** — entity / value object / domain event in `02-src/03-Domain/`
 
-  <ItemGroup Label="Application">
-    <PackageVersion Include="ErrorOr" Version="2.0.1" />
-    <PackageVersion Include="FluentValidation" Version="12.1.1" />
-  </ItemGroup>
+**2. Contracts** — repository/service interface in `Domain/Interfaces/`
 
-  <ItemGroup Label="Api">
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.14.14" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
-  </ItemGroup>
+**3. Application** — feature folder under `Application/Features/{Feature}/`:
+- `{Action}Request.cs`
+- `{Action}Validator.cs` (FluentValidation, messages via `ValidationMessageResource`)
+- `{Action}Handler.cs` (implements `IHandler<TRequest, TResponse>`, returns `ErrorOr<T>`)
+- `{Feature}Response.cs` + `{Feature}Mapper.cs`
 
-  <ItemGroup Label="Tests">
-    <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="Moq" Version="4.20.72" />
-    <PackageVersion Include="FluentAssertions" Version="8.2.0" />
-  </ItemGroup>
-  <!-- ... -->
-</Project>
+**4. Infrastructure** — implement repository/service in `Infrastructure/`
+
+**5. IoC** — no changes needed. Handlers and repositories are auto-discovered via reflection.
+
+**6. Api** — add one file per endpoint implementing `IEndpoint` in `Api/Endpoints/{Group}/`
+
+**7. Tests** — unit tests in `03-Handlers/` and `02-Validators/`; integration tests in `05-Integration/`
+
+## Error Handling
+
+Business logic never throws — it returns `ErrorOr<T>`. Endpoints map the result to HTTP responses:
+
+```csharp
+var result = await handler.Handle(request, cancellationToken);
+return result.Match(r => Results.Ok(r), e => e.ToProblem(httpContext));
 ```
 
-**Benefits:**
-- No version conflicts between projects — a single source of truth.
-- To upgrade a package, edit one line in `Directory.Packages.props`.
-- PRs show version changes in one file, making upgrades easy to review.
-
-### Shared build settings
-
-`Directory.Build.props` at the solution root applies common MSBuild properties to every project automatically:
-
-```xml
-<Project>
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <AnalysisMode>Recommended</AnalysisMode>
-    <LangVersion>latest</LangVersion>
-    <NuGetAuditMode>direct</NuGetAuditMode>
-  </PropertyGroup>
-</Project>
-```
-
-`03-tests/Directory.Build.props` extends the root file and suppresses analyzer rules that conflict with test conventions (underscore naming, interface-typed fields, etc.) — without touching production project settings.
+| ErrorOr type | HTTP status |
+|---|---|
+| `Error.Validation` | 422 Unprocessable Entity |
+| `Error.NotFound` | 404 Not Found |
+| `Error.Conflict` | 409 Conflict |
+| `Error.Unauthorized` | 401 Unauthorized |
+| Other | 500 Internal Server Error |
 
 ## Middlewares
 
 ### CorrelationIdMiddleware
 
-Tracks every request end-to-end across logs, responses, and error payloads.
-
-- Reads `X-Correlation-Id` from the request header; generates a new `Guid` if absent.
-- Sanitizes the value (alphanumeric + dashes, max 64 chars) to prevent header injection.
-- Stores the value in `HttpContext.Items` and echoes it in the `X-Correlation-Id` response header.
-- Pushes it to Serilog's `LogContext` — every log line in that request automatically includes `{CorrelationId}`.
+Reads `X-Correlation-Id` from the request header (generates a new `Guid` if absent), sanitizes it, pushes it to Serilog's `LogContext`, and echoes it in the response header.
 
 ### GlobalExceptionHandler
 
-Catches all unhandled exceptions and returns a structured `ProblemDetails` response (RFC 7807):
-
-```json
-{
-  "status": 500,
-  "title": "An unexpected error occurred.",
-  "instance": "/api/v1/examples",
-  "extensions": {
-    "correlationId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-    "traceId": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
-    "exceptionType": "System.InvalidOperationException",
-    "exceptionMessage": "Sequence contains no elements."
-  }
-}
-```
-
-`OperationCanceledException` triggered by client disconnection returns HTTP 499 and is logged as a warning, not an error.
+Catches all unhandled exceptions and returns a structured RFC 7807 `ProblemDetails` response — no stack traces exposed. `OperationCanceledException` from client disconnection returns HTTP 499.
 
 ### Rate Limiting
 
@@ -299,216 +244,37 @@ Fixed window policy applied globally to all versioned endpoints. Configurable vi
 }
 ```
 
-### CORS
-
-Configured via `appsettings.json`. Update the allowed origins before going to production:
-
-```json
-"Cors": {
-  "AllowedOrigins": [ "https://your-frontend.com" ]
-}
-```
-
 ## Health Endpoints
 
 | Route | Purpose |
 |---|---|
 | `GET /health` | All registered health checks |
-| `GET /alive` | Liveness probe (checks tagged `live`) |
-| `GET /api/v1/health` | Application-level health check (versioned, documented in Swagger) |
-
-## Error Handling
-
-Business logic never throws — it returns `ErrorOr<T>`. Endpoints map the result to HTTP responses:
-
-```csharp
-ErrorOr<ExampleEntity> result = await handler.Handle(request, cancellationToken);
-
-return result.Match(
-    entity => Results.Ok(entity.ToResponse()),
-    errors => errors.ToProblem(httpContext));
-```
-
-Error types are mapped to HTTP status codes automatically:
-
-| ErrorOr type | HTTP status |
-|---|---|
-| `Error.Validation` | 422 Unprocessable Entity |
-| `Error.NotFound` | 404 Not Found |
-| `Error.Conflict` | 409 Conflict |
-| `Error.Unauthorized` | 401 Unauthorized |
-| Other | 500 Internal Server Error |
+| `GET /alive` | Liveness probe |
+| `GET /api/v1/health` | Application-level health check |
 
 ## Observability
 
-The template ships with OpenTelemetry pre-configured for traces, metrics, and logs via `.NET Aspire ServiceDefaults`.
+OpenTelemetry is pre-configured for traces, metrics, and logs via .NET Aspire ServiceDefaults.
 
-Set the following environment variables to enable export to any OTLP-compatible collector:
+| Variable | Description |
+|---|---|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Collector URL (empty = export disabled) |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` or `grpc` |
+| `OTEL_SERVICE_NAME` | Service name in traces/metrics |
 
-| Variable | Description | Default |
-|---|---|---|
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Collector URL | _(empty — export disabled)_ |
-| `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` or `grpc` | `http/protobuf` |
-| `OTEL_EXPORTER_OTLP_HEADERS` | Auth headers (e.g. API key) | _(empty)_ |
-| `OTEL_SERVICE_NAME` | Service name in traces/metrics | `RentifyxIdentity.Api` |
-| `OTEL_RESOURCE_ATTRIBUTES` | Additional resource metadata | `deployment.environment=production` |
+## Security
 
-Compatible platforms: Grafana Cloud, Datadog, New Relic, Honeycomb, Elastic, Jaeger, OpenTelemetry Collector.
+- Secrets are never hardcoded — all sensitive config comes from AWS Secrets Manager.
+- CPF is encrypted at rest via KMS before storing in DynamoDB.
+- Refresh tokens are stored as HMAC-SHA256 hashes (not plaintext), with DynamoDB TTL.
+- Rate limiting is applied at the route group level (OWASP A04).
+- gitleaks runs as a pre-commit hook to prevent secret leaks.
 
-### Serilog sinks (logs only)
+## Centralized Package Management
 
-If you prefer sending logs via a Serilog sink instead of OTLP:
+All NuGet versions are declared in `Directory.Packages.props`. Individual `.csproj` files reference packages without specifying versions.
 
-```bash
-dotnet add package Serilog.Sinks.Seq
-dotnet add package Serilog.Sinks.Datadog.Logs
-dotnet add package Serilog.Sinks.Elasticsearch
-```
-
-Configure in `appsettings.json` under `Serilog.WriteTo`.
-
-## Post-Generation Setup
-
-After running `dotnet new clean-arch -n MyProject`, complete the following steps:
-
-### 1. Replace the connection string
-
-In `appsettings.json`:
-
-```json
-"ConnectionStrings": {
-  "DefaultConnection": "your-real-connection-string"
-}
-```
-
-### 2. Implement the repository
-
-Open `Infrastructure/Repositories/ExampleRepository.cs` and implement the methods using your chosen persistence technology (EF Core, Dapper, MongoDB, etc.):
-
-```csharp
-public sealed class ExampleRepository : IRepository<ExampleEntity, GetAllExampleRequest>
-{
-    // Your implementation here
-}
-```
-
-### 3. Update CORS origins
-
-In `appsettings.json`, replace the placeholder with your frontend URL:
-
-```json
-"Cors": {
-  "AllowedOrigins": [ "https://your-frontend.com" ]
-}
-```
-
-### 4. Update OpenAPI contact info
-
-In `appsettings.json`:
-
-```json
-"OpenApi": {
-  "ContactName": "your-name",
-  "ContactUrl": "https://github.com/your-handle"
-}
-```
-
-### 5. Configure observability (optional)
-
-Set `OTEL_EXPORTER_OTLP_ENDPOINT` to point to your collector. Leave it empty to disable export during local development.
-
-### 6. Replace the Example stubs
-
-The `Example*` files throughout the project are working stubs that demonstrate all patterns end-to-end. Use them as a reference, then replace them with your own features.
-
-## Adding a New Feature
-
-The workflow for adding a feature (e.g. `Product`) mirrors the existing `Example` feature:
-
-**1. Domain** — add entity and error codes:
-
-```
-Domain/Entities/ProductEntity.cs
-Domain/Constants/ProductErrorCodes.cs
-```
-
-**2. Application** — add handlers, requests, validators, mapper:
-
-```
-Application/Features/Products/
-├── ProductResponse.cs
-├── Mapper/ProductMapper.cs
-└── Handlers/
-    ├── Create/
-    │   ├── CreateProductHandler.cs
-    │   ├── Request/CreateProductRequest.cs
-    │   └── Validator/CreateProductValidator.cs
-    ├── GetById/GetByIdProductHandler.cs
-    ├── GetAll/
-    │   ├── GetAllProductHandler.cs
-    │   └── Request/GetAllProductRequest.cs
-    ├── Update/
-    │   ├── UpdateProductHandler.cs
-    │   ├── Request/UpdateProductRequest.cs
-    │   └── Validator/UpdateProductValidator.cs
-    └── Delete/DeleteProductHandler.cs
-```
-
-**3. Infrastructure** — implement the repository:
-
-```csharp
-public sealed class ProductRepository : IRepository<ProductEntity, GetAllProductRequest>
-{
-    // EF Core, Dapper, etc.
-}
-```
-
-**4. IoC** — nenhuma alteração necessária. Handlers e repositórios são registrados automaticamente via reflection ao implementar `IHandler<,>` e `IRepository<,>`.
-
-**5. Api** — add one file per endpoint:
-
-```
-Api/Endpoints/Products/
-├── Create.cs
-├── GetById.cs
-├── GetAll.cs
-├── Update.cs
-└── Delete.cs
-```
-
-Endpoints are registered automatically via reflection — no additional wiring needed.
-
-## Running Locally
-
-With Aspire orchestration (recommended):
-
-```bash
-dotnet run --project "01-aspire/01-AppHost/RentifyxIdentity.AppHost"
-```
-
-Or directly:
-
-```bash
-dotnet run --project "02-src/01-Api/RentifyxIdentity.Api"
-```
-
-## Running with Docker
-
-```bash
-docker build -t myproject .
-docker run -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=Production myproject
-```
-
-## Running on Kubernetes
-
-```bash
-kubectl apply -k k8s/overlays/dev
-kubectl apply -k k8s/overlays/prod
-```
-
-## Contributing
-
-See [docs/](docs/) for architecture docs, ADRs, and contributor guides.
+`Directory.Build.props` enforces `Nullable=enable`, `TreatWarningsAsErrors=true`, `LangVersion=latest`, and SonarAnalyzer.CSharp across every project.
 
 ## License
 

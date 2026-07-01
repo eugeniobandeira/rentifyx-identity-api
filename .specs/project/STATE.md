@@ -2,11 +2,11 @@
 
 ## Last Updated
 
-2026-06-29
+2026-06-30
 
 ## Current Work
 
-v1.0.0 released. All six epics (E-01 through E-06) complete. No active development.
+v1.1.0 COMPLETE (2026-06-30) — login lockout, LGPD audit completeness, Aspire+LocalStack one-liner delivered. Tagged v1.1.0. Outbox (DEF-005) and TaxId KMS (DEF-007) deferred post-v1.1.0.
 
 ## Decisions
 
@@ -20,7 +20,7 @@ v1.0.0 released. All six epics (E-01 through E-06) complete. No active developme
 | D-006 | Soft delete + PII anonymization for account erasure | LGPD Art. 18 VI — hard delete breaks audit trails | 2026-06-21 |
 | D-007 | Everything in English | User preference — no Portuguese in code, docs, or specs | 2026-06-21 |
 | D-008 | Enums always stored as string values in DynamoDB, never as integers | Readability in DB and avoid int/value drift bugs; applies to UserRole and UserStatus | 2026-06-21 |
-| D-009 | `ct` as CancellationToken parameter name in our own interfaces | Shorter, less noise in method signatures. Constraint: methods overriding a base interface (IRepository<T>, IHandler<,>) must keep `cancellationToken` to satisfy CA1725/S927 | 2026-06-24 |
+| D-009 | `ct` as CancellationToken parameter name everywhere in own interfaces and implementations | Shorter, less noise. Applied to `IRepository<T>`, `IHandler<,>`, all handlers, endpoints, repositories, and fakes. External interfaces (e.g. `IExceptionHandler`) keep their declared name. | 2026-06-30 |
 | D-010 | TaxId stored as plaintext for now | KMS encryption + HMAC blind index deferred to E-04 (DynamoDB wiring epic); acceptable for a study project in local/dev stage | 2026-06-24 |
 | D-011 | Coverage gate excludes Example scaffold; Infrastructure stubs replaced in E-04 | Example files are living-pattern templates, not features. UserRepository/EmailService/TokenService stubs replaced with real AWS adapters in E-04 — coverage exclusions should be revisited. | 2026-06-28 |
 
@@ -38,7 +38,14 @@ _None active._
 | DEF-004 | Rate limiting per-user lockout state (5 failed logins → 15-min lockout) | E-05 |
 | DEF-005 | Domain event dispatch via Outbox pattern | E-05 |
 | DEF-006 | LGPD export: consent records and login history | Confirm scope with team before E-05 |
-| DEF-007 | TaxId KMS encryption + HMAC blind index for secure search | E-05 (Cognito/KMS epic) |
+| DEF-007 | TaxId KMS encryption + HMAC blind index for secure search | Post-v1.1.0 — skipped in v1.1.0 by design |
+
+| D-012 | `UserRepository` uses `IDynamoDBContext` (high-level API), not `IAmazonDynamoDB` | Eliminates manual `Dictionary<string, AttributeValue>` construction; `SaveAsync`/`LoadAsync`/`DeleteAsync` are cleaner and less error-prone | 2026-06-30 |
+| D-013 | `UserDynamoDbItem` GSI properties named in PascalCase with `[DynamoDBProperty]` for physical name | CA1707 forbids underscores in member names; `[DynamoDBProperty("GSI_Email_PK")]` preserves the DynamoDB attribute name | 2026-06-30 |
+| D-014 | `ForgotPasswordHandler` delegates HMAC hashing to `ITokenService.HashToken()` | Eliminates duplicated HMAC-SHA256 logic and the security risk of a hardcoded `"dev-hmac-key"` fallback | 2026-06-30 |
+| D-015 | `EmailService` validates `Ses:FromAddress` at construction time | Fail-fast pattern: invalid config surfaces at startup, not at the first email send | 2026-06-30 |
+| D-016 | DynamoDB table requires SK as range key (`USER#{id}`) equal to PK | `[DynamoDBRangeKey("SK")]` on `UserDynamoDbItem` requires the table to define SK; enables future composite-key access patterns (e.g. audit log items on same table) | 2026-06-30 |
+| D-017 | Login lockout state stored as `FailedLoginAttempts` (int) + `LockoutUntil` (DateTimeOffset?) on `UserEntity` | Co-locates lockout state with the user record; single `UpdateAsync` call; `LockoutUntilEpoch` (Unix seconds) mapped in `UserDynamoDbItem` for DynamoDB TTL auto-cleanup compatibility | 2026-06-30 |
 
 ## Lessons Learned
 
@@ -71,3 +78,4 @@ _None active._
 | aws-integration (E-04) | T01–T18 (18/18) | 6 unit (TokenService + EmailService) + 8 repository integration (Testcontainers/LocalStack) | 2026-06-28 |
 | e05-security-lgpd (E-05) | T-01–T-29 (29/29) | 5 security header integration + 5 audit service unit + 6 audit handler unit + 3 LGPD integration audit + 2 consent validator + 1 consent integration + handler refactors (Register/VerifyEmail/ResetPassword) | 2026-06-29 |
 | e06-iac-production (E-06) | T-01–T-25 (25/25) | 6 Terraform modules + root + backend · 7 K8s manifests + 2 overlays · appsettings.Production.json · docs/slo.md · 3 C4 diagrams · docs/runbook.md · git tag v1.0.0 | 2026-06-29 |
+| v1.1.0-hardening | login lockout (DEF-004) + LGPD audit completeness (DEF-006) + Aspire+LocalStack one-liner | 6 entity + 7 lockout handler + 2 repo integration + 1 audit handler + 3 export handler · FakeAuditLogService extended · git tag v1.1.0 | 2026-06-30 |

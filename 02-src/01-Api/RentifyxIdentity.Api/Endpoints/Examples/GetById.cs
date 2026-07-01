@@ -21,9 +21,9 @@ internal sealed class GetById : IEndpoint
         Guid id,
         IHandler<Guid, ExampleEntity> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        ErrorOr<ExampleEntity> result = await handler.Handle(id, cancellationToken);
+        ErrorOr<ExampleEntity> result = await handler.Handle(id, ct);
 
         return result.Match(
             entity => Results.Ok(ExampleMapper.ToResponse(entity)),

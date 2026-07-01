@@ -1,6 +1,5 @@
 using Amazon.DynamoDBv2.Model;
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using RentifyxIdentity.Domain.Entities;
 using Xunit;
 using RentifyxIdentity.Domain.Enums;
@@ -19,17 +18,7 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
     public UserRepositoryTests(LocalStackFixture fixture)
     {
         _fixture = fixture;
-
-        IConfiguration configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["AWS:DynamoDB:TableName"] = "rentifyx-identity"
-            })
-            .Build();
-
-        _sut = new UserRepository(
-            _fixture.Client,
-            configuration);
+        _sut = new UserRepository(_fixture.Context);
     }
 
     [Fact]
@@ -151,7 +140,8 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
                 _fixture.TableName,
                 new Dictionary<string, AttributeValue>
                 {
-                    ["PK"] = new AttributeValue { S = $"USER#{user.Id}" }
+                    ["PK"] = new AttributeValue { S = $"USER#{user.Id}" },
+                    ["SK"] = new AttributeValue { S = $"USER#{user.Id}" }
                 });
 
             raw.Item.Should().ContainKey("TTL");
@@ -178,10 +168,62 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
                 _fixture.TableName,
                 new Dictionary<string, AttributeValue>
                 {
-                    ["PK"] = new AttributeValue { S = $"USER#{user.Id}" }
+                    ["PK"] = new AttributeValue { S = $"USER#{user.Id}" },
+                    ["SK"] = new AttributeValue { S = $"USER#{user.Id}" }
                 });
 
             raw.Item.Should().NotContainKey("TTL");
+        }
+        finally
+        {
+            await DeleteUserAsync(user.Id);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAsync_PersistsFailedLoginAttempts()
+    {
+        UserEntity user = BuildUser("lockout-attempts@example.com", "33344455566");
+
+        try
+        {
+            await _sut.AddAsync(user);
+            user.RecordFailedLogin(DateTimeOffset.UtcNow);
+            user.RecordFailedLogin(DateTimeOffset.UtcNow);
+            user.RecordFailedLogin(DateTimeOffset.UtcNow);
+            await _sut.UpdateAsync(user);
+
+            UserEntity? retrieved = await _sut.GetByIdAsync(user.Id);
+
+            retrieved.Should().NotBeNull();
+            retrieved!.FailedLoginAttempts.Should().Be(3);
+        }
+        finally
+        {
+            await DeleteUserAsync(user.Id);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAsync_PersistsLockoutUntil()
+    {
+        UserEntity user = BuildUser("lockout-until@example.com", "44455566677");
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        try
+        {
+            await _sut.AddAsync(user);
+            for (int i = 0; i < 5; i++)
+                user.RecordFailedLogin(now);
+            await _sut.UpdateAsync(user);
+
+            UserEntity? retrieved = await _sut.GetByIdAsync(user.Id);
+
+            retrieved.Should().NotBeNull();
+            retrieved!.LockoutUntil.Should().NotBeNull();
+            retrieved.LockoutUntil!.Value.Should().BeCloseTo(
+                now.AddMinutes(15),
+                TimeSpan.FromSeconds(2));
         }
         finally
         {
@@ -206,7 +248,8 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
             _fixture.TableName,
             new Dictionary<string, AttributeValue>
             {
-                ["PK"] = new AttributeValue { S = $"USER#{id}" }
+                ["PK"] = new AttributeValue { S = $"USER#{id}" },
+                ["SK"] = new AttributeValue { S = $"USER#{id}" }
             });
     }
 }

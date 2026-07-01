@@ -1,7 +1,7 @@
 # Roadmap
 
-**Current Milestone:** v1.0.0 — Released
-**Status:** Complete ✅
+**Current Milestone:** v1.1.0 — In Planning
+**Last Released:** v1.0.0 ✅ (2026-06-29)
 
 ---
 
@@ -28,7 +28,7 @@
 - OWASP dependency-check (`dependency-check/Dependency-Check_Action`, fail on CVSS ≥ 7)
 - Trivy container scan (`aquasecurity/trivy-action`, CRITICAL/HIGH, ignore-unfixed)
 
-**Local Infrastructure** — PLANNED
+**Local Infrastructure** — DEFERRED to v1.1.0
 
 - LocalStack via Docker (DynamoDB, SES, Cognito, KMS, Secrets Manager)
 - Aspire AppHost wires API + LocalStack for `dotnet run` one-liner
@@ -107,32 +107,26 @@
 
 ### Features
 
-**DynamoDB Persistence** — PLANNED
+**DynamoDB Persistence** — COMPLETE ✅
 
-- `UserRepository` — single-table design, GSI for email and TaxId lookups
-- Refresh token as separate DynamoDB item with TTL
-- KMS encryption/decryption for CPF/CNPJ on write/read
+- `UserRepository` — `IDynamoDBContext` high-level API, single-table design (PK+SK composite), GSI for email and TaxId
+- Refresh token stored as hash with TTL on `UserEntity`
+- TaxId stored as plaintext (KMS deferred to v1.1.0 — D-010)
 
-**AWS Service Adapters** — PLANNED
+**AWS Service Adapters** — COMPLETE ✅
 
-- `TokenService` — Cognito JWT issuance, RSA-2048 key, access token 15 min TTL
-- `EmailService` — SES transactional email with HMAC token links
-- `IKmsService` — TaxId encryption at rest
+- `TokenService` — RS256 JWT (15 min), refresh token generation, HMAC-SHA256 hash/verify
+- `EmailService` — SES v2 transactional email (verification + password reset)
+- `SecretsManagerConfigurationProvider` — loads secrets at startup
 
-**Outbox Pattern** — PLANNED
+**Outbox Pattern** — DEFERRED to v1.1.0 (DEF-005)
 
-- Domain events (`UserRegistered`, etc.) dispatched via DynamoDB Streams or SNS Outbox
-- Ensures at-least-once delivery without two-phase commit
+**Per-User Rate Limiting** — DEFERRED to v1.1.0 (DEF-004)
 
-**Per-User Rate Limiting** — PLANNED
+**Repository Integration Tests** — COMPLETE ✅
 
-- 5 failed logins → 15-min lockout stored as DynamoDB item with TTL
-
-**Repository Integration Tests** — PLANNED
-
-- Testcontainers + LocalStack DynamoDB
-- Tests: `AddAsync`, `GetByIdAsync`, `GetByEmailAsync`, `GetByTaxIdAsync`, `UpdateAsync`
-- Verify KMS encryption roundtrip, refresh token TTL behavior
+- Testcontainers + LocalStack DynamoDB, PK+SK composite table
+- 8 tests: Add, GetById, GetByEmail, GetByTaxId, Update, Delete, TTL pending, TTL active
 
 ---
 
@@ -208,6 +202,46 @@
 - Coverage gate ≥ 80% verified in CI (95.6% line coverage)
 - Runbook documented: `docs/runbook.md`
 - Git tag `v1.0.0` on `main`
+
+---
+
+---
+
+## v1.1.0 — Hardening & Deferred Infrastructure
+
+**Goal:** Close the gaps identified in the post-v1.0.0 quality review: local dev experience, login security, domain event dispatch, TaxId encryption, and LGPD audit completeness.
+**Status:** COMPLETE ✅ (2026-06-30)
+
+### Features
+
+**Aspire + LocalStack one-liner** _(from M1 — never delivered)_ — COMPLETE ✅
+
+- LocalStack container wired in `AppHost` with `SERVICES=dynamodb,ses,secretsmanager,kms`
+- `init-localstack.sh` creates DynamoDB table (PK+SK+2 GSIs+TTL) and seeds Secrets Manager on startup
+- API waits for LocalStack via `.WaitFor(localstack)` before starting
+- `.env.local.template` documents local AWS credential setup (LocalStack fake creds)
+
+**Per-user login lockout** _(DEF-004)_ — COMPLETE ✅
+
+- `FailedLoginAttempts` + `LockoutUntil` fields on `UserEntity`; `LockoutUntilEpoch` (Unix seconds) in DynamoDB for TTL auto-cleanup
+- `RecordFailedLogin()` / `ClearLockout()` mutation methods; `IsLockedOut()` check in `LoginHandler`
+- `User.LoginLocked` error code + 429 response via `Error.Custom(429, ...)`; `ToProblem()` extended for custom numeric HTTP codes
+- 6 entity unit tests + 7 handler unit tests + 2 repository integration tests
+
+**TaxId KMS encryption at rest** _(DEF-007 / D-010)_ — SKIPPED, deferred to post-v1.1.0
+
+**Domain event Outbox** _(DEF-005)_
+
+- `OutboxEntry` DynamoDB item written atomically in same `SaveAsync` call as user item
+- `OutboxProcessor` background service polls and dispatches to SNS/EventBridge
+- Dead-letter handling: max 3 retries, then mark as `Failed`
+- Integration tests: verify outbox entry created on `UserRegistered`
+
+**LGPD audit completeness** _(DEF-006)_
+
+- Include consent records and login history in `ExportData` response
+- `LoginHistoryEntry` domain object (timestamp, IP, user-agent)
+- Audit log query by userId range key prefix
 
 ---
 

@@ -22,9 +22,9 @@ internal sealed class Login : IEndpoint
         LoginRequest request,
         IHandler<LoginRequest, LoginResponse> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        ErrorOr<LoginResponse> result = await handler.Handle(request, cancellationToken);
+        ErrorOr<LoginResponse> result = await handler.Handle(request, ct);
 
         return result.Match(
             response => Results.Ok(response),

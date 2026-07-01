@@ -17,15 +17,15 @@ public sealed class LogoutHandler(
 {
     public async Task<ErrorOr<Success>> Handle(
         LogoutRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
         logger.LogInformation("Logout attempt. Email={Email}", request.Email);
 
-        List<Error>? errors = await validator.ValidateToErrorsAsync(request, cancellationToken);
+        List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
             return errors;
 
-        UserEntity? user = await repository.GetByEmailAsync(request.Email, cancellationToken);
+        UserEntity? user = await repository.GetByEmailAsync(request.Email, ct);
         if (user is null)
         {
             logger.LogInformation("Logout no-op: user not found. Email={Email}", request.Email);
@@ -45,7 +45,7 @@ public sealed class LogoutHandler(
         }
 
         user.ClearRefreshToken();
-        await repository.UpdateAsync(user, cancellationToken);
+        await repository.UpdateAsync(user, ct);
 
         logger.LogInformation("Logout successful. UserId={UserId}", user.Id);
 

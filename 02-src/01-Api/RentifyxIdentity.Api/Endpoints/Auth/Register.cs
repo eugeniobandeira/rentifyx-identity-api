@@ -22,9 +22,9 @@ internal sealed class Register : IEndpoint
         RegisterUserRequest request,
         IHandler<RegisterUserRequest, UserResponse> handler,
         HttpContext httpContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken ct = default)
     {
-        ErrorOr<UserResponse> result = await handler.Handle(request, cancellationToken);
+        ErrorOr<UserResponse> result = await handler.Handle(request, ct);
 
         return result.Match(
             response => Results.Created($"/api/v1/users/{response.Id}", response),

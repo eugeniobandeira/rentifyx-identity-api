@@ -113,4 +113,84 @@ public sealed class UserEntityTests
 
         entity1.Id.Should().NotBe(entity2.Id);
     }
+
+    [Fact]
+    public void RecordFailedLogin_IncrementsCounter()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        entity.RecordFailedLogin(now);
+
+        entity.FailedLoginAttempts.Should().Be(1);
+        entity.LockoutUntil.Should().BeNull();
+    }
+
+    [Fact]
+    public void RecordFailedLogin_OnFifthCall_SetsLockoutUntil()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        for (int i = 0; i < 5; i++)
+            entity.RecordFailedLogin(now);
+
+        entity.FailedLoginAttempts.Should().Be(5);
+        entity.LockoutUntil.Should().BeCloseTo(now.AddMinutes(15), TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void RecordFailedLogin_BeyondFive_DoesNotExtendLockout()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        for (int i = 0; i < 5; i++)
+            entity.RecordFailedLogin(now);
+
+        DateTimeOffset originalLockout = entity.LockoutUntil!.Value;
+
+        entity.RecordFailedLogin(now.AddMinutes(1));
+
+        entity.LockoutUntil.Should().Be(originalLockout);
+    }
+
+    [Fact]
+    public void ClearLockout_ResetsCounterAndLockoutUntil()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        for (int i = 0; i < 5; i++)
+            entity.RecordFailedLogin(now);
+
+        entity.ClearLockout();
+
+        entity.FailedLoginAttempts.Should().Be(0);
+        entity.LockoutUntil.Should().BeNull();
+    }
+
+    [Fact]
+    public void IsLockedOut_ReturnsTrueWhenWithinWindow()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        for (int i = 0; i < 5; i++)
+            entity.RecordFailedLogin(now);
+
+        entity.IsLockedOut(DateTimeOffset.UtcNow).Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsLockedOut_ReturnsFalseWhenExpired()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        DateTimeOffset pastNow = DateTimeOffset.UtcNow.AddMinutes(-16);
+
+        for (int i = 0; i < 5; i++)
+            entity.RecordFailedLogin(pastNow);
+
+        entity.IsLockedOut(DateTimeOffset.UtcNow).Should().BeFalse();
+    }
 }

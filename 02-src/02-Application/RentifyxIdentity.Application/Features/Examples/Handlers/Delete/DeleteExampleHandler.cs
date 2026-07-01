@@ -11,11 +11,11 @@ public sealed class DeleteExampleHandler(
     IRepository<ExampleEntity> repository,
     ILogger<DeleteExampleHandler> logger) : IHandler<Guid, Deleted>
 {
-    public async Task<ErrorOr<Deleted>> Handle(Guid id, CancellationToken cancellationToken = default)
+    public async Task<ErrorOr<Deleted>> Handle(Guid id, CancellationToken ct = default)
     {
         logger.LogInformation("Deleting example. Id={Id}", id);
 
-        ExampleEntity? entity = await repository.GetByIdAsync(id, cancellationToken);
+        ExampleEntity? entity = await repository.GetByIdAsync(id, ct);
 
         if (entity is null)
         {
@@ -23,7 +23,7 @@ public sealed class DeleteExampleHandler(
             return Error.NotFound(ExampleErrorCodes.NotFound, $"Example {id} not found.");
         }
 
-        await repository.DeleteAsync(entity, cancellationToken);
+        await repository.DeleteAsync(entity, ct);
 
         logger.LogInformation("Example deleted successfully. Response={@Response}", entity);
 
