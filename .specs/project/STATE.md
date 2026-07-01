@@ -6,7 +6,7 @@
 
 ## Current Work
 
-v1.1.0 COMPLETE (2026-06-30) — login lockout, LGPD audit completeness, Aspire+LocalStack one-liner delivered. Outbox (DEF-005) and TaxId KMS (DEF-007) deferred post-v1.1.0.
+v1.1.0 COMPLETE (2026-06-30) — login lockout, LGPD audit completeness, Aspire+LocalStack one-liner delivered. Tagged v1.1.0. Outbox (DEF-005) and TaxId KMS (DEF-007) deferred post-v1.1.0.
 
 ## Decisions
 
@@ -78,3 +78,4 @@ _None active._
 | aws-integration (E-04) | T01–T18 (18/18) | 6 unit (TokenService + EmailService) + 8 repository integration (Testcontainers/LocalStack) | 2026-06-28 |
 | e05-security-lgpd (E-05) | T-01–T-29 (29/29) | 5 security header integration + 5 audit service unit + 6 audit handler unit + 3 LGPD integration audit + 2 consent validator + 1 consent integration + handler refactors (Register/VerifyEmail/ResetPassword) | 2026-06-29 |
 | e06-iac-production (E-06) | T-01–T-25 (25/25) | 6 Terraform modules + root + backend · 7 K8s manifests + 2 overlays · appsettings.Production.json · docs/slo.md · 3 C4 diagrams · docs/runbook.md · git tag v1.0.0 | 2026-06-29 |
+| v1.1.0-hardening | login lockout (DEF-004) + LGPD audit completeness (DEF-006) + Aspire+LocalStack one-liner | 6 entity + 7 lockout handler + 2 repo integration + 1 audit handler + 3 export handler · FakeAuditLogService extended · git tag v1.1.0 | 2026-06-30 |
