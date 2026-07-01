@@ -74,6 +74,24 @@ public sealed class LoginHandlerTests
         return user;
     }
 
+    private static UserEntity BuildLockedUser()
+    {
+        UserEntity user = BuildUser();
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        for (int i = 0; i < 5; i++)
+            user.RecordFailedLogin(now);
+        return user;
+    }
+
+    private static UserEntity BuildExpiredLockoutUser()
+    {
+        UserEntity user = BuildUser();
+        DateTimeOffset pastNow = DateTimeOffset.UtcNow.AddMinutes(-16);
+        for (int i = 0; i < 5; i++)
+            user.RecordFailedLogin(pastNow);
+        return user;
+    }
+
     [Fact]
     public async Task HappyPath_ActiveUser_CorrectPassword_ReturnsLoginResponse()
     {
@@ -221,5 +239,141 @@ public sealed class LoginHandlerTests
         _repositoryMock.Verify(
             r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    [Fact]
+    public async Task LockedAccount_Returns429LoginLocked_WithoutVerifyingPassword()
+    {
+        UserEntity user = BuildLockedUser();
+
+        _repositoryMock
+            .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
+
+        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+
+        result.IsError.Should().BeTrue();
+        result.FirstError.NumericType.Should().Be(429);
+        result.FirstError.Code.Should().Be(UserErrorCodes.LoginLocked);
+
+        _passwordHasherMock.Verify(
+            p => p.Verify(It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task WrongPassword_IncrementsFailedLoginAttempts_AndPersists()
+    {
+        UserEntity user = BuildUser();
+        int initialAttempts = user.FailedLoginAttempts;
+
+        _repositoryMock
+            .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _passwordHasherMock
+            .Setup(p => p.Verify(It.IsAny<string>(), user.PasswordHash.HashValue))
+            .Returns(false);
+
+        LoginRequest request = new(TestConstants.ValidEmail, "wrong-password");
+
+        await _handler.Handle(request);
+
+        user.FailedLoginAttempts.Should().Be(initialAttempts + 1);
+
+        _repositoryMock.Verify(
+            r => r.UpdateAsync(user, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task FifthWrongPassword_TriggersLockout()
+    {
+        UserEntity user = BuildUser();
+        for (int i = 0; i < 4; i++)
+            user.RecordFailedLogin(DateTimeOffset.UtcNow);
+
+        _repositoryMock
+            .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _passwordHasherMock
+            .Setup(p => p.Verify(It.IsAny<string>(), user.PasswordHash.HashValue))
+            .Returns(false);
+
+        LoginRequest request = new(TestConstants.ValidEmail, "wrong-password");
+
+        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+
+        result.IsError.Should().BeTrue();
+        result.FirstError.Code.Should().Be(UserErrorCodes.InvalidCredentials);
+        user.LockoutUntil.Should().NotBeNull();
+        user.FailedLoginAttempts.Should().Be(5);
+    }
+
+    [Fact]
+    public async Task CorrectPassword_ClearsLockoutCounter()
+    {
+        UserEntity user = BuildUser();
+        for (int i = 0; i < 3; i++)
+            user.RecordFailedLogin(DateTimeOffset.UtcNow);
+
+        _repositoryMock
+            .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _passwordHasherMock
+            .Setup(p => p.Verify(TestConstants.ValidPassword, user.PasswordHash.HashValue))
+            .Returns(true);
+
+        LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
+
+        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+
+        result.IsError.Should().BeFalse();
+        user.FailedLoginAttempts.Should().Be(0);
+        user.LockoutUntil.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UnknownEmail_DoesNotIncrementCounter_AndDoesNotCallUpdate()
+    {
+        _repositoryMock
+            .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserEntity?)null);
+
+        LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
+
+        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+
+        result.IsError.Should().BeTrue();
+        result.FirstError.Code.Should().Be(UserErrorCodes.InvalidCredentials);
+
+        _repositoryMock.Verify(
+            r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ExpiredLockout_ProceedsNormally_WhenPasswordCorrect()
+    {
+        UserEntity user = BuildExpiredLockoutUser();
+
+        _repositoryMock
+            .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _passwordHasherMock
+            .Setup(p => p.Verify(TestConstants.ValidPassword, user.PasswordHash.HashValue))
+            .Returns(true);
+
+        LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
+
+        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+
+        result.IsError.Should().BeFalse();
+        result.Value.AccessToken.Should().NotBeNullOrEmpty();
     }
 }

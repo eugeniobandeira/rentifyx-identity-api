@@ -6,7 +6,7 @@
 
 ## Current Work
 
-v1.0.0 shipped. Post-release quality pass completed 2026-06-30. v1.1.0 planned — see ROADMAP.
+v1.0.0 shipped. Post-release quality pass completed 2026-06-30. v1.1.0 in progress — login lockout (DEF-004) implemented. See ROADMAP.
 
 ## Decisions
 
@@ -45,6 +45,7 @@ _None active._
 | D-014 | `ForgotPasswordHandler` delegates HMAC hashing to `ITokenService.HashToken()` | Eliminates duplicated HMAC-SHA256 logic and the security risk of a hardcoded `"dev-hmac-key"` fallback | 2026-06-30 |
 | D-015 | `EmailService` validates `Ses:FromAddress` at construction time | Fail-fast pattern: invalid config surfaces at startup, not at the first email send | 2026-06-30 |
 | D-016 | DynamoDB table requires SK as range key (`USER#{id}`) equal to PK | `[DynamoDBRangeKey("SK")]` on `UserDynamoDbItem` requires the table to define SK; enables future composite-key access patterns (e.g. audit log items on same table) | 2026-06-30 |
+| D-017 | Login lockout state stored as `FailedLoginAttempts` (int) + `LockoutUntil` (DateTimeOffset?) on `UserEntity` | Co-locates lockout state with the user record; single `UpdateAsync` call; `LockoutUntilEpoch` (Unix seconds) mapped in `UserDynamoDbItem` for DynamoDB TTL auto-cleanup compatibility | 2026-06-30 |
 
 ## Lessons Learned
 

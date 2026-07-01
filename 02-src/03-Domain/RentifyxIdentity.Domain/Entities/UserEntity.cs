@@ -19,8 +19,13 @@ public sealed class UserEntity
     public string? RefreshTokenHash { get; private set; }
     public DateTimeOffset? RefreshTokenExpiry { get; private set; }
     public DateTimeOffset? ConsentGivenAt { get; private set; }
+    public int FailedLoginAttempts { get; private set; }
+    public DateTimeOffset? LockoutUntil { get; private set; }
 
     private UserEntity() { }
+
+    public bool IsLockedOut(DateTimeOffset now) =>
+        LockoutUntil.HasValue && now < LockoutUntil.Value;
 
     public void SetConsent(DateTimeOffset timestamp)
     {
@@ -79,6 +84,19 @@ public sealed class UserEntity
         RefreshTokenExpiry = null;
     }
 
+    public void RecordFailedLogin(DateTimeOffset now)
+    {
+        FailedLoginAttempts++;
+        if (FailedLoginAttempts >= 5 && !LockoutUntil.HasValue)
+            LockoutUntil = now.AddMinutes(15);
+    }
+
+    public void ClearLockout()
+    {
+        FailedLoginAttempts = 0;
+        LockoutUntil = null;
+    }
+
     public void Suspend()
     {
         Status = UserStatus.Suspended;
@@ -98,7 +116,9 @@ public sealed class UserEntity
         DateTimeOffset? passwordResetTokenExpiry,
         string? refreshTokenHash,
         DateTimeOffset? refreshTokenExpiry,
-        DateTimeOffset? consentGivenAt = null)
+        DateTimeOffset? consentGivenAt = null,
+        int failedLoginAttempts = 0,
+        DateTimeOffset? lockoutUntil = null)
     {
         return new UserEntity
         {
@@ -115,7 +135,9 @@ public sealed class UserEntity
             PasswordResetTokenExpiry = passwordResetTokenExpiry,
             RefreshTokenHash = refreshTokenHash,
             RefreshTokenExpiry = refreshTokenExpiry,
-            ConsentGivenAt = consentGivenAt
+            ConsentGivenAt = consentGivenAt,
+            FailedLoginAttempts = failedLoginAttempts,
+            LockoutUntil = lockoutUntil
         };
     }
 

@@ -33,6 +33,8 @@ internal static class UserDynamoDbMapper
             RefreshTokenHash = entity.RefreshTokenHash,
             RefreshTokenExpiry = entity.RefreshTokenExpiry?.ToString("O"),
             ConsentGivenAt = entity.ConsentGivenAt?.ToString("O"),
+            FailedLoginAttempts = entity.FailedLoginAttempts,
+            LockoutUntilEpoch = entity.LockoutUntil?.ToUnixTimeSeconds(),
             Ttl = entity.Status == UserStatus.PendingVerification
                 ? DateTimeOffset.UtcNow.AddHours(48).ToUnixTimeSeconds()
                 : null
@@ -66,7 +68,11 @@ internal static class UserDynamoDbMapper
             passwordResetTokenExpiry: ParseDate(item.PasswordResetTokenExpiry),
             refreshTokenHash: item.RefreshTokenHash,
             refreshTokenExpiry: ParseDate(item.RefreshTokenExpiry),
-            consentGivenAt: ParseDate(item.ConsentGivenAt));
+            consentGivenAt: ParseDate(item.ConsentGivenAt),
+            failedLoginAttempts: item.FailedLoginAttempts,
+            lockoutUntil: item.LockoutUntilEpoch.HasValue
+                ? DateTimeOffset.FromUnixTimeSeconds(item.LockoutUntilEpoch.Value)
+                : null);
     }
 
     private static DateTimeOffset? ParseDate(string? value) =>

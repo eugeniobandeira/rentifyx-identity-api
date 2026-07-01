@@ -220,12 +220,12 @@
 - Remove manual Docker setup requirement from local dev
 - Add `.env.local` template for local AWS credentials
 
-**Per-user login lockout** _(DEF-004)_
+**Per-user login lockout** _(DEF-004)_ — COMPLETE ✅
 
-- 5 consecutive failed logins → 15-min lockout stored as DynamoDB item with TTL
-- `FailedLoginAttempts` counter on `UserEntity`, reset on success
-- `LOGIN_LOCKED` error code + 429 response
-- Unit tests: counter increment, lockout trigger, auto-expiry
+- `FailedLoginAttempts` + `LockoutUntil` fields on `UserEntity`; `LockoutUntilEpoch` (Unix seconds) in DynamoDB for TTL auto-cleanup
+- `RecordFailedLogin()` / `ClearLockout()` mutation methods; `IsLockedOut()` check in `LoginHandler`
+- `User.LoginLocked` error code + 429 response via `Error.Custom(429, ...)`; `ToProblem()` extended for custom numeric HTTP codes
+- 6 entity unit tests + 7 handler unit tests + 2 repository integration tests
 
 **TaxId KMS encryption at rest** _(DEF-007 / D-010)_
 

@@ -36,6 +36,12 @@ public sealed class LoginHandler(
         if (user is null)
             return Error.Validation(UserErrorCodes.InvalidCredentials, "Invalid email or password.");
 
+        if (user.IsLockedOut(DateTimeOffset.UtcNow))
+            return Error.Custom(
+                429,
+                UserErrorCodes.LoginLocked,
+                "Account is temporarily locked due to too many failed login attempts.");
+
         if (user.Status is UserStatus.PendingVerification)
             return Error.Validation(UserErrorCodes.AccountNotVerified, "Email address has not been verified yet.");
 
@@ -43,7 +49,13 @@ public sealed class LoginHandler(
             return Error.Conflict(UserErrorCodes.AccountNotVerifiable, "This account cannot be accessed.");
 
         if (!passwordHasher.Verify(request.Password, user.PasswordHash.HashValue))
+        {
+            user.RecordFailedLogin(DateTimeOffset.UtcNow);
+            await repository.UpdateAsync(user, ct);
             return Error.Validation(UserErrorCodes.InvalidCredentials, "Invalid email or password.");
+        }
+
+        user.ClearLockout();
 
         string accessToken = tokenService.GenerateAccessToken(
             user.Id,
