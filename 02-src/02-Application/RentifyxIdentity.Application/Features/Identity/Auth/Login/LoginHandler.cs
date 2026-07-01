@@ -8,7 +8,6 @@ using RentifyxIdentity.Application.Features.Identity.Mapper;
 using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
-using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
 
 namespace RentifyxIdentity.Application.Features.Identity.Auth.Login;
@@ -17,6 +16,7 @@ public sealed class LoginHandler(
     IUserRepository repository,
     IPasswordHasher passwordHasher,
     ITokenService tokenService,
+    IAuditLogService auditLogService,
     IValidator<LoginRequest> validator,
     ILogger<LoginHandler> logger) : IHandler<LoginRequest, LoginResponse>
 {
@@ -68,10 +68,16 @@ public sealed class LoginHandler(
 
         await repository.UpdateAsync(user, ct);
 
-        UserLoggedIn domainEvent = new(user.Id, user.Email.ToString(), DateTimeOffset.UtcNow);
-        logger.LogInformation("Domain event: {Event}", domainEvent);
-
         logger.LogInformation("Login successful. UserId={UserId}", user.Id);
+
+        try
+        {
+            await auditLogService.LogAsync(user.Id, AuditEvents.UserLoggedIn, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Audit log failed for UserId={UserId}", user.Id);
+        }
 
         return new LoginResponse(
             accessToken,

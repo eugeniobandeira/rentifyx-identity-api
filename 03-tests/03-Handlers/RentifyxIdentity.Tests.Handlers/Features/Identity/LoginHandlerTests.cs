@@ -21,6 +21,7 @@ public sealed class LoginHandlerTests
     private readonly Mock<IUserRepository> _repositoryMock = new();
     private readonly Mock<IPasswordHasher> _passwordHasherMock = new();
     private readonly Mock<ITokenService> _tokenServiceMock = new();
+    private readonly Mock<IAuditLogService> _auditLogServiceMock = new();
     private readonly Mock<IValidator<LoginRequest>> _validatorMock = new();
     private readonly Mock<ILogger<LoginHandler>> _loggerMock = new();
     private readonly LoginHandler _handler;
@@ -48,10 +49,15 @@ public sealed class LoginHandlerTests
             .Setup(t => t.HashToken(It.IsAny<string>()))
             .Returns("stub-refresh-token-hash");
 
+        _auditLogServiceMock
+            .Setup(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         _handler = new LoginHandler(
             _repositoryMock.Object,
             _passwordHasherMock.Object,
             _tokenServiceMock.Object,
+            _auditLogServiceMock.Object,
             _validatorMock.Object,
             _loggerMock.Object);
     }
@@ -239,6 +245,28 @@ public sealed class LoginHandlerTests
         _repositoryMock.Verify(
             r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    [Fact]
+    public async Task SuccessfulLogin_WritesUserLoggedInAuditEntry()
+    {
+        UserEntity user = BuildUser();
+
+        _repositoryMock
+            .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _passwordHasherMock
+            .Setup(p => p.Verify(TestConstants.ValidPassword, user.PasswordHash.HashValue))
+            .Returns(true);
+
+        LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
+
+        await _handler.Handle(request);
+
+        _auditLogServiceMock.Verify(
+            a => a.LogAsync(user.Id, AuditEvents.UserLoggedIn, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]

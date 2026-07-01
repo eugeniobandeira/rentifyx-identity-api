@@ -34,8 +34,10 @@ public sealed class ExportDataHandler(
 
         logger.LogInformation("Data export prepared. UserId={UserId}", user.Id);
 
+        IReadOnlyList<Domain.Contracts.AuditLogEntryRecord> auditHistory = [];
         try
         {
+            auditHistory = await auditLogService.GetByUserIdAsync(user.Id, ct);
             await auditLogService.LogAsync(user.Id, AuditEvents.DataExported, ct);
         }
         catch (Exception ex)
@@ -49,7 +51,9 @@ public sealed class ExportDataHandler(
             user.TaxId.ToString(),
             user.Role.ToString(),
             user.Status.ToString(),
-            user.CreatedAt
+            user.CreatedAt,
+            user.ConsentGivenAt,
+            auditHistory
         );
     }
 }

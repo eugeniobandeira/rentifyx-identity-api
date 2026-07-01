@@ -7,6 +7,7 @@ using Moq;
 using RentifyxIdentity.Application.Features.Identity.User.ExportData;
 using RentifyxIdentity.Application.Features.Identity.User.ExportData.Request;
 using RentifyxIdentity.Domain.Constants;
+using RentifyxIdentity.Domain.Contracts;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
 using RentifyxIdentity.Domain.Interfaces.Users;
@@ -29,6 +30,10 @@ public sealed class ExportDataHandlerTests
         _auditLogServiceMock
             .Setup(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        _auditLogServiceMock
+            .Setup(a => a.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<AuditLogEntryRecord>)[]);
 
         _validatorMock
             .Setup(v => v.ValidateAsync(It.IsAny<ExportDataRequest>(), It.IsAny<CancellationToken>()))
@@ -147,9 +152,41 @@ public sealed class ExportDataHandlerTests
             .Setup(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("DynamoDB unavailable"));
 
+        _auditLogServiceMock
+            .Setup(a => a.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("DynamoDB unavailable"));
+
         ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(user.Id));
 
         result.IsError.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task HappyPath_IncludesAuditHistoryAndConsentDate()
+    {
+        UserEntity user = BuildUser();
+        user.SetConsent(DateTimeOffset.UtcNow);
+
+        IReadOnlyList<AuditLogEntryRecord> stubHistory =
+        [
+            new AuditLogEntryRecord(AuditEvents.ProfileAccessed, DateTimeOffset.UtcNow.AddMinutes(-5)),
+            new AuditLogEntryRecord(AuditEvents.UserLoggedIn, DateTimeOffset.UtcNow.AddHours(-1))
+        ];
+
+        _repositoryMock
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _auditLogServiceMock
+            .Setup(a => a.GetByUserIdAsync(user.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(stubHistory);
+
+        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(user.Id));
+
+        result.IsError.Should().BeFalse();
+        result.Value.ConsentGivenAt.Should().NotBeNull();
+        result.Value.AuditHistory.Should().HaveCount(2);
+        result.Value.AuditHistory[0].EventType.Should().Be(AuditEvents.ProfileAccessed);
     }
 
     [Fact]
