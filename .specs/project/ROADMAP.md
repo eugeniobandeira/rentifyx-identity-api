@@ -227,14 +227,7 @@
 - `User.LoginLocked` error code + 429 response via `Error.Custom(429, ...)`; `ToProblem()` extended for custom numeric HTTP codes
 - 6 entity unit tests + 7 handler unit tests + 2 repository integration tests
 
-**TaxId KMS encryption at rest** _(DEF-007 / D-010)_
-
-- `IKmsService` contract in Domain
-- `KmsService` adapter using AWS KMS `Encrypt`/`Decrypt`
-- HMAC blind index (`GSI_TaxId_PK`) for searchability without decrypting
-- Update `UserDynamoDbMapper`: encrypt on write, decrypt on read
-- Update `UserRepository` integration tests: verify roundtrip
-- Remove D-010 plaintext decision
+**TaxId KMS encryption at rest** _(DEF-007 / D-010)_ — SKIPPED, deferred to post-v1.1.0
 
 **Domain event Outbox** _(DEF-005)_
 
