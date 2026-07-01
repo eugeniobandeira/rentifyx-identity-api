@@ -13,7 +13,7 @@ IResourceBuilder<ContainerResource> localstack =
         .WithEnvironment("AWS_DEFAULT_REGION", "sa-east-1")
         .WithEnvironment("LOCALSTACK_HOST", "localhost")
         .WithBindMount("../scripts/init-localstack.sh", "/etc/localstack/init/ready.d/init-aws.sh")
-        .WithEndpoint(targetPort: 4566, name: "http");
+        .WithEndpoint(port: 4566, targetPort: 4566, name: "http");
 
 builder.AddProject<Projects.RentifyxIdentity_Api>("clean-arch-api")
     .WithReference(awsConfig)
