@@ -210,15 +210,16 @@
 ## v1.1.0 — Hardening & Deferred Infrastructure
 
 **Goal:** Close the gaps identified in the post-v1.0.0 quality review: local dev experience, login security, domain event dispatch, TaxId encryption, and LGPD audit completeness.
-**Status:** Planned
+**Status:** COMPLETE ✅ (2026-06-30)
 
 ### Features
 
-**Aspire + LocalStack one-liner** _(from M1 — never delivered)_
+**Aspire + LocalStack one-liner** _(from M1 — never delivered)_ — COMPLETE ✅
 
-- Wire LocalStack container into `AppHost` for DynamoDB, SES, KMS, Secrets Manager
-- Remove manual Docker setup requirement from local dev
-- Add `.env.local` template for local AWS credentials
+- LocalStack container wired in `AppHost` with `SERVICES=dynamodb,ses,secretsmanager,kms`
+- `init-localstack.sh` creates DynamoDB table (PK+SK+2 GSIs+TTL) and seeds Secrets Manager on startup
+- API waits for LocalStack via `.WaitFor(localstack)` before starting
+- `.env.local.template` documents local AWS credential setup (LocalStack fake creds)
 
 **Per-user login lockout** _(DEF-004)_ — COMPLETE ✅
 

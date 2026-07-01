@@ -7,15 +7,17 @@ IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(ar
 IAWSSDKConfig awsConfig = builder.AddAWSSDKConfig()
     .WithRegion(RegionEndpoint.SAEast1);
 
-builder.AddContainer("localstack", "localstack/localstack:3")
-    .WithEnvironment("SERVICES", "dynamodb,ses,secretsmanager,kms")
-    .WithEnvironment("AWS_DEFAULT_REGION", "sa-east-1")
-    .WithEnvironment("LOCALSTACK_HOST", "localhost")
-    .WithBindMount("../scripts/init-localstack.sh", "/etc/localstack/init/ready.d/init-aws.sh")
-    .WithEndpoint(targetPort: 4566, name: "http");
+IResourceBuilder<ContainerResource> localstack =
+    builder.AddContainer("localstack", "localstack/localstack:3")
+        .WithEnvironment("SERVICES", "dynamodb,ses,secretsmanager,kms")
+        .WithEnvironment("AWS_DEFAULT_REGION", "sa-east-1")
+        .WithEnvironment("LOCALSTACK_HOST", "localhost")
+        .WithBindMount("../scripts/init-localstack.sh", "/etc/localstack/init/ready.d/init-aws.sh")
+        .WithEndpoint(targetPort: 4566, name: "http");
 
 builder.AddProject<Projects.RentifyxIdentity_Api>("clean-arch-api")
     .WithReference(awsConfig)
+    .WaitFor(localstack)
     .WithHttpHealthCheck("/health")
     .WithScalar();
 

@@ -6,7 +6,7 @@
 
 ## Current Work
 
-v1.0.0 shipped. Post-release quality pass completed 2026-06-30. v1.1.0 in progress — login lockout (DEF-004) implemented. See ROADMAP.
+v1.1.0 COMPLETE (2026-06-30) — login lockout, LGPD audit completeness, Aspire+LocalStack one-liner delivered. Outbox (DEF-005) and TaxId KMS (DEF-007) deferred post-v1.1.0.
 
 ## Decisions
 
