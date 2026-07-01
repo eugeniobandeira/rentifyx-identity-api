@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api
+  name: rentifyx-identity-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api
+      app: rentifyx-identity-api
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -15,26 +15,26 @@ spec:
   template:
     metadata:
       labels:
-        app: api
+        app: rentifyx-identity-api
     spec:
       containers:
-        - name: api
-          image: api:latest
+        - name: rentifyx-identity-api
+          image: rentifyx-identity-api:latest
           ports:
             - containerPort: 8080
           envFrom:
             - configMapRef:
-                name: api-config
+                name: rentifyx-identity-api-config
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: Production
           resources:
             requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
               cpu: 100m
               memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 256Mi
           readinessProbe:
             httpGet:
               path: /health/ready

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: api-config
+  name: rentifyx-identity-api-config
 data:
   AWS__DynamoDB__TableName: "rentifyx-identity-development"
   OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=development"
