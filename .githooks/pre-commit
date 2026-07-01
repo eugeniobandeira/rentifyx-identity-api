@@ -44,7 +44,7 @@ fi
 SOLUTION="$ROOT/RentifyxIdentity.slnx"
 
 echo "Running dotnet build before commit..."
-dotnet build "$SOLUTION" --no-incremental -v quiet 2>&1
+dotnet build "$SOLUTION" --configuration Release --no-incremental -v quiet 2>&1
 
 if [ $? -ne 0 ]; then
   echo ""
