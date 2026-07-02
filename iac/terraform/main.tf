@@ -61,6 +61,16 @@ module "ec2" {
   ssh_key_name        = var.ssh_key_name
 }
 
+data "aws_caller_identity" "main" {}
+
+module "github_actions" {
+  source             = "./modules/github-actions"
+  prefix             = local.prefix
+  github_repo        = var.github_repo
+  ecr_repository_arn = module.ec2.ecr_repository_arn
+  ec2_instance_arn   = "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.main.account_id}:instance/${module.ec2.instance_id}"
+}
+
 module "iam" {
   source                    = "./modules/iam"
   prefix                    = local.prefix

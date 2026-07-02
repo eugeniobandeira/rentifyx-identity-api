@@ -3,6 +3,11 @@ output "instance_id" {
   value       = aws_instance.identity_api.id
 }
 
+output "ecr_repository_arn" {
+  description = "ARN of the ECR repository"
+  value       = aws_ecr_repository.identity_api.arn
+}
+
 output "public_ip" {
   description = "Public IP of the EC2 instance"
   value       = aws_instance.identity_api.public_ip

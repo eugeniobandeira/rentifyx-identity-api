@@ -1,0 +1,90 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+# Only one deploy at a time; cancel any queued run if a newer one arrives
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+permissions:
+  id-token: write  # required for OIDC token
+  contents: read
+
+env:
+  AWS_REGION: sa-east-1
+  ECR_REPOSITORY: 166613156216.dkr.ecr.sa-east-1.amazonaws.com/rentifyx-production-identity-api
+  EC2_INSTANCE_ID: i-0fcdf83e9671c77e5
+
+jobs:
+  deploy:
+    name: Build, Push & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          docker build -t $ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REPOSITORY:latest .
+          docker push $ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REPOSITORY:latest
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Deploy to EC2 via SSM
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters "commands=[
+              \"aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY\",
+              \"docker pull $ECR_REPOSITORY:$IMAGE_TAG\",
+              \"docker rm -f rentifyx-identity-api 2>/dev/null || true\",
+              \"docker run -d --name rentifyx-identity-api --restart unless-stopped -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=Production -e AWS__Region=$AWS_REGION -e AWS__DynamoDB__TableName=rentifyx-production-identity $ECR_REPOSITORY:$IMAGE_TAG\"
+            ]" \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "SSM Command ID: $COMMAND_ID"
+
+          # Poll until the command completes (max 3 min)
+          for i in $(seq 1 18); do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$EC2_INSTANCE_ID" \
+              --query "Status" \
+              --output text 2>/dev/null || echo "Pending")
+
+            echo "  [$i/18] Status: $STATUS"
+
+            if [ "$STATUS" = "Success" ]; then
+              echo "Deploy succeeded."
+              exit 0
+            elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ] || [ "$STATUS" = "TimedOut" ]; then
+              echo "Deploy failed with status: $STATUS"
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "$EC2_INSTANCE_ID" \
+                --query "StandardOutputContent" \
+                --output text
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "Deploy timed out waiting for SSM command."
+          exit 1

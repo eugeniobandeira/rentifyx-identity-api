@@ -47,3 +47,8 @@ output "ec2_role_arn" {
   description = "IAM role ARN attached to the EC2 instance profile"
   value       = module.ec2.ec2_role_arn
 }
+
+output "github_deploy_role_arn" {
+  description = "IAM role ARN for GitHub Actions deploy workflow (OIDC) — set as GH Actions variable AWS_DEPLOY_ROLE_ARN"
+  value       = module.github_actions.deploy_role_arn
+}

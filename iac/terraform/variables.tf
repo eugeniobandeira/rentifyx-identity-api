@@ -50,3 +50,9 @@ variable "ssh_key_name" {
   type        = string
   default     = ""
 }
+
+variable "github_repo" {
+  description = "GitHub repository in owner/repo format allowed to assume the deploy role"
+  type        = string
+  default     = "eugeniobandeira/rentifyx-identity-api"
+}
