@@ -12,7 +12,7 @@
 
 - `kubectl` configured for the target EKS cluster
 - `terraform output` values available (IAM role ARN, table name)
-- Secrets populated in AWS Secrets Manager (`rentifyx-identity-production/*`)
+- Secrets populated in AWS Secrets Manager (`rentifyx-production/*`)
 - Fluent Bit DaemonSet running (CloudWatch Logs log group `/rentifyx/identity-api` must exist)
 
 ### Steps
@@ -84,7 +84,7 @@ openssl rsa -in new-private-key.pem -pubout -out new-public-key.pem
 
 # 2. Update the secret in Secrets Manager (Terraform lifecycle.ignore_changes keeps it safe)
 aws secretsmanager put-secret-value \
-  --secret-id "rentifyx-identity-production/jwt-private-key-pem" \
+  --secret-id "rentifyx-production/jwt-private-key-pem" \
   --secret-string file://new-private-key.pem
 
 # 3. Restart pods to reload the secret (CSI driver remounts on pod restart)
@@ -103,7 +103,7 @@ Same procedure as JWT key. Note: rotating the HMAC key invalidates all in-flight
 
 ```bash
 aws secretsmanager put-secret-value \
-  --secret-id "rentifyx-identity-production/ses-from-address" \
+  --secret-id "rentifyx-production/ses-from-address" \
   --secret-string "new-sender@example.com"
 
 kubectl rollout restart deployment/api -n prod
@@ -175,7 +175,7 @@ kubectl rollout restart daemonset/fluent-bit -n amazon-cloudwatch
 
 **Dashboard name:** `rentifyx-identity`
 
-URL: `https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=rentifyx-identity`
+URL: `https://console.aws.amazon.com/cloudwatch/home?region=sa-east-1#dashboards:name=rentifyx-identity`
 
 Key widgets to check during an incident:
 - **Request rate (RPM)** — establish baseline before/after deploy
@@ -188,7 +188,7 @@ Key widgets to check during an incident:
 
 ## 8. Terraform State
 
-Remote state is stored in S3 bucket `rentifyx-tfstate`, key `identity-api/terraform.tfstate`, lock table `rentifyx-tflock`.
+Remote state is stored in S3 bucket `rentifyx-tfstate-sa-166613156216`, key `identity-api/terraform.tfstate`, region `sa-east-1`, lock table `rentifyx-tflock`.
 
 ```bash
 # View current state
