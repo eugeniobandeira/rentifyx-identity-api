@@ -1,7 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <RootNamespace>RentifyxIdentity.Api</RootNamespace>
     <NoWarn>$(NoWarn);CA1812</NoWarn>
+    <UserSecretsId>789272b0-bc25-488e-b880-7db773f21092</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\04-IoC\RentifyxIdentity.IoC\RentifyxIdentity.IoC.csproj" />
