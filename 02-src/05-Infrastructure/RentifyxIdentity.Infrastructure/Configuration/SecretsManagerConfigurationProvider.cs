@@ -1,4 +1,4 @@
-using Amazon;
+﻿using Amazon;
 using Amazon.Runtime;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
@@ -83,7 +83,7 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
         catch (Exception ex) when (
             ex is DecryptionFailureException
             or InternalServiceErrorException
-            or Amazon.Runtime.AmazonServiceException
+            or AmazonServiceException
             or JsonException)
         {
             // Write to stderr so it surfaces in docker logs without crashing the app
