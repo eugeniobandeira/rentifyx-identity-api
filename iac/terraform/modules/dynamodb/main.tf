@@ -27,13 +27,13 @@ resource "aws_dynamodb_table" "identity" {
   }
 
   global_secondary_index {
-    name            = "GSI-Email"
+    name            = "GSI_Email"
     hash_key        = "Email"
     projection_type = "ALL"
   }
 
   global_secondary_index {
-    name            = "GSI-TaxId"
+    name            = "GSI_TaxId"
     hash_key        = "TaxId"
     projection_type = "ALL"
   }

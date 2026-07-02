@@ -48,8 +48,8 @@ public sealed class UserRepository : IUserRepository
     {
         return await QueryByGsiAsync(
             indexName: "GSI_Email",
-            gsiAttribute: "GSI_Email_PK",
-            gsiValue: $"EMAIL#{email.ToLowerInvariant()}",
+            gsiAttribute: "Email",
+            gsiValue: email.ToLowerInvariant(),
             ct);
     }
 
@@ -59,8 +59,8 @@ public sealed class UserRepository : IUserRepository
     {
         return await QueryByGsiAsync(
             indexName: "GSI_TaxId",
-            gsiAttribute: "GSI_TaxId_PK",
-            gsiValue: $"TAXID#{taxId.ToUpperInvariant()}",
+            gsiAttribute: "TaxId",
+            gsiValue: taxId,
             ct);
     }
 
