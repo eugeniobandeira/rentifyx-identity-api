@@ -3,8 +3,8 @@ kind: ConfigMap
 metadata:
   name: rentifyx-identity-api-config
 data:
-  AWS__Region: "us-east-1"
-  AWS__DynamoDB__TableName: "rentifyx-identity-production"
+  AWS__Region: "sa-east-1"
+  AWS__DynamoDB__TableName: "rentifyx-production-identity"
   OTEL_SERVICE_NAME: "RentifyxIdentity.Api"
   OTEL_EXPORTER_OTLP_ENDPOINT: ""
   OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"

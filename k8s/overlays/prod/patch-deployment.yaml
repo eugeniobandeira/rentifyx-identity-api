@@ -8,7 +8,7 @@ spec:
     metadata:
       annotations:
         # Value comes from `terraform output iam_role_arn`. Replace before applying.
-        eks.amazonaws.com/role-arn: "arn:aws:iam::ACCOUNT_ID:role/rentifyx-identity-production-api-role"
+        eks.amazonaws.com/role-arn: "arn:aws:iam::166613156216:role/rentifyx-production-api-role"
     spec:
       serviceAccountName: rentifyx-identity-api
       containers:

@@ -112,7 +112,7 @@ No AWS SDK dependency is required in the application for log shipping. Structure
 
 Dashboard name: `rentifyx-identity`
 
-URL pattern: `https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=rentifyx-identity`
+URL pattern: `https://console.aws.amazon.com/cloudwatch/home?region=sa-east-1#dashboards:name=rentifyx-identity`
 
 Widgets:
 1. Request rate (RPM) — last 3 hours

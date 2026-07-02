@@ -25,14 +25,15 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
         if (string.Equals(env, "Testing", StringComparison.OrdinalIgnoreCase))
             return;
 
-        string resolvedEnv = env ?? "Development";
+        string resolvedEnv = (env ?? "Development").ToLowerInvariant();
 
         string secretNameTemplate = _bootstrapConfig["AWS:SecretsManager:SecretName"] ?? string.Empty;
         string secretName = secretNameTemplate.Replace("{environment}", resolvedEnv, StringComparison.OrdinalIgnoreCase);
 
+        string region = _bootstrapConfig["AWS:Region"] ?? "sa-east-1";
         AmazonSecretsManagerConfig clientConfig = new()
         {
-            RegionEndpoint = RegionEndpoint.SAEast1
+            RegionEndpoint = RegionEndpoint.GetBySystemName(region)
         };
 
         bool useLocalStack = string.Equals(

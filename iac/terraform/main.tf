@@ -9,7 +9,8 @@ locals {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region  = var.aws_region
+  profile = "rentifyx-admin"
 
   default_tags {
     tags = local.common_tags
@@ -46,6 +47,28 @@ module "secrets" {
   prefix      = local.prefix
   environment = var.environment
   kms_key_arn = module.kms.key_arn
+}
+
+module "ec2" {
+  source              = "./modules/ec2"
+  prefix              = local.prefix
+  environment         = var.environment
+  app_name            = var.app_name
+  policy_arn          = module.iam.policy_arn
+  aws_region          = var.aws_region
+  dynamodb_table_name = module.dynamodb.table_name
+  kms_key_arn         = module.kms.key_arn
+  ssh_key_name        = var.ssh_key_name
+}
+
+data "aws_caller_identity" "main" {}
+
+module "github_actions" {
+  source             = "./modules/github-actions"
+  prefix             = local.prefix
+  github_repo        = var.github_repo
+  ecr_repository_arn = module.ec2.ecr_repository_arn
+  ec2_instance_arn   = "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.main.account_id}:instance/${module.ec2.instance_id}"
 }
 
 module "iam" {

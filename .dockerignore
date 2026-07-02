@@ -1,0 +1,17 @@
+**/.git
+**/.gitignore
+**/.dockerignore
+**/bin
+**/obj
+**/.vs
+**/.vscode
+**/TestResults
+**/coverage
+**/reports
+**/*.user
+**/*.suo
+.github
+iac
+k8s
+docs
+03-tests
