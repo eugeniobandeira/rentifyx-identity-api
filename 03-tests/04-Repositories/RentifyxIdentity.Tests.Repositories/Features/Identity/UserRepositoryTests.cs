@@ -1,5 +1,6 @@
 using Amazon.DynamoDBv2.Model;
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using RentifyxIdentity.Domain.Entities;
 using Xunit;
 using RentifyxIdentity.Domain.Enums;
@@ -18,7 +19,13 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
     public UserRepositoryTests(LocalStackFixture fixture)
     {
         _fixture = fixture;
-        _sut = new UserRepository(_fixture.Context);
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["AWS:DynamoDB:TableName"] = fixture.TableName
+            })
+            .Build();
+        _sut = new UserRepository(_fixture.Context, configuration);
     }
 
     [Fact]
