@@ -9,7 +9,8 @@ locals {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region  = var.aws_region
+  profile = "rentifyx-admin"
 
   default_tags {
     tags = local.common_tags
