@@ -3,6 +3,6 @@ kind: ConfigMap
 metadata:
   name: rentifyx-identity-api-config
 data:
-  AWS__DynamoDB__TableName: "rentifyx-identity-development"
+  AWS__DynamoDB__TableName: "rentifyx-development-identity"
   OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=development"
   OTEL_EXPORTER_OTLP_ENDPOINT: ""

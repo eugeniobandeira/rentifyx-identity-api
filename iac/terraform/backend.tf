@@ -8,11 +8,8 @@ terraform {
     }
   }
 
-  backend "s3" {
-    bucket         = "rentifyx-tfstate"
-    key            = "identity-api/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "rentifyx-tflock"
-    encrypt        = true
-  }
+  # Backend values are supplied via backend.hcl (gitignored) to avoid
+  # exposing the AWS account ID in a public repository.
+  # Run: terraform init -backend-config=backend.hcl
+  backend "s3" {}
 }

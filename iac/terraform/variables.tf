@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region to deploy resources"
   type        = string
-  default     = "us-east-1"
+  default     = "sa-east-1"
 }
 
 variable "environment" {
@@ -13,7 +13,7 @@ variable "environment" {
 variable "app_name" {
   description = "Application name used as resource name prefix"
   type        = string
-  default     = "rentifyx-identity"
+  default     = "rentifyx"
 }
 
 variable "ses_identity" {
@@ -43,4 +43,16 @@ variable "service_account_name" {
   description = "Kubernetes service account name that assumes the IAM role"
   type        = string
   default     = "rentifyx-identity-api"
+}
+
+variable "ssh_key_name" {
+  description = "EC2 key pair name for SSH access (leave empty to disable SSH)"
+  type        = string
+  default     = ""
+}
+
+variable "github_repo" {
+  description = "GitHub repository in owner/repo format allowed to assume the deploy role"
+  type        = string
+  default     = "eugeniobandeira/rentifyx-identity-api"
 }
