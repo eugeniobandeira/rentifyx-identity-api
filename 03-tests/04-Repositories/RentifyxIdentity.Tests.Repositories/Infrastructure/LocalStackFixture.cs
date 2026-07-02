@@ -60,8 +60,8 @@ public sealed class LocalStackFixture : IAsyncLifetime
             [
                 new AttributeDefinition { AttributeName = "PK", AttributeType = ScalarAttributeType.S },
                 new AttributeDefinition { AttributeName = "SK", AttributeType = ScalarAttributeType.S },
-                new AttributeDefinition { AttributeName = "GSI_Email_PK", AttributeType = ScalarAttributeType.S },
-                new AttributeDefinition { AttributeName = "GSI_TaxId_PK", AttributeType = ScalarAttributeType.S }
+                new AttributeDefinition { AttributeName = "Email", AttributeType = ScalarAttributeType.S },
+                new AttributeDefinition { AttributeName = "TaxId", AttributeType = ScalarAttributeType.S }
             ],
             KeySchema =
             [
@@ -75,7 +75,7 @@ public sealed class LocalStackFixture : IAsyncLifetime
                     IndexName = "GSI_Email",
                     KeySchema =
                     [
-                        new KeySchemaElement { AttributeName = "GSI_Email_PK", KeyType = KeyType.HASH }
+                        new KeySchemaElement { AttributeName = "Email", KeyType = KeyType.HASH }
                     ],
                     Projection = new Projection { ProjectionType = ProjectionType.ALL }
                 },
@@ -84,7 +84,7 @@ public sealed class LocalStackFixture : IAsyncLifetime
                     IndexName = "GSI_TaxId",
                     KeySchema =
                     [
-                        new KeySchemaElement { AttributeName = "GSI_TaxId_PK", KeyType = KeyType.HASH }
+                        new KeySchemaElement { AttributeName = "TaxId", KeyType = KeyType.HASH }
                     ],
                     Projection = new Projection { ProjectionType = ProjectionType.ALL }
                 }

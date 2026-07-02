@@ -13,18 +13,12 @@ public sealed class UserDynamoDbItem
     public string Sk { get; set; } = null!;
 
     public string Id { get; set; } = null!;
+    [DynamoDBGlobalSecondaryIndexHashKey("GSI_Email")]
     public string Email { get; set; } = null!;
 
-    [DynamoDBGlobalSecondaryIndexHashKey("GSI_Email")]
-    [DynamoDBProperty("GSI_Email_PK")]
-    public string GsiEmailPk { get; set; } = null!;
-
+    [DynamoDBGlobalSecondaryIndexHashKey("GSI_TaxId")]
     public string TaxId { get; set; } = null!;
     public string TaxDocumentType { get; set; } = null!;
-
-    [DynamoDBGlobalSecondaryIndexHashKey("GSI_TaxId")]
-    [DynamoDBProperty("GSI_TaxId_PK")]
-    public string GsiTaxIdPk { get; set; } = null!;
 
     public string PasswordHash { get; set; } = null!;
     public string Role { get; set; } = null!;
