@@ -49,6 +49,18 @@ module "secrets" {
   kms_key_arn = module.kms.key_arn
 }
 
+module "ec2" {
+  source              = "./modules/ec2"
+  prefix              = local.prefix
+  environment         = var.environment
+  app_name            = var.app_name
+  policy_arn          = module.iam.policy_arn
+  aws_region          = var.aws_region
+  dynamodb_table_name = module.dynamodb.table_name
+  kms_key_arn         = module.kms.key_arn
+  ssh_key_name        = var.ssh_key_name
+}
+
 module "iam" {
   source                    = "./modules/iam"
   prefix                    = local.prefix

@@ -44,3 +44,9 @@ variable "service_account_name" {
   type        = string
   default     = "rentifyx-identity-api"
 }
+
+variable "ssh_key_name" {
+  description = "EC2 key pair name for SSH access (leave empty to disable SSH)"
+  type        = string
+  default     = ""
+}

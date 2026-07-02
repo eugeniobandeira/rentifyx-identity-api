@@ -50,6 +50,7 @@ Thumbs.db
 *.tfstate.*
 *.tfplan
 *.tfvars
+backend.hcl
 crash.log
 override.tf
 override.tf.json
