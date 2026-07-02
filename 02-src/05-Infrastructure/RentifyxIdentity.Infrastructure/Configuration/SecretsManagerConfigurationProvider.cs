@@ -78,7 +78,16 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
         }
         catch (ResourceNotFoundException)
         {
-            // Secret not yet seeded in local dev — skip silently
+            // Secret not yet seeded — skip silently
+        }
+        catch (Exception ex) when (
+            ex is DecryptionFailureException
+            or InternalServiceErrorException
+            or Amazon.Runtime.AmazonServiceException
+            or JsonException)
+        {
+            // Write to stderr so it surfaces in docker logs without crashing the app
+            Console.Error.WriteLine($"[SecretsManager] Failed to load secret '{secretName}': {ex.GetType().Name}: {ex.Message}");
         }
     }
 }
