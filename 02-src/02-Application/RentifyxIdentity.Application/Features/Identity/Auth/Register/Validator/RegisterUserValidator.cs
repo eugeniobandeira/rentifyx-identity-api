@@ -74,7 +74,7 @@ public sealed class RegisterUserValidator : AbstractValidator<RegisterUserReques
 
     private static bool HasComplexity(string password)
     {
-        const string symbols = "!@#$%^&*()-_=+[]{}|;:,.<>?";
+        string symbols = ValidationConstants.UserRules.PasswordSymbols;
 
         bool hasUpper = false;
         bool hasLower = false;

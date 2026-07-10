@@ -13,9 +13,9 @@ variable "kms_key_arn" {
   type        = string
 }
 
-variable "secret_arns" {
-  description = "List of Secrets Manager secret ARNs the API must read"
-  type        = list(string)
+variable "secret_arn" {
+  description = "ARN of the Secrets Manager secret the API must read"
+  type        = string
 }
 
 variable "ses_identity_arn" {

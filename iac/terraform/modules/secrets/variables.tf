@@ -1,5 +1,5 @@
-variable "prefix" {
-  description = "Resource name prefix"
+variable "app_name" {
+  description = "Application name (e.g. rentifyx)"
   type        = string
 }
 

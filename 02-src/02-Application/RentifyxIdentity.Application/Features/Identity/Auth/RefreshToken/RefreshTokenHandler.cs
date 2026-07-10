@@ -19,7 +19,7 @@ public sealed class RefreshTokenHandler(
     IValidator<RefreshTokenRequest> validator,
     ILogger<RefreshTokenHandler> logger) : IHandler<RefreshTokenRequest, LoginResponse>
 {
-    private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(30);
+    private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(TokenPolicyConstants.RefreshTokenDays);
 
     public async Task<ErrorOr<LoginResponse>> Handle(
         RefreshTokenRequest request,

@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using RentifyxIdentity.Api.Constants;
 using RentifyxIdentity.Domain.Constants;
 
 namespace RentifyxIdentity.Api.Middlewares;
@@ -41,13 +42,13 @@ internal sealed class GlobalExceptionHandler(
             Instance = httpContext.Request.Path,
             Extensions =
             {
-                ["correlationId"] = correlationId,
-                ["traceId"] = traceId
+                [ProblemDetailsKeys.CorrelationId] = correlationId,
+                [ProblemDetailsKeys.TraceId] = traceId
             }
         };
 
-        problem.Extensions["exceptionType"] = exception.GetType().FullName;
-        problem.Extensions["exceptionMessage"] = exception.Message;
+        problem.Extensions[ProblemDetailsKeys.ExceptionType] = exception.GetType().FullName;
+        problem.Extensions[ProblemDetailsKeys.ExceptionMessage] = exception.Message;
 
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         httpContext.Response.ContentType = ProblemDetailsContentType;

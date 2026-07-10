@@ -49,7 +49,7 @@ public sealed class RegisterUserHandler(
 
         string rawToken = Guid.NewGuid().ToString();
         string tokenHash = tokenService.HashToken(rawToken);
-        user.SetEmailVerificationToken(tokenHash, DateTimeOffset.UtcNow.AddHours(24));
+        user.SetEmailVerificationToken(tokenHash, DateTimeOffset.UtcNow.AddHours(TokenPolicyConstants.EmailVerificationHours));
 
         await repository.AddAsync(user, ct);
 

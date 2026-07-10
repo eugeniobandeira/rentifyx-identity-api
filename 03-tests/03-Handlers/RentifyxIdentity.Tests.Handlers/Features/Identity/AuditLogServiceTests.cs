@@ -55,14 +55,14 @@ public sealed class AuditLogServiceTests
     }
 
     [Fact]
-    public async Task LogAsync_PkStartsWithAuditPrefix_AndSkEqualsPk()
+    public async Task LogAsync_Pk_IsAuditPrefixWithUserId_And_Sk_ContainsTimestamp()
     {
         Guid userId = Guid.NewGuid();
 
         AuditLogEntry entry = await CaptureEntryAsync(userId);
 
-        entry.Pk.Should().StartWith($"AUDIT#{userId}#");
-        entry.Sk.Should().Be(entry.Pk);
+        entry.Pk.Should().Be($"AUDIT#{userId}");
+        entry.Sk.Should().MatchRegex(@"^\d{14}_[0-9a-f\-]{36}$");
     }
 
     [Fact]

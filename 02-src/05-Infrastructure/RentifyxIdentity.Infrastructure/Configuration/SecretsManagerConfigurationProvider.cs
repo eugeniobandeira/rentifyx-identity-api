@@ -3,6 +3,7 @@ using Amazon.Runtime;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Microsoft.Extensions.Configuration;
+using RentifyxIdentity.Infrastructure.Constants;
 using System.Text.Json;
 
 namespace RentifyxIdentity.Infrastructure.Configuration;
@@ -22,22 +23,22 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
             ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
             ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
 
-        if (string.Equals(env, "Testing", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(env, ConfigurationKeys.TestingEnvironment, StringComparison.OrdinalIgnoreCase))
             return;
 
         string resolvedEnv = (env ?? "Development").ToLowerInvariant();
 
-        string secretNameTemplate = _bootstrapConfig["AWS:SecretsManager:SecretName"] ?? string.Empty;
+        string secretNameTemplate = _bootstrapConfig[ConfigurationKeys.AwsSecretsManagerSecretName] ?? string.Empty;
         string secretName = secretNameTemplate.Replace("{environment}", resolvedEnv, StringComparison.OrdinalIgnoreCase);
 
-        string region = _bootstrapConfig["AWS:Region"] ?? "sa-east-1";
+        string region = _bootstrapConfig[ConfigurationKeys.AwsRegion] ?? ConfigurationKeys.DefaultAwsRegion;
         AmazonSecretsManagerConfig clientConfig = new()
         {
             RegionEndpoint = RegionEndpoint.GetBySystemName(region)
         };
 
         bool useLocalStack = string.Equals(
-            _bootstrapConfig["LocalStack:UseLocalStack"],
+            _bootstrapConfig[ConfigurationKeys.LocalStackEnabled],
             "true",
             StringComparison.OrdinalIgnoreCase);
 
@@ -47,11 +48,11 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
 
             if (useLocalStack)
             {
-                string host = _bootstrapConfig["LocalStack:Config:LocalStackHost"] ?? "localhost";
-                string port = _bootstrapConfig["LocalStack:Config:EdgePort"] ?? "4566";
+                string host = _bootstrapConfig[ConfigurationKeys.LocalStackHost] ?? ConfigurationKeys.DefaultLocalStackHost;
+                string port = _bootstrapConfig[ConfigurationKeys.LocalStackEdgePort] ?? ConfigurationKeys.DefaultLocalStackEdgePort;
                 clientConfig.ServiceURL = $"http://{host}:{port}";
                 client = new AmazonSecretsManagerClient(
-                    new BasicAWSCredentials("test", "test"),
+                    new BasicAWSCredentials(ConfigurationKeys.LocalStackTestAccessKey, ConfigurationKeys.LocalStackTestSecretKey),
                     clientConfig);
             }
             else

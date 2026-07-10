@@ -21,16 +21,15 @@ public sealed class AuditLogService(
             ?? throw new InvalidOperationException($"{DynamoDbConstants.TableNameConfigKey} is not configured.");
 
         DateTimeOffset now = DateTimeOffset.UtcNow;
-        string pk = $"AUDIT#{userId}#{now:yyyyMMddHHmmss}_{Guid.NewGuid()}";
 
         AuditLogEntry entry = new()
         {
-            Pk = pk,
-            Sk = pk,
+            Pk = $"{DynamoDbConstants.AuditKeyPrefix}{userId}",
+            Sk = $"{now:yyyyMMddHHmmss}_{Guid.NewGuid()}",
             UserId = userId.ToString(),
             EventType = eventType,
             OccurredAt = now.ToString("O", CultureInfo.InvariantCulture),
-            Ttl = now.AddDays(90).ToUnixTimeSeconds()
+            Ttl = now.AddDays(DynamoDbConstants.AuditLogRetentionDays).ToUnixTimeSeconds()
         };
 
         await context.SaveAsync(
@@ -48,16 +47,18 @@ public sealed class AuditLogService(
         string tableName = configuration[DynamoDbConstants.TableNameConfigKey]
             ?? throw new InvalidOperationException($"{DynamoDbConstants.TableNameConfigKey} is not configured.");
 
-        ScanCondition[] conditions =
-        [
-            new ScanCondition("UserId", ScanOperator.Equal, userId.ToString())
-        ];
+        QueryOperationConfig config = new()
+        {
+            KeyExpression = new Expression
+            {
+                ExpressionStatement = "PK = :pk",
+                ExpressionAttributeValues = { [":pk"] = $"{DynamoDbConstants.AuditKeyPrefix}{userId}" }
+            }
+        };
 
-#pragma warning disable CS0618
         List<AuditLogEntry> entries = await context
-            .ScanAsync<AuditLogEntry>(conditions, new DynamoDBOperationConfig { OverrideTableName = tableName })
+            .FromQueryAsync<AuditLogEntry>(config, new FromQueryConfig { OverrideTableName = tableName })
             .GetRemainingAsync(ct);
-#pragma warning restore CS0618
 
         return entries
             .OrderByDescending(e => e.OccurredAt)
