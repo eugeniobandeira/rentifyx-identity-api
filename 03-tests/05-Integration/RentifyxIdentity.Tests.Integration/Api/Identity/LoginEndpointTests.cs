@@ -35,7 +35,7 @@ public sealed class LoginEndpointTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task Login_WithValidCredentials_Returns200WithTokens()
+    public async Task Login_WithValidCredentials_Returns200WithAccessTokenAndSetsRefreshCookie()
     {
         RegisterUserRequest registered = await RegisterAndVerifyAsync();
 
@@ -51,12 +51,17 @@ public sealed class LoginEndpointTests(CustomWebApplicationFactory factory)
         root.TryGetProperty("accessToken", out JsonElement accessToken).Should().BeTrue();
         accessToken.GetString().Should().NotBeNullOrEmpty();
 
-        root.TryGetProperty("refreshToken", out JsonElement refreshToken).Should().BeTrue();
-        refreshToken.GetString().Should().NotBeNullOrEmpty();
+        root.TryGetProperty("refreshToken", out _).Should().BeFalse();
 
         root.TryGetProperty("user", out JsonElement userProp).Should().BeTrue();
         userProp.TryGetProperty("status", out JsonElement statusProp).Should().BeTrue();
         statusProp.GetString().Should().Be(TestConstants.StatusActive);
+
+        response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? cookies).Should().BeTrue();
+        cookies!.Should().Contain(c =>
+            c.StartsWith("refreshToken=", StringComparison.Ordinal)
+            && c.Contains("httponly", StringComparison.OrdinalIgnoreCase)
+            && c.Contains("samesite=strict", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

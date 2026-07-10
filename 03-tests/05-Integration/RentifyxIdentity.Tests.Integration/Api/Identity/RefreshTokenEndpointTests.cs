@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using RentifyxIdentity.Application.Features.Identity.Auth.Login.Request;
-using RentifyxIdentity.Application.Features.Identity.Auth.RefreshToken.Request;
 using RentifyxIdentity.Application.Features.Identity.Auth.Register.Request;
 using RentifyxIdentity.Application.Features.Identity.Auth.VerifyEmail.Request;
 using RentifyxIdentity.Tests.Common.Builders;
@@ -20,7 +19,7 @@ public sealed class RefreshTokenEndpointTests(CustomWebApplicationFactory factor
     private const string LoginEndpoint = "/api/v1/auth/login";
     private const string RefreshEndpoint = "/api/v1/auth/refresh";
 
-    private async Task<(string Email, string Password, string RefreshToken)> RegisterVerifyLoginAsync()
+    private async Task<string> RegisterVerifyLoginAsync()
     {
         RegisterUserRequest registerRequest = new RegisterUserRequestBuilder().Build();
         await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
@@ -31,24 +30,19 @@ public sealed class RefreshTokenEndpointTests(CustomWebApplicationFactory factor
 
         await _client.PostAsJsonAsync(VerifyEmailEndpoint, new VerifyEmailRequest(registerRequest.Email, rawToken));
 
-        HttpResponseMessage loginResponse = await _client.PostAsJsonAsync(
+        await _client.PostAsJsonAsync(
             LoginEndpoint,
             new LoginRequest(registerRequest.Email, registerRequest.Password));
 
-        string loginContent = await loginResponse.Content.ReadAsStringAsync();
-        JsonDocument loginDoc = JsonDocument.Parse(loginContent);
-        string refreshToken = loginDoc.RootElement.GetProperty("refreshToken").GetString()!;
-
-        return (registerRequest.Email, registerRequest.Password, refreshToken);
+        return registerRequest.Email;
     }
 
     [Fact]
-    public async Task Refresh_WithValidToken_Returns200WithNewTokens()
+    public async Task Refresh_WithValidCookie_Returns200WithNewAccessTokenAndRotatesCookie()
     {
-        (string email, _, string refreshToken) = await RegisterVerifyLoginAsync();
+        string email = await RegisterVerifyLoginAsync();
 
-        RefreshTokenRequest request = new(email, refreshToken);
-        HttpResponseMessage response = await _client.PostAsJsonAsync(RefreshEndpoint, request);
+        HttpResponseMessage response = await _client.PostAsJsonAsync(RefreshEndpoint, new { email });
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -59,13 +53,14 @@ public sealed class RefreshTokenEndpointTests(CustomWebApplicationFactory factor
         root.TryGetProperty("accessToken", out JsonElement accessToken).Should().BeTrue();
         accessToken.GetString().Should().NotBeNullOrEmpty();
 
-        root.TryGetProperty("refreshToken", out JsonElement newRefreshToken).Should().BeTrue();
-        newRefreshToken.GetString().Should().NotBeNullOrEmpty();
-        newRefreshToken.GetString().Should().NotBe(refreshToken);
+        root.TryGetProperty("refreshToken", out _).Should().BeFalse();
+
+        response.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? cookies).Should().BeTrue();
+        cookies!.Should().Contain(c => c.StartsWith("refreshToken=", StringComparison.Ordinal));
     }
 
     [Fact]
-    public async Task Refresh_WithInvalidToken_Returns422()
+    public async Task Refresh_WithoutCookie_Returns422()
     {
         RegisterUserRequest registerRequest = new RegisterUserRequestBuilder().Build();
         await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
@@ -76,8 +71,32 @@ public sealed class RefreshTokenEndpointTests(CustomWebApplicationFactory factor
 
         await _client.PostAsJsonAsync(VerifyEmailEndpoint, new VerifyEmailRequest(registerRequest.Email, rawToken));
 
-        RefreshTokenRequest request = new(registerRequest.Email, "wrong-refresh-token");
-        HttpResponseMessage response = await _client.PostAsJsonAsync(RefreshEndpoint, request);
+        HttpResponseMessage response = await _client.PostAsJsonAsync(
+            RefreshEndpoint,
+            new { email = registerRequest.Email });
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+    }
+
+    [Fact]
+    public async Task Refresh_WithInvalidCookie_Returns422()
+    {
+        RegisterUserRequest registerRequest = new RegisterUserRequestBuilder().Build();
+        await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
+
+        string rawToken = factory.EmailService.SentVerificationEmails
+            .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
+            .Token;
+
+        await _client.PostAsJsonAsync(VerifyEmailEndpoint, new VerifyEmailRequest(registerRequest.Email, rawToken));
+
+        using HttpRequestMessage request = new(HttpMethod.Post, RefreshEndpoint)
+        {
+            Content = JsonContent.Create(new { email = registerRequest.Email })
+        };
+        request.Headers.Add("Cookie", "refreshToken=wrong-refresh-token");
+
+        HttpResponseMessage response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }

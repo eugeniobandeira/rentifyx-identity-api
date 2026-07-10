@@ -1,5 +1,6 @@
 using ErrorOr;
 using RentifyxIdentity.Api.Abstract;
+using RentifyxIdentity.Api.Contracts.Auth;
 using RentifyxIdentity.Api.Extensions;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Features.Identity.Auth.Logout.Request;
@@ -12,18 +13,26 @@ internal sealed class Logout : IEndpoint
     {
         app.MapPost("/auth/logout", HandleAsync)
            .WithName("Logout")
-           .WithDescription("Invalidates the user's refresh token. Idempotent — always returns 204.")
+           .WithDescription("Invalidates the user's refresh token and clears the cookie. Idempotent — always returns 204.")
            .WithTags(Tags.AUTH)
            .AllowAnonymous();
     }
 
     private static async Task<IResult> HandleAsync(
-        LogoutRequest request,
+        EmailRequestBody request,
         IHandler<LogoutRequest, Success> handler,
         HttpContext httpContext,
         CancellationToken ct = default)
     {
-        ErrorOr<Success> result = await handler.Handle(request, ct);
+        string? refreshToken = httpContext.GetRefreshTokenCookie();
+        httpContext.DeleteRefreshTokenCookie();
+
+        if (string.IsNullOrEmpty(refreshToken))
+            return Results.NoContent();
+
+        ErrorOr<Success> result = await handler.Handle(
+            new LogoutRequest(request.Email, refreshToken),
+            ct);
 
         return result.Match(
             _ => Results.NoContent(),

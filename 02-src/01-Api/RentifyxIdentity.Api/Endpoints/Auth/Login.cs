@@ -1,5 +1,6 @@
 using ErrorOr;
 using RentifyxIdentity.Api.Abstract;
+using RentifyxIdentity.Api.Contracts.Auth;
 using RentifyxIdentity.Api.Extensions;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Features.Identity.Auth.Login;
@@ -13,7 +14,7 @@ internal sealed class Login : IEndpoint
     {
         app.MapPost("/auth/login", HandleAsync)
            .WithName("Login")
-           .WithDescription("Authenticates a user with email and password, returning access and refresh tokens.")
+           .WithDescription("Authenticates a user with email and password. Returns the access token in the body and sets the refresh token as an httpOnly cookie.")
            .WithTags(Tags.AUTH)
            .AllowAnonymous();
     }
@@ -27,7 +28,11 @@ internal sealed class Login : IEndpoint
         ErrorOr<LoginResponse> result = await handler.Handle(request, ct);
 
         return result.Match(
-            response => Results.Ok(response),
+            response =>
+            {
+                httpContext.AppendRefreshTokenCookie(response.RefreshToken);
+                return Results.Ok(new AuthTokenResponse(response.AccessToken, response.User));
+            },
             errors => errors.ToProblem(httpContext));
     }
 }

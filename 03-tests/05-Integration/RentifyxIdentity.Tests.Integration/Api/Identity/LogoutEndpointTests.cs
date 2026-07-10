@@ -1,9 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using FluentAssertions;
 using RentifyxIdentity.Application.Features.Identity.Auth.Login.Request;
-using RentifyxIdentity.Application.Features.Identity.Auth.Logout.Request;
 using RentifyxIdentity.Application.Features.Identity.Auth.Register.Request;
 using RentifyxIdentity.Application.Features.Identity.Auth.VerifyEmail.Request;
 using RentifyxIdentity.Tests.Common.Builders;
@@ -20,7 +18,7 @@ public sealed class LogoutEndpointTests(CustomWebApplicationFactory factory)
     private const string LoginEndpoint = "/api/v1/auth/login";
     private const string LogoutEndpoint = "/api/v1/auth/logout";
 
-    private async Task<(string Email, string RefreshToken)> RegisterVerifyLoginAsync()
+    private async Task<string> RegisterVerifyLoginAsync()
     {
         RegisterUserRequest registerRequest = new RegisterUserRequestBuilder().Build();
         await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
@@ -31,24 +29,19 @@ public sealed class LogoutEndpointTests(CustomWebApplicationFactory factory)
 
         await _client.PostAsJsonAsync(VerifyEmailEndpoint, new VerifyEmailRequest(registerRequest.Email, rawToken));
 
-        HttpResponseMessage loginResponse = await _client.PostAsJsonAsync(
+        await _client.PostAsJsonAsync(
             LoginEndpoint,
             new LoginRequest(registerRequest.Email, registerRequest.Password));
 
-        string loginContent = await loginResponse.Content.ReadAsStringAsync();
-        JsonDocument loginDoc = JsonDocument.Parse(loginContent);
-        string refreshToken = loginDoc.RootElement.GetProperty("refreshToken").GetString()!;
-
-        return (registerRequest.Email, refreshToken);
+        return registerRequest.Email;
     }
 
     [Fact]
-    public async Task Logout_WithValidToken_Returns204()
+    public async Task Logout_WithValidCookie_Returns204()
     {
-        (string email, string refreshToken) = await RegisterVerifyLoginAsync();
+        string email = await RegisterVerifyLoginAsync();
 
-        LogoutRequest request = new(email, refreshToken);
-        HttpResponseMessage response = await _client.PostAsJsonAsync(LogoutEndpoint, request);
+        HttpResponseMessage response = await _client.PostAsJsonAsync(LogoutEndpoint, new { email });
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -56,14 +49,12 @@ public sealed class LogoutEndpointTests(CustomWebApplicationFactory factory)
     [Fact]
     public async Task Logout_CalledTwice_Returns204BothTimes()
     {
-        (string email, string refreshToken) = await RegisterVerifyLoginAsync();
+        string email = await RegisterVerifyLoginAsync();
 
-        LogoutRequest request = new(email, refreshToken);
-
-        HttpResponseMessage first = await _client.PostAsJsonAsync(LogoutEndpoint, request);
+        HttpResponseMessage first = await _client.PostAsJsonAsync(LogoutEndpoint, new { email });
         first.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        HttpResponseMessage second = await _client.PostAsJsonAsync(LogoutEndpoint, request);
+        HttpResponseMessage second = await _client.PostAsJsonAsync(LogoutEndpoint, new { email });
         second.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 }
