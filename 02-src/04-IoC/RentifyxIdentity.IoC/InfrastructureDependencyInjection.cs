@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Security.Cryptography;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
@@ -8,9 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using RentifyxIdentity.Domain.Interfaces.Common;
 using RentifyxIdentity.Domain.Interfaces.Users;
-using RentifyxIdentity.Infrastructure;
 using RentifyxIdentity.Infrastructure.Repositories;
 using RentifyxIdentity.Infrastructure.Services;
 
@@ -30,7 +27,6 @@ internal static class InfrastructureDependencyInjection
                 .WithDynamoDBClient(() => sp.GetRequiredService<IAmazonDynamoDB>())
                 .Build());
 
-        services.AddRepositories();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
@@ -63,28 +59,5 @@ internal static class InfrastructureDependencyInjection
         services.AddAuthorization();
 
         return services;
-    }
-
-    private static void AddRepositories(this IServiceCollection services)
-    {
-        Assembly assembly = typeof(InfrastructureAssemblyMarker).Assembly;
-
-        assembly.GetTypes()
-            .Where(t => !t.IsAbstract && !t.IsInterface)
-            .Where(t => t.GetInterfaces().Any(i => i.IsGenericType &&
-                       (i.GetGenericTypeDefinition() == typeof(IRepository<>) ||
-                        i.GetGenericTypeDefinition() == typeof(IRepository<,>))))
-            .ToList()
-            .ForEach(repositoryType =>
-            {
-                services.AddScoped(repositoryType);
-
-                repositoryType.GetInterfaces()
-                    .Where(i => i.IsGenericType &&
-                               (i.GetGenericTypeDefinition() == typeof(IRepository<>) ||
-                                i.GetGenericTypeDefinition() == typeof(IRepository<,>)))
-                    .ToList()
-                    .ForEach(iface => services.AddScoped(iface, sp => sp.GetRequiredService(repositoryType)));
-            });
     }
 }
