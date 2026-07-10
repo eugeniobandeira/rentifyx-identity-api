@@ -1,5 +1,6 @@
 using ErrorOr;
 using RentifyxIdentity.Api.Abstract;
+using RentifyxIdentity.Api.Contracts.Auth;
 using RentifyxIdentity.Api.Extensions;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Features.Identity.Auth.Login;
@@ -13,21 +14,29 @@ internal sealed class RefreshToken : IEndpoint
     {
         app.MapPost("/auth/refresh", HandleAsync)
            .WithName("RefreshToken")
-           .WithDescription("Issues a new access token and rotates the refresh token.")
+           .WithDescription("Issues a new access token and rotates the refresh token cookie.")
            .WithTags(Tags.AUTH)
            .AllowAnonymous();
     }
 
     private static async Task<IResult> HandleAsync(
-        RefreshTokenRequest request,
+        EmailRequestBody request,
         IHandler<RefreshTokenRequest, LoginResponse> handler,
         HttpContext httpContext,
         CancellationToken ct = default)
     {
-        ErrorOr<LoginResponse> result = await handler.Handle(request, ct);
+        string refreshToken = httpContext.GetRefreshTokenCookie() ?? string.Empty;
+
+        ErrorOr<LoginResponse> result = await handler.Handle(
+            new RefreshTokenRequest(request.Email, refreshToken),
+            ct);
 
         return result.Match(
-            response => Results.Ok(response),
+            response =>
+            {
+                httpContext.AppendRefreshTokenCookie(response.RefreshToken);
+                return Results.Ok(new AuthTokenResponse(response.AccessToken, response.User));
+            },
             errors => errors.ToProblem(httpContext));
     }
 }

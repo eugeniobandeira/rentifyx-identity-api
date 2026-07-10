@@ -25,7 +25,6 @@ Authenticate a registered, active user using email and password. Returns a short
 ```json
 {
   "accessToken": "<access_token>",
-  "refreshToken": "<refresh_token>",
   "user": {
     "id": "uuid",
     "email": "user@example.com",
@@ -35,6 +34,8 @@ Authenticate a registered, active user using email and password. Returns a short
   }
 }
 ```
+
+The refresh token is **not** in the body. It is set via a `Set-Cookie: refreshToken=...; HttpOnly; SameSite=Strict; Path=/api/v1/auth` header (see ADR/`docs/api-contracts.md`).
 
 ---
 
@@ -50,8 +51,8 @@ Authenticate a registered, active user using email and password. Returns a short
 | REQ-006 | Verify password using `IPasswordHasher.Verify(plaintext, storedHash)` — mismatch returns `Error.Validation(InvalidCredentials)` |
 | REQ-007 | On success: generate access token via `ITokenService.GenerateAccessToken(userId, email, role)` |
 | REQ-008 | On success: generate refresh token via `ITokenService.GenerateRefreshToken()`, hash it via `ITokenService.HashToken()`, store hash + 30-day expiry on `UserEntity` via `SetRefreshToken()` |
-| REQ-009 | Return raw (unhashed) refresh token in the response — never the hash |
-| REQ-010 | Response contains `accessToken`, `refreshToken`, and `user` (UserResponse) |
+| REQ-009 | Return raw (unhashed) refresh token — never the hash. Handler returns it on `LoginResponse`; the API endpoint sets it as an `httpOnly` cookie instead of including it in the JSON body |
+| REQ-010 | Handler response (`LoginResponse`) contains `accessToken`, `refreshToken`, and `user`; the HTTP response body (`AuthTokenResponse`) exposes only `accessToken` and `user` |
 | REQ-011 | `UserEntity` must expose `RefreshTokenHash` and `RefreshTokenExpiry` properties, and a `SetRefreshToken(string hash, DateTimeOffset expiry)` method |
 
 ---

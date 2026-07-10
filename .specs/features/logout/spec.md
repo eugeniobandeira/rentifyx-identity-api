@@ -15,14 +15,15 @@ Invalidates the user's current refresh token by clearing it from `UserEntity`. T
 
 ```json
 {
-  "email": "user@example.com",
-  "refreshToken": "<raw_refresh_token>"
+  "email": "user@example.com"
 }
 ```
 
+The `refreshToken` is read from the `refreshToken` `httpOnly` cookie, not the body. Client must send the request with `credentials: 'include'`. A missing cookie is treated as "already logged out" (204, handler not invoked).
+
 ### Response — 204 No Content
 
-Empty body.
+Empty body. The `refreshToken` cookie is cleared (`Set-Cookie` with expired `Max-Age`).
 
 ---
 
@@ -38,6 +39,7 @@ Empty body.
 | REQ-006 | On valid token match: call `user.ClearRefreshToken()`, persist via `UpdateAsync`, return `Success` (204) |
 | REQ-007 | `UserEntity` must expose a `ClearRefreshToken()` method that nullifies `RefreshTokenHash` and `RefreshTokenExpiry` |
 | REQ-008 | Logout is idempotent — all non-validation paths return 204 |
+| REQ-009 | API layer: if the `refreshToken` cookie is missing, return 204 immediately without invoking the handler (still deletes the cookie) — keeps logout idempotent even after the cookie was already cleared by a prior logout |
 
 ---
 
