@@ -1,7 +1,9 @@
 using System.Globalization;
+using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
 using RentifyxIdentity.Domain.ValueObjects;
+using RentifyxIdentity.Infrastructure.Constants;
 using RentifyxIdentity.Infrastructure.Models;
 
 namespace RentifyxIdentity.Infrastructure.Mapping;
@@ -10,7 +12,7 @@ internal static class UserDynamoDbMapper
 {
     public static UserDynamoDbItem ToItem(UserEntity entity)
     {
-        string pk = $"USER#{entity.Id}";
+        string pk = $"{DynamoDbConstants.UserKeyPrefix}{entity.Id}";
 
         return new UserDynamoDbItem
         {
@@ -34,7 +36,7 @@ internal static class UserDynamoDbMapper
             FailedLoginAttempts = entity.FailedLoginAttempts,
             LockoutUntilEpoch = entity.LockoutUntil?.ToUnixTimeSeconds(),
             Ttl = entity.Status == UserStatus.PendingVerification
-                ? DateTimeOffset.UtcNow.AddHours(48).ToUnixTimeSeconds()
+                ? DateTimeOffset.UtcNow.AddHours(DynamoDbConstants.PendingVerificationTtlHours).ToUnixTimeSeconds()
                 : null
         };
     }
@@ -43,7 +45,7 @@ internal static class UserDynamoDbMapper
     {
         Email email = Email.Create(item.Email);
 
-        TaxDocument taxId = string.Equals(item.TaxId, "ANONYMIZED", StringComparison.OrdinalIgnoreCase)
+        TaxDocument taxId = string.Equals(item.TaxId, AnonymizationConstants.Marker, StringComparison.OrdinalIgnoreCase)
             ? TaxDocument.CreateAnonymized()
             : TaxDocument.Create(item.TaxId);
 

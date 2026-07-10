@@ -20,7 +20,7 @@ public sealed class LoginHandler(
     IValidator<LoginRequest> validator,
     ILogger<LoginHandler> logger) : IHandler<LoginRequest, LoginResponse>
 {
-    private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(30);
+    private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(TokenPolicyConstants.RefreshTokenDays);
 
     public async Task<ErrorOr<LoginResponse>> Handle(
         LoginRequest request,

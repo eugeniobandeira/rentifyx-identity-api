@@ -1,3 +1,5 @@
+using RentifyxIdentity.Domain.Constants;
+
 namespace RentifyxIdentity.Api.Extensions;
 
 internal static class CorsExtension
@@ -19,7 +21,7 @@ internal static class CorsExtension
                       .AllowAnyHeader()
                       .AllowAnyMethod()
                       .AllowCredentials()
-                      .WithExposedHeaders("X-Correlation-Id")
+                      .WithExposedHeaders(CorrelationIdConstants.HeaderName)
                       .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
             });
         });

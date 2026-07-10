@@ -33,7 +33,7 @@ public sealed class UserRepository : IUserRepository
         Guid id,
         CancellationToken ct = default)
     {
-        string pk = $"USER#{id}";
+        string pk = $"{DynamoDbConstants.UserKeyPrefix}{id}";
         UserDynamoDbItem? item = await _context.LoadAsync<UserDynamoDbItem>(
             pk,
             pk,
@@ -47,8 +47,8 @@ public sealed class UserRepository : IUserRepository
         CancellationToken ct = default)
     {
         return await QueryByGsiAsync(
-            indexName: "GSI_Email",
-            gsiAttribute: "Email",
+            indexName: DynamoDbConstants.GsiEmail,
+            gsiAttribute: DynamoDbConstants.EmailAttribute,
             gsiValue: email.ToLowerInvariant(),
             ct);
     }
@@ -58,8 +58,8 @@ public sealed class UserRepository : IUserRepository
         CancellationToken ct = default)
     {
         return await QueryByGsiAsync(
-            indexName: "GSI_TaxId",
-            gsiAttribute: "TaxId",
+            indexName: DynamoDbConstants.GsiTaxId,
+            gsiAttribute: DynamoDbConstants.TaxIdAttribute,
             gsiValue: taxId,
             ct);
     }
@@ -73,7 +73,7 @@ public sealed class UserRepository : IUserRepository
         UserEntity entity,
         CancellationToken ct = default)
     {
-        string pk = $"USER#{entity.Id}";
+        string pk = $"{DynamoDbConstants.UserKeyPrefix}{entity.Id}";
         await _context.DeleteAsync<UserDynamoDbItem>(
             pk,
             pk,

@@ -1,3 +1,4 @@
+using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Enums;
 using RentifyxIdentity.Domain.ValueObjects;
 
@@ -87,8 +88,8 @@ public sealed class UserEntity
     public void RecordFailedLogin(DateTimeOffset now)
     {
         FailedLoginAttempts++;
-        if (FailedLoginAttempts >= 5 && !LockoutUntil.HasValue)
-            LockoutUntil = now.AddMinutes(15);
+        if (FailedLoginAttempts >= UserPolicyConstants.MaxFailedLoginAttempts && !LockoutUntil.HasValue)
+            LockoutUntil = now.AddMinutes(UserPolicyConstants.LockoutDurationMinutes);
     }
 
     public void ClearLockout()
@@ -144,8 +145,8 @@ public sealed class UserEntity
     public void Anonymize()
     {
         Status = UserStatus.Deleted;
-        Email = Email.Create($"deleted_{Id}@anonymized.local");
+        Email = Email.Create(string.Format(System.Globalization.CultureInfo.InvariantCulture, AnonymizationConstants.EmailPattern, Id));
         TaxId = TaxDocument.CreateAnonymized();
-        PasswordHash = Password.FromHash("ANONYMIZED");
+        PasswordHash = Password.FromHash(AnonymizationConstants.Marker);
     }
 }

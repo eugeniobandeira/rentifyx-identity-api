@@ -3,11 +3,15 @@ using Amazon.SimpleEmailV2.Model;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RentifyxIdentity.Domain.Interfaces.Users;
+using RentifyxIdentity.Infrastructure.Constants;
 
 namespace RentifyxIdentity.Infrastructure.Services;
 
 public sealed class EmailService : IEmailService
 {
+    private const string VerificationEmailSubject = "Confirm your email — RentifyX";
+    private const string PasswordResetEmailSubject = "Password reset — RentifyX";
+
     private readonly IAmazonSimpleEmailServiceV2 _sesClient;
     private readonly string _fromAddress;
     private readonly ILogger<EmailService> _logger;
@@ -18,8 +22,8 @@ public sealed class EmailService : IEmailService
         ILogger<EmailService> logger)
     {
         _sesClient = sesClient;
-        _fromAddress = configuration["Ses:FromAddress"]
-            ?? throw new InvalidOperationException("Ses:FromAddress is not configured.");
+        _fromAddress = configuration[ConfigurationKeys.SesFromAddress]
+            ?? throw new InvalidOperationException($"{ConfigurationKeys.SesFromAddress} is not configured.");
         _logger = logger;
     }
 
@@ -30,7 +34,7 @@ public sealed class EmailService : IEmailService
     {
         SendEmailRequest request = BuildRequest(
             recipient,
-            subject: "Confirm your email — RentifyX",
+            subject: VerificationEmailSubject,
             htmlBody: $"<p>Your verification token: <strong>{token}</strong></p>");
 
         SendEmailResponse response = await _sesClient.SendEmailAsync(request, ct);
@@ -48,7 +52,7 @@ public sealed class EmailService : IEmailService
     {
         SendEmailRequest request = BuildRequest(
             recipient,
-            subject: "Password reset — RentifyX",
+            subject: PasswordResetEmailSubject,
             htmlBody: $"<p>Your password reset token: <strong>{token}</strong></p>");
 
         SendEmailResponse response = await _sesClient.SendEmailAsync(request, ct);

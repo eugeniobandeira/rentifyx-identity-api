@@ -4,7 +4,9 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Interfaces.Users;
+using RentifyxIdentity.Infrastructure.Constants;
 
 namespace RentifyxIdentity.Infrastructure.Services;
 
@@ -17,10 +19,10 @@ public sealed class TokenService : ITokenService
     {
         _configuration = configuration;
 
-        string? pem = configuration["Jwt:PrivateKeyPem"];
+        string? pem = configuration[ConfigurationKeys.JwtPrivateKeyPem];
 
         if (string.IsNullOrWhiteSpace(pem))
-            throw new InvalidOperationException("Jwt:PrivateKeyPem is not configured.");
+            throw new InvalidOperationException($"{ConfigurationKeys.JwtPrivateKeyPem} is not configured.");
 
         _rsa = RSA.Create();
         _rsa.ImportFromPem(pem.AsSpan());
@@ -39,15 +41,15 @@ public sealed class TokenService : ITokenService
         List<Claim> claims =
         [
             new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new Claim("email", email),
+            new Claim(JwtRegisteredClaimNames.Email, email),
             new Claim("role", role)
         ];
 
         JwtSecurityToken token = new(
-            issuer: _configuration["Jwt:Issuer"],
-            audience: _configuration["Jwt:Audience"],
+            issuer: _configuration[ConfigurationKeys.JwtIssuer],
+            audience: _configuration[ConfigurationKeys.JwtAudience],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(15),
+            expires: DateTime.UtcNow.AddMinutes(TokenPolicyConstants.AccessTokenMinutes),
             signingCredentials: signingCreds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
@@ -58,10 +60,10 @@ public sealed class TokenService : ITokenService
 
     public string HashToken(string rawToken)
     {
-        string? hmacKey = _configuration["Hmac:Key"];
+        string? hmacKey = _configuration[ConfigurationKeys.HmacKey];
 
         if (string.IsNullOrWhiteSpace(hmacKey))
-            throw new InvalidOperationException("Hmac:Key is not configured.");
+            throw new InvalidOperationException($"{ConfigurationKeys.HmacKey} is not configured.");
 
         byte[] key = Encoding.UTF8.GetBytes(hmacKey);
         using HMACSHA256 hmac = new(key);

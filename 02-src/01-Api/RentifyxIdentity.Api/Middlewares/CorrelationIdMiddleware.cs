@@ -6,7 +6,7 @@ namespace RentifyxIdentity.Api.Middlewares;
 
 public sealed class CorrelationIdMiddleware(RequestDelegate next)
 {
-    private const string CorrelationIdHeader = "X-Correlation-Id";
+    private const string CorrelationIdHeader = CorrelationIdConstants.HeaderName;
     private const int MaxIdLength = 64;
 
     public async Task InvokeAsync(HttpContext context)

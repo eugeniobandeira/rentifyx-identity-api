@@ -6,6 +6,7 @@ using RentifyxIdentity.Application.Extensions;
 using RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword.Request;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
+using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Interfaces.Users;
 
 namespace RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword;
@@ -17,7 +18,7 @@ public sealed class ForgotPasswordHandler(
     IValidator<ForgotPasswordRequest> validator,
     ILogger<ForgotPasswordHandler> logger) : IHandler<ForgotPasswordRequest, Success>
 {
-    private static readonly TimeSpan TokenLifetime = TimeSpan.FromHours(1);
+    private static readonly TimeSpan TokenLifetime = TimeSpan.FromHours(TokenPolicyConstants.PasswordResetHours);
 
     public async Task<ErrorOr<Success>> Handle(
         ForgotPasswordRequest request,

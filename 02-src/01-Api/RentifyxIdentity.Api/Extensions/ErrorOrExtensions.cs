@@ -1,4 +1,5 @@
 ﻿using ErrorOr;
+using RentifyxIdentity.Api.Constants;
 using RentifyxIdentity.Domain.Constants;
 
 namespace RentifyxIdentity.Api.Extensions;
@@ -31,22 +32,12 @@ internal static class ErrorOrExtensions
             return Results.ValidationProblem(
                 validationErrors,
                 statusCode: statusCode,
-                extensions: new Dictionary<string, object?> { ["correlationId"] = correlationId });
+                extensions: new Dictionary<string, object?> { [ProblemDetailsKeys.CorrelationId] = correlationId });
         }
 
         return Results.Problem(
             title: firstError.Description,
             statusCode: statusCode,
-            extensions: new Dictionary<string, object?> { ["correlationId"] = correlationId });
+            extensions: new Dictionary<string, object?> { [ProblemDetailsKeys.CorrelationId] = correlationId });
     }
-
-    public static IResult ToResult<T>(this ErrorOr<T> result, HttpContext httpContext)
-        => result.Match(
-            value => Results.Ok(value),
-            errors => errors.ToProblem(httpContext));
-
-    public static IResult ToCreatedResult<T>(this ErrorOr<T> result, string uri, HttpContext httpContext)
-        => result.Match(
-            value => Results.Created(uri, value),
-            errors => errors.ToProblem(httpContext));
 }
