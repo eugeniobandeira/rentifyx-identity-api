@@ -60,7 +60,7 @@ data "aws_iam_policy_document" "identity_api" {
 
     actions = ["secretsmanager:GetSecretValue"]
 
-    resources = var.secret_arns
+    resources = [var.secret_arn]
   }
 
   statement {

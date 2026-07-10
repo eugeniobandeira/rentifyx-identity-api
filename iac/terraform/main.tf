@@ -44,7 +44,7 @@ module "cognito" {
 
 module "secrets" {
   source      = "./modules/secrets"
-  prefix      = local.prefix
+  app_name    = var.app_name
   environment = var.environment
   kms_key_arn = module.kms.key_arn
 }
@@ -76,7 +76,7 @@ module "iam" {
   prefix                    = local.prefix
   table_arn                 = module.dynamodb.table_arn
   kms_key_arn               = module.kms.key_arn
-  secret_arns               = [module.secrets.jwt_secret_arn, module.secrets.hmac_secret_arn, module.secrets.ses_secret_arn]
+  secret_arn                = module.secrets.secret_arn
   ses_identity_arn          = module.ses.identity_arn
   eks_oidc_provider_arn     = var.eks_oidc_provider_arn
   eks_oidc_provider_url     = var.eks_oidc_provider_url
