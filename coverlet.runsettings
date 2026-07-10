@@ -10,12 +10,6 @@
           <!-- Exclude Example scaffold files (living pattern guide, not features) and
                Infrastructure stubs that throw NotImplementedException until E-04 (DynamoDB wiring) -->
           <ExcludeByFile>
-            **/Examples/**/*.cs,
-            **/Entities/ExampleEntity.cs,
-            **/Constants/ExampleErrorCodes.cs,
-            **/Common/Response/ApiListResponse.cs,
-            **/Common/Mapper/ApiListResponseMapper.cs,
-            **/Repositories/ExampleRepository.cs,
             **/Repositories/UserRepository.cs,
             **/Services/EmailService.cs
           </ExcludeByFile>
