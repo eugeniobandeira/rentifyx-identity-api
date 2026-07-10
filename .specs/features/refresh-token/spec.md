@@ -15,19 +15,19 @@ Issues a new access token and rotates the refresh token for an authenticated use
 
 ```json
 {
-  "email": "user@example.com",
-  "refreshToken": "<raw_refresh_token>"
+  "email": "user@example.com"
 }
 ```
 
+The current `refreshToken` is read from the `refreshToken` `httpOnly` cookie, not the body. Client must send the request with `credentials: 'include'`.
+
 ### Response — 200 OK
 
-Same shape as `/auth/login`:
+Same body shape as `/auth/login` (`AuthTokenResponse`):
 
 ```json
 {
   "accessToken": "<new_access_token>",
-  "refreshToken": "<new_raw_refresh_token>",
   "user": {
     "id": "uuid",
     "email": "user@example.com",
@@ -37,6 +37,8 @@ Same shape as `/auth/login`:
   }
 }
 ```
+
+The rotated refresh token is set via `Set-Cookie`, not returned in the body.
 
 ---
 
@@ -52,8 +54,9 @@ Same shape as `/auth/login`:
 | REQ-006 | If `RefreshTokenHash` is null or `RefreshTokenExpiry` is past, return `Error.Validation(TokenInvalidOrExpired)` |
 | REQ-007 | Verify token via `ITokenService.VerifyTokenHash(rawToken, storedHash)` — mismatch returns `Error.Validation(TokenInvalidOrExpired)` |
 | REQ-008 | On success: generate new access token and rotate refresh token (new raw token → hash → `SetRefreshToken` with 30-day expiry) |
-| REQ-009 | Return raw (unhashed) new refresh token in the response |
-| REQ-010 | Response shape is identical to `LoginResponse` (reuse) |
+| REQ-009 | Return raw (unhashed) new refresh token. Handler returns it on `LoginResponse`; the API endpoint sets it as an `httpOnly` cookie instead of including it in the JSON body |
+| REQ-010 | Handler response shape is identical to `LoginResponse` (reuse); HTTP response body (`AuthTokenResponse`) exposes only `accessToken` and `user` |
+| REQ-011 | API layer: if the `refreshToken` cookie is missing, pass an empty token to the handler, which fails validation (`RefreshToken` required) — 422 |
 
 ---
 
