@@ -17,7 +17,7 @@ Legend: `[P]` = safe to run in parallel with other `[P]` tasks in the same group
 
 ## Group 2 — Documentation & housekeeping (single PR, no code behavior change)
 
-### T-02 [P] — Refresh CLAUDE.md
+### T-02 [P] — Refresh CLAUDE.md ✅ DONE (2026-07-11)
 - **What:** Update the stale claims: CI gates/OWASP/Trivy status (done, not planned), ADR count
   (8 written, not just template), IaC status (done, not "Week 6 TBD")
 - **Where:** `CLAUDE.md`
@@ -25,7 +25,7 @@ Legend: `[P]` = safe to run in parallel with other `[P]` tasks in the same group
 - **Done when:** CLAUDE.md matches `.specs/project/STATE.md` + `ROADMAP.md` on all four points
 - **Gate:** manual diff review against STATE.md/ROADMAP.md
 
-### T-03 [P] — Commit `docs/api-contracts.md`
+### T-03 [P] — Commit `docs/api-contracts.md` ✅ DONE (2026-07-11)
 - **What:** `git add docs/api-contracts.md` and include in the next commit
 - **Where:** `docs/api-contracts.md`
 - **Depends on:** nothing (content already verified consistent with `CookieExtensions.cs`)
@@ -42,7 +42,7 @@ Legend: `[P]` = safe to run in parallel with other `[P]` tasks in the same group
 - **Gate:** `dotnet test` + coverage run still passes the 80% gate (these files are already
   well-tested per the assessment — removing the exclusion should not drop the gate, but confirm)
 
-### T-05 [P] — Write `docs/guides/adding-a-new-feature.md`
+### T-05 [P] — Write `docs/guides/adding-a-new-feature.md` ✅ DONE (2026-07-11)
 - **What:** Document the 7-step feature process from CLAUDE.md's "Adding a new feature" section,
   with a worked example pointing at the `register-user` feature as reference implementation
 - **Where:** new file `docs/guides/adding-a-new-feature.md`

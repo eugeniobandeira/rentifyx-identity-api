@@ -10,7 +10,10 @@ A production-grade Identity API covering:
 - AWS integration: Cognito, DynamoDB, SES, Secrets Manager, KMS
 - DevSecOps: OWASP ZAP, gitleaks, Trivy, coverage gate ≥80%
 
-The full 28-day plan is in `RentifyX_IdentityAPI_Plan.jsx`.
+The full 28-day plan is in `RentifyX_IdentityAPI_Plan.jsx`. For current progress, active
+decisions, and deferred work, `.specs/project/STATE.md` and `.specs/project/ROADMAP.md` are the
+living source of truth — this file describes conventions and should be updated when they change,
+but check STATE.md/ROADMAP.md before assuming something here reflects the current state.
 
 ## Tech stack
 
@@ -40,11 +43,11 @@ The full 28-day plan is in `RentifyX_IdentityAPI_Plan.jsx`.
   04-Repositories/    – Repository integration tests (Testcontainers)
   05-Integration/     – End-to-end via CustomWebApplicationFactory
 docs/
-  architecture/       – Architecture overview
-  decisions/          – ADRs (000-template exists; ADR-001 to 008 to be written)
+  architecture/       – Architecture overview (C4 context/container/component diagrams)
+  decisions/          – ADRs (000-template + ADR-001 to 008, all written)
   guides/             – adding-a-new-feature.md
-iac/                  – Terraform (to be implemented in Week 6)
-k8s/                  – Kustomize base + dev/prod overlays
+iac/                  – Terraform (DynamoDB, Cognito, SES, KMS, Secrets Manager, IAM modules — implemented in E-06)
+k8s/                  – Kustomize base + dev/prod overlays (deployment, HPA, SecretProviderClass — implemented in E-06)
 ```
 
 ## Key conventions
@@ -61,7 +64,10 @@ k8s/                  – Kustomize base + dev/prod overlays
 4. **Infrastructure** – implement repository/service in `Infrastructure/`
 5. **IoC** – register in `ApplicationDependencyInjection` or `InfrastructureDependencyInjection`
 6. **API** – add endpoint file implementing `IEndpoint` in `Api/Endpoints/{Group}/`
-   - No manual wiring needed: reflection auto-discovers all `IEndpoint` implementations
+   - No manual wiring needed for endpoints: reflection auto-discovers all `IEndpoint` implementations
+   - Validators and handlers, however, are registered explicitly in `ApplicationDependencyInjection`
+     (one `AddScoped<IValidator<T>, ...>` / `AddScoped<IHandler<...>>` line per feature) — reflection
+     was replaced here for explicitness (D-011 in `.specs/project/STATE.md`)
    - All endpoints land under `/api/v1/` via `MapVersionedApi(1)`
 7. **Tests** – unit tests in `03-Handlers/` and `02-Validators/`; integration tests in `05-Integration/`
 
@@ -121,16 +127,19 @@ dotnet build RentifyxIdentity.slnx --configuration Release
 GitHub Actions (`ci.yml`) triggers on PRs to `main`:
 1. **Secret Scanning** – gitleaks with `.gitleaks.toml` (blocks if secrets found)
 2. **Build & Test** – restore → build Release → test
-
-Coverage gate (≥80%), OWASP dep-check, and Trivy scan are planned for Week 1 (T-018/019/020).
+3. **Coverage gate** – ReportGenerator merges `coverlet.collector` output; PR fails if line coverage < 80% (currently ~95.6%)
+4. **OWASP dependency-check** – `dependency-check/Dependency-Check_Action`, fails on CVSS ≥ 7 (suppressions in `.owasp-suppressions.xml`)
+5. **Trivy container scan** – `aquasecurity/trivy-action` on the built image, blocks on CRITICAL/HIGH
 
 ## Security rules
 
 - **Never** hardcode secrets. All sensitive config comes from AWS Secrets Manager.
 - No stack traces in error responses (`GlobalExceptionHandler` strips them).
 - Rate limiting is configured at the `v1` route group level.
-- CPF must be encrypted at rest via KMS before storing in DynamoDB.
 - Refresh tokens stored as hash (not plaintext), with DynamoDB TTL.
+- **Known gap**: TaxId (CPF/CNPJ) is currently stored as **plaintext** in DynamoDB (D-010 in
+  `.specs/project/STATE.md`). KMS encryption + HMAC blind index for lookup is deferred
+  (DEF-007) — do not assume it's already encrypted when working in this area.
 
 ## Test structure conventions
 
