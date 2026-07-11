@@ -80,6 +80,23 @@ public sealed class GetProfileHandlerTests
     }
 
     [Fact]
+    public async Task HappyPath_EssentialConsentGranted_ReturnsConsentFields()
+    {
+        UserEntity user = BuildUser();
+        user.SetConsent(DateTimeOffset.UtcNow);
+
+        _repositoryMock
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        ErrorOr<UserResponse> result = await _handler.Handle(new GetProfileRequest(user.Id));
+
+        result.IsError.Should().BeFalse();
+        result.Value.EssentialConsentGranted.Should().BeTrue();
+        result.Value.EssentialConsentGivenAt.Should().NotBeNull();
+    }
+
+    [Fact]
     public async Task SuspendedUser_ReturnsProfile()
     {
         UserEntity user = BuildUser(UserStatus.Suspended);

@@ -190,6 +190,23 @@ public sealed class ExportDataHandlerTests
     }
 
     [Fact]
+    public async Task HappyPath_MarketingConsentGranted_ReturnsMarketingConsentFields()
+    {
+        UserEntity user = BuildUser();
+        user.GrantMarketingConsent(DateTimeOffset.UtcNow);
+
+        _repositoryMock
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(user.Id));
+
+        result.IsError.Should().BeFalse();
+        result.Value.MarketingConsentGranted.Should().BeTrue();
+        result.Value.MarketingConsentGivenAt.Should().NotBeNull();
+    }
+
+    [Fact]
     public async Task ValidationFailure_ReturnsErrors_AndDoesNotCallRepository()
     {
         _validatorMock

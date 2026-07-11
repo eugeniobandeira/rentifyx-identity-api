@@ -20,8 +20,14 @@ public sealed class UserEntity
     public string? RefreshTokenHash { get; private set; }
     public DateTimeOffset? RefreshTokenExpiry { get; private set; }
     public DateTimeOffset? ConsentGivenAt { get; private set; }
+    public DateTimeOffset? EssentialConsentRevokedAt { get; private set; }
+    public DateTimeOffset? MarketingConsentGivenAt { get; private set; }
+    public DateTimeOffset? MarketingConsentRevokedAt { get; private set; }
     public int FailedLoginAttempts { get; private set; }
     public DateTimeOffset? LockoutUntil { get; private set; }
+
+    public bool IsEssentialConsentGranted => ConsentGivenAt.HasValue;
+    public bool IsMarketingConsentGranted => MarketingConsentGivenAt.HasValue;
 
     private UserEntity() { }
 
@@ -31,6 +37,32 @@ public sealed class UserEntity
     public void SetConsent(DateTimeOffset timestamp)
     {
         ConsentGivenAt = timestamp;
+    }
+
+    public void GrantEssentialConsent(DateTimeOffset now)
+    {
+        ConsentGivenAt = now;
+        EssentialConsentRevokedAt = null;
+        Status = UserStatus.Active;
+    }
+
+    public void RevokeEssentialConsent(DateTimeOffset now)
+    {
+        ConsentGivenAt = null;
+        EssentialConsentRevokedAt = now;
+        Suspend();
+    }
+
+    public void GrantMarketingConsent(DateTimeOffset now)
+    {
+        MarketingConsentGivenAt = now;
+        MarketingConsentRevokedAt = null;
+    }
+
+    public void RevokeMarketingConsent(DateTimeOffset now)
+    {
+        MarketingConsentGivenAt = null;
+        MarketingConsentRevokedAt = now;
     }
 
     public static UserEntity Create(Email email, TaxDocument taxId, Password passwordHash, UserRole role)
@@ -119,7 +151,10 @@ public sealed class UserEntity
         DateTimeOffset? refreshTokenExpiry,
         DateTimeOffset? consentGivenAt = null,
         int failedLoginAttempts = 0,
-        DateTimeOffset? lockoutUntil = null)
+        DateTimeOffset? lockoutUntil = null,
+        DateTimeOffset? essentialConsentRevokedAt = null,
+        DateTimeOffset? marketingConsentGivenAt = null,
+        DateTimeOffset? marketingConsentRevokedAt = null)
     {
         return new UserEntity
         {
@@ -135,6 +170,9 @@ public sealed class UserEntity
             PasswordResetTokenHash = passwordResetTokenHash,
             PasswordResetTokenExpiry = passwordResetTokenExpiry,
             RefreshTokenHash = refreshTokenHash,
+            EssentialConsentRevokedAt = essentialConsentRevokedAt,
+            MarketingConsentGivenAt = marketingConsentGivenAt,
+            MarketingConsentRevokedAt = marketingConsentRevokedAt,
             RefreshTokenExpiry = refreshTokenExpiry,
             ConsentGivenAt = consentGivenAt,
             FailedLoginAttempts = failedLoginAttempts,

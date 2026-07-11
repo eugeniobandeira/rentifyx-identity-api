@@ -284,5 +284,23 @@ namespace RentifyxIdentity.Domain.MessageResource {
                 return ResourceManager.GetString("CONSENT_REQUIRED", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Purpose is required..
+        /// </summary>
+        public static string CONSENT_PURPOSE_REQUIRED {
+            get {
+                return ResourceManager.GetString("CONSENT_PURPOSE_REQUIRED", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Purpose must be one of: Essential, Marketing..
+        /// </summary>
+        public static string CONSENT_PURPOSE_INVALID {
+            get {
+                return ResourceManager.GetString("CONSENT_PURPOSE_INVALID", resourceCulture);
+            }
+        }
     }
 }

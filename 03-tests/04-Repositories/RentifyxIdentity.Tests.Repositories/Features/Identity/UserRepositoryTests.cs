@@ -238,6 +238,95 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
         }
     }
 
+    [Fact]
+    public async Task UpdateAsync_PersistsGrantedEssentialConsent()
+    {
+        UserEntity user = BuildUser("consent-grant@example.com", "77788899900");
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        try
+        {
+            await _sut.AddAsync(user);
+
+            user.RevokeEssentialConsent(now);
+            user.GrantEssentialConsent(now);
+            await _sut.UpdateAsync(user);
+
+            UserEntity? retrieved = await _sut.GetByIdAsync(user.Id);
+
+            retrieved.Should().NotBeNull();
+            retrieved!.ConsentGivenAt.Should().NotBeNull();
+            retrieved.ConsentGivenAt!.Value.Should().BeCloseTo(now, TimeSpan.FromSeconds(2));
+            retrieved.EssentialConsentRevokedAt.Should().BeNull();
+        }
+        finally
+        {
+            await DeleteUserAsync(user.Id);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAsync_PersistsRevokedEssentialConsent()
+    {
+        UserEntity user = BuildUser("consent-revoke@example.com", "88899900011");
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        try
+        {
+            await _sut.AddAsync(user);
+
+            user.RevokeEssentialConsent(now);
+            await _sut.UpdateAsync(user);
+
+            UserEntity? retrieved = await _sut.GetByIdAsync(user.Id);
+
+            retrieved.Should().NotBeNull();
+            retrieved!.ConsentGivenAt.Should().BeNull();
+            retrieved.EssentialConsentRevokedAt.Should().NotBeNull();
+            retrieved.EssentialConsentRevokedAt!.Value.Should().BeCloseTo(now, TimeSpan.FromSeconds(2));
+        }
+        finally
+        {
+            await DeleteUserAsync(user.Id);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAsync_PersistsMarketingConsentGrantAndRevoke()
+    {
+        UserEntity user = BuildUser("marketing-consent@example.com", "99900011122");
+        DateTimeOffset grantedAt = DateTimeOffset.UtcNow;
+
+        try
+        {
+            await _sut.AddAsync(user);
+
+            user.GrantMarketingConsent(grantedAt);
+            await _sut.UpdateAsync(user);
+
+            UserEntity? afterGrant = await _sut.GetByIdAsync(user.Id);
+
+            afterGrant.Should().NotBeNull();
+            afterGrant!.MarketingConsentGivenAt.Should().NotBeNull();
+            afterGrant.MarketingConsentGivenAt!.Value.Should().BeCloseTo(grantedAt, TimeSpan.FromSeconds(2));
+
+            DateTimeOffset revokedAt = DateTimeOffset.UtcNow;
+            afterGrant.RevokeMarketingConsent(revokedAt);
+            await _sut.UpdateAsync(afterGrant);
+
+            UserEntity? afterRevoke = await _sut.GetByIdAsync(user.Id);
+
+            afterRevoke.Should().NotBeNull();
+            afterRevoke!.MarketingConsentGivenAt.Should().BeNull();
+            afterRevoke.MarketingConsentRevokedAt.Should().NotBeNull();
+            afterRevoke.MarketingConsentRevokedAt!.Value.Should().BeCloseTo(revokedAt, TimeSpan.FromSeconds(2));
+        }
+        finally
+        {
+            await DeleteUserAsync(user.Id);
+        }
+    }
+
     private static UserEntity BuildUser(
         string email,
         string taxId)

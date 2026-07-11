@@ -31,6 +31,9 @@ public sealed class UserDynamoDbItem
     public string? RefreshTokenHash { get; set; }
     public string? RefreshTokenExpiry { get; set; }
     public string? ConsentGivenAt { get; set; }
+    public string? EssentialConsentRevokedAt { get; set; }
+    public string? MarketingConsentGivenAt { get; set; }
+    public string? MarketingConsentRevokedAt { get; set; }
     public int FailedLoginAttempts { get; set; }
 
     [DynamoDBProperty("LockoutUntil")]

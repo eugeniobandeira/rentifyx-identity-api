@@ -53,6 +53,10 @@ public sealed class ExportDataHandler(
             user.Status.ToString(),
             user.CreatedAt,
             user.ConsentGivenAt,
+            user.EssentialConsentRevokedAt,
+            user.IsMarketingConsentGranted,
+            user.MarketingConsentGivenAt,
+            user.MarketingConsentRevokedAt,
             auditHistory
         );
     }

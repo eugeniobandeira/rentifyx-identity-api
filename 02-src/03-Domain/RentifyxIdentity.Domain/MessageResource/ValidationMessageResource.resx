@@ -113,4 +113,10 @@
   <data name="CONSENT_REQUIRED" xml:space="preserve">
     <value>You must provide consent to register.</value>
   </data>
+  <data name="CONSENT_PURPOSE_REQUIRED" xml:space="preserve">
+    <value>Purpose is required.</value>
+  </data>
+  <data name="CONSENT_PURPOSE_INVALID" xml:space="preserve">
+    <value>Purpose must be one of: Essential, Marketing.</value>
+  </data>
 </root>

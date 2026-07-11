@@ -5,5 +5,11 @@ public sealed record UserResponse(
     string Email,
     string Role,
     string Status,
-    DateTimeOffset CreatedAt
+    DateTimeOffset CreatedAt,
+    bool EssentialConsentGranted,
+    DateTimeOffset? EssentialConsentGivenAt,
+    DateTimeOffset? EssentialConsentRevokedAt,
+    bool MarketingConsentGranted,
+    DateTimeOffset? MarketingConsentGivenAt,
+    DateTimeOffset? MarketingConsentRevokedAt
 );
