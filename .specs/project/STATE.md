@@ -2,11 +2,26 @@
 
 ## Last Updated
 
-2026-06-30
+2026-07-11
 
 ## Current Work
 
 v1.1.0 COMPLETE (2026-06-30) — login lockout, LGPD audit completeness, Aspire+LocalStack one-liner delivered. Tagged v1.1.0. Outbox (DEF-005) and TaxId KMS (DEF-007) deferred post-v1.1.0.
+
+Post-v1.1.0 assessment (2026-07-11) produced two new feature specs:
+`.specs/features/post-assessment-hardening/` (doc drift, coverage polish, test file split,
+LGPD consent revoke, TaxId KMS) and `.specs/features/pf-pj-customer-support/` (see D-018 —
+PJ/CNPJ was never modeled as a first-class concept beyond digit-length detection; not yet
+implemented).
+
+R-03 (LGPD granular consent revoke) is COMPLETE (2026-07-11) — went through discuss → design →
+tasks → execute. All 7 tasks (T-01 to T-07) done: `UserEntity` grant/revoke mutations,
+`GetConsent`/`UpdateConsent` handlers + endpoints (`GET`/`PUT /api/v1/users/me/consent`),
+DynamoDB persistence, `docs/api-contracts.md` updated. Also done from the same feature's `tasks.md` (housekeeping): R-01 (CLAUDE.md refresh), R-02
+(api-contracts.md committed), R-06 (adding-a-new-feature guide). Still open from `tasks.md`:
+R-05 (remove stale coverlet exclusions + untrack `.csproj.user`), R-07 (split
+`LgpdEndpointTests.cs` by endpoint), R-08 (coverage polish); and R-04 from the hardening spec
+proper (TaxId KMS — needs its own design pass). `pf-pj-customer-support` not started.
 
 ## Decisions
 
@@ -46,6 +61,10 @@ _None active._
 | D-015 | `EmailService` validates `Ses:FromAddress` at construction time | Fail-fast pattern: invalid config surfaces at startup, not at the first email send | 2026-06-30 |
 | D-016 | DynamoDB table requires SK as range key (`USER#{id}`) equal to PK | `[DynamoDBRangeKey("SK")]` on `UserDynamoDbItem` requires the table to define SK; enables future composite-key access patterns (e.g. audit log items on same table) | 2026-06-30 |
 | D-017 | Login lockout state stored as `FailedLoginAttempts` (int) + `LockoutUntil` (DateTimeOffset?) on `UserEntity` | Co-locates lockout state with the user record; single `UpdateAsync` call; `LockoutUntilEpoch` (Unix seconds) mapped in `UserDynamoDbItem` for DynamoDB TTL auto-cleanup compatibility | 2026-06-30 |
+| D-018 | PJ (CNPJ) support exists only at `TaxDocument` VO level (length-based detection, D-002) — no `CustomerType`, no company name, no legal representative anywhere in `RegisterUserRequest`/`UserEntity`. Confirmed by grep: zero references to `Cnpj`/`CompanyName`/`TaxDocumentType` outside the VO and DynamoDB mapping files. | Flagged during 2026-07-11 assessment when asked to verify PF/PJ coverage — a rental marketplace needs a named person of record even for business accounts (LGPD protects the natural person's data, not the CNPJ itself). New feature spec created: `pf-pj-customer-support`. | 2026-07-11 |
+| D-019 | LGPD consent revoke (R-03) scope expanded from all-or-nothing to per-purpose (Essential, Marketing), via `discuss` on `post-assessment-hardening` feature | Revoking Essential suspends the account (reuses existing `Suspend()`/`UserStatus.Suspended` gating already enforced across Login/RefreshToken/ResetPassword/VerifyEmail); revoking Marketing only affects `rentifyx-communications-api` sends, no account impact. Revocation ≠ deletion — data retained, `DeleteAccount` stays the only anonymization path. Re-granting Essential reactivates the account. Existing users: Essential inherited from current `ConsentGivenAt`, Marketing defaults to not-granted (no retroactive assumption). Full details in `.specs/features/post-assessment-hardening/context.md`. | 2026-07-11 |
+| D-020 | `rentifyx-communications-api` is a separate microservice owning marketing/comms sends; identity-api is only the consent source of truth | Surfaced during D-019 discussion — marketing consent has no local sender (`IEmailService` here only does transactional auth email). Cross-service notification of consent changes should ride the deferred Outbox (DEF-005) once it exists; until then that service must poll/query consent state. | 2026-07-11 |
+| D-021 | R-03 design: keep `ConsentGivenAt` untouched (means "Essential granted at"); add `EssentialConsentRevokedAt`, `MarketingConsentGivenAt`, `MarketingConsentRevokedAt` to `UserEntity`/`UserDynamoDbItem`; "granted" = timestamp present, no separate bool | Avoids renaming a field used across 6+ files for no functional gain; matches existing `SetConsent` single-timestamp convention. Single `PUT /users/me/consent` with `{Purpose, Granted}` body instead of 4 separate endpoints. No Outbox/event dispatch to `rentifyx-communications-api` yet — deferred until DEF-005 ships. Full design: `.specs/features/post-assessment-hardening/design-consent-revoke.md` | 2026-07-11 |
 
 ## Lessons Learned
 
@@ -57,6 +76,10 @@ _None active._
 | L-004 | `Aspire.Hosting.AWS` 13.x is CDK-based and not compatible with the standard Aspire hosting model. The correct Aspire-compatible package is 9.3.1. | Pin to 9.3.1; do not follow the latest NuGet version for this package. |
 | L-005 | `Testcontainers.LocalStack` 4.x deprecates the parameterless `LocalStackBuilder()` ctor. With `TreatWarningsAsErrors=true`, use `new LocalStackBuilder("localstack/localstack:latest")` instead. | Surfaced in E-04 repository integration tests. |
 | L-006 | Singletons that require secrets at construction time (e.g., `TokenService` reading `Jwt:PrivateKeyPem`) will crash integration tests unless a `FakeTokenService` is registered in `CustomWebApplicationFactory`. The real service must be explicitly overridden — DI does not auto-substitute. | Caused 7 integration test failures at the end of E-04 until `FakeTokenService` was added. |
+| L-007 | `Agent` calls with `isolation: "worktree"` check out a new git worktree from the last **commit** — they do NOT see uncommitted changes sitting in the main working tree. Launching parallel worktree tasks that all depend on the same not-yet-committed prerequisite (e.g., three tasks all needing an uncommitted `UserEntity` change) causes each worktree to independently re-derive the missing piece, often diverging from the intended design. Commit the prerequisite first, or avoid `isolation: "worktree"` for tasks with a shared uncommitted dependency. | Happened launching T-02/T-03/T-05 of the LGPD consent feature in parallel right after T-01 (`UserEntity` changes) instead of committing T-01 first; required manual reconciliation of 3 worktrees' domain-layer edits. |
+| L-008 | `dotnet build` via the CLI does NOT regenerate a `.resx`'s `Designer.cs` — `ResXFileCodeGenerator` is a Visual Studio single-file-generator convention, not an MSBuild target invoked by `dotnet build`/`dotnet test`. Adding a new resx key requires manually adding the matching property to `Designer.cs` in the same style as existing entries. | Discovered adding `CONSENT_PURPOSE_REQUIRED`/`CONSENT_PURPOSE_INVALID` to `ValidationMessageResource.resx` — first build failed with CS0117 until Designer.cs was hand-edited. |
+| L-009 | All of `03-tests/05-Integration`'s `[Collection("Integration")]` test classes share ONE `CustomWebApplicationFactory` (one in-process app host), and the API's rate limiter (`RateLimitExtension.cs`) is a single global, non-partitioned fixed-window bucket (100 req/60s) — every test class's HTTP calls draw from that same budget for the whole test run. A new test class with enough real requests can push unrelated, already-passing tests in other classes over the limit (429). `IConfiguration` override via `ConfigureAppConfiguration` does NOT reach the limiter (root cause not diagnosed — not worth the time sunk). Re-registering `services.AddRateLimiter(...)` from the test project does not compile (`Microsoft.AspNetCore.RateLimiting` types aren't resolvable from a plain `Microsoft.NET.Sdk` test project even with an explicit `FrameworkReference`). Working fix: give a request-heavy new test class its own `IClassFixture<CustomWebApplicationFactory>` instead of joining the shared collection, AND add `[assembly: CollectionBehavior(DisableTestParallelization = true)]` (two `WebApplicationFactory<Program>` instances starting concurrently crash host startup with "entry point exited without ever building an IHost"). | Surfaced adding `ConsentEndpointTests.cs` (T-06 of the LGPD consent feature) — broke 6 unrelated tests in `RegisterEndpointTests`/`VerifyEmailEndpointTests` until isolated. |
+| L-010 | In this sandbox, `03-tests/04-Repositories` (`UserRepositoryTests`, Testcontainers + `LocalStack`) fails ALL 13 tests with `Amazon.DynamoDBv2.AmazonDynamoDBException: The security token included in the request is invalid` during `LocalStackFixture.CreateTableAsync()` — including the 10 pre-existing tests, not just new ones, so it's an environment issue, not a code regression. Confirmed a real ephemeral container IS created each time (~42s startup, consistent with genuine boot), so it's not a "container never started" problem — the AWS SDK call against the freshly-started container is what's rejected. Restarting the docker-compose stack clean (`docker compose down --remove-orphans && docker compose up -d --build`) did not fix it. Not fully root-caused (possibly global `AWS_*` env vars in the shell interfering with the SDK's credential resolution ahead of the explicit `BasicAWSCredentials("test","test")` in `LocalStackFixture.cs`) — diagnosis stopped at the user's request. | Discovered verifying repository tests for PR #26 (LGPD granular consent). Verify `UserRepositoryTests` on a different machine/CI before relying on a green run in this sandbox. |
 
 ## Preferences
 

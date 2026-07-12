@@ -245,6 +245,34 @@
 
 ---
 
+## v1.2.0 — Post-Assessment Hardening & PF/PJ Support (Planned)
+
+**Goal:** Close doc-drift and tracked gaps from the 2026-07-11 assessment; make PJ (business/CNPJ)
+customers a first-class, intentionally modeled concept alongside PF (individual/CPF).
+**Status:** Specced, not started. See `.specs/features/post-assessment-hardening/` and
+`.specs/features/pf-pj-customer-support/`.
+
+### Features
+
+**Post-Assessment Hardening** — SPECCED
+
+- CLAUDE.md refresh to match STATE.md/ROADMAP.md reality
+- Commit `docs/api-contracts.md`; write missing `docs/guides/adding-a-new-feature.md`
+- Split `LgpdEndpointTests.cs` into per-endpoint files
+- Remove stale `coverlet.runsettings` exclusions; untrack `.csproj.user`
+- Coverage polish on `PasswordHasher`/`CorrelationIdMiddleware`/`ErrorOrExtensions`/`OpenApiExtensions`
+- LGPD consent view/revoke endpoint — **needs a `discuss` pass first** (does revoke suspend the account?)
+- TaxId KMS encryption + HMAC blind index (DEF-007) — **needs a `design` pass first**, sequenced after PF/PJ support
+
+**PF/PJ Customer Support** — SPECCED (new gap, D-018)
+
+- `CustomerType` (Individual/Business) as an explicit field, not inferred from TaxId digit count
+- `FullName` for PF; `CompanyLegalName` + `LegalRepresentativeName` for PJ
+- Validator cross-checks declared type against TaxId format
+- DynamoDB item + LGPD export/profile responses updated accordingly; existing records default to `Individual`
+
+---
+
 ## Future Considerations
 
 - Social login (OAuth — Google, GitHub, Apple)

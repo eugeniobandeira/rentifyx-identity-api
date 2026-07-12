@@ -10,5 +10,9 @@ public sealed record UserDataExportResponse(
     string Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset? ConsentGivenAt,
+    DateTimeOffset? EssentialConsentRevokedAt,
+    bool MarketingConsentGranted,
+    DateTimeOffset? MarketingConsentGivenAt,
+    DateTimeOffset? MarketingConsentRevokedAt,
     IReadOnlyList<AuditLogEntryRecord> AuditHistory
 );

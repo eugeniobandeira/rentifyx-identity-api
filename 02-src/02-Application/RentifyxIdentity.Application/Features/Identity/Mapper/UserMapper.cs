@@ -10,6 +10,12 @@ public static class UserMapper
             entity.Email.ToString(),
             entity.Role.ToString(),
             entity.Status.ToString(),
-            entity.CreatedAt
+            entity.CreatedAt,
+            entity.IsEssentialConsentGranted,
+            entity.ConsentGivenAt,
+            entity.EssentialConsentRevokedAt,
+            entity.IsMarketingConsentGranted,
+            entity.MarketingConsentGivenAt,
+            entity.MarketingConsentRevokedAt
         );
 }

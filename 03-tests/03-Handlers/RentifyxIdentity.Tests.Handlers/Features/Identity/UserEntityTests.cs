@@ -193,4 +193,108 @@ public sealed class UserEntityTests
 
         entity.IsLockedOut(DateTimeOffset.UtcNow).Should().BeFalse();
     }
+
+    [Fact]
+    public void GrantEssentialConsent_SetsConsentGivenAt_ClearsRevokedAt_AndActivatesAccount()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        entity.RevokeEssentialConsent(now);
+
+        DateTimeOffset regrantedAt = now.AddMinutes(1);
+        entity.GrantEssentialConsent(regrantedAt);
+
+        entity.ConsentGivenAt.Should().Be(regrantedAt);
+        entity.EssentialConsentRevokedAt.Should().BeNull();
+        entity.Status.Should().Be(UserStatus.Active);
+        entity.IsEssentialConsentGranted.Should().BeTrue();
+    }
+
+    [Fact]
+    public void RevokeEssentialConsent_ClearsConsentGivenAt_SetsRevokedAt_AndSuspendsAccount()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        entity.SetConsent(DateTimeOffset.UtcNow);
+        DateTimeOffset revokedAt = DateTimeOffset.UtcNow;
+
+        entity.RevokeEssentialConsent(revokedAt);
+
+        entity.ConsentGivenAt.Should().BeNull();
+        entity.EssentialConsentRevokedAt.Should().Be(revokedAt);
+        entity.Status.Should().Be(UserStatus.Suspended);
+        entity.IsEssentialConsentGranted.Should().BeFalse();
+    }
+
+    [Fact]
+    public void RevokeEssentialConsent_CalledTwice_IsIdempotent()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        DateTimeOffset firstRevoke = DateTimeOffset.UtcNow;
+        entity.RevokeEssentialConsent(firstRevoke);
+
+        DateTimeOffset secondRevoke = firstRevoke.AddMinutes(1);
+        entity.RevokeEssentialConsent(secondRevoke);
+
+        entity.ConsentGivenAt.Should().BeNull();
+        entity.EssentialConsentRevokedAt.Should().Be(secondRevoke);
+        entity.Status.Should().Be(UserStatus.Suspended);
+    }
+
+    [Fact]
+    public void GrantMarketingConsent_SetsGivenAt_AndClearsRevokedAt()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+
+        entity.GrantMarketingConsent(now);
+
+        entity.MarketingConsentGivenAt.Should().Be(now);
+        entity.MarketingConsentRevokedAt.Should().BeNull();
+        entity.IsMarketingConsentGranted.Should().BeTrue();
+    }
+
+    [Fact]
+    public void RevokeMarketingConsent_ClearsGivenAt_AndSetsRevokedAt_WithoutAffectingAccountStatus()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        entity.GrantMarketingConsent(DateTimeOffset.UtcNow);
+        UserStatus statusBefore = entity.Status;
+        DateTimeOffset revokedAt = DateTimeOffset.UtcNow;
+
+        entity.RevokeMarketingConsent(revokedAt);
+
+        entity.MarketingConsentGivenAt.Should().BeNull();
+        entity.MarketingConsentRevokedAt.Should().Be(revokedAt);
+        entity.IsMarketingConsentGranted.Should().BeFalse();
+        entity.Status.Should().Be(statusBefore);
+    }
+
+    [Fact]
+    public void RevokeMarketingConsent_DoesNotAffectEssentialConsentState()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        entity.SetConsent(DateTimeOffset.UtcNow);
+        entity.GrantMarketingConsent(DateTimeOffset.UtcNow);
+
+        entity.RevokeMarketingConsent(DateTimeOffset.UtcNow);
+
+        entity.IsEssentialConsentGranted.Should().BeTrue();
+        entity.Status.Should().NotBe(UserStatus.Suspended);
+    }
+
+    [Fact]
+    public void IsEssentialConsentGranted_ReturnsFalse_WhenNeverSet()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+
+        entity.IsEssentialConsentGranted.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsMarketingConsentGranted_ReturnsFalse_WhenNeverSet()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+
+        entity.IsMarketingConsentGranted.Should().BeFalse();
+    }
 }
