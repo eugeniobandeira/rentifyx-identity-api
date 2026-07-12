@@ -1,7 +1,29 @@
 # LGPD Granular Consent (R-03) — Tasks
 
 **Design**: `.specs/features/post-assessment-hardening/design-consent-revoke.md`
-**Status**: In Progress — T-01, T-02, T-03, T-04, T-05 done (2026-07-11); T-06/T-07 pending
+**Status**: In Progress — T-01 through T-06 done (2026-07-11); T-07 pending
+
+**T-06 note — real test-infrastructure bug found and fixed, not just endpoint wiring:** adding
+`ConsentEndpointTests.cs` (9 tests against the shared `[Collection("Integration")]` factory)
+initially broke 6 unrelated, pre-existing tests in `RegisterEndpointTests`/
+`VerifyEmailEndpointTests` with 429 TooManyRequests. Root cause: the whole "Integration"
+collection shares ONE `CustomWebApplicationFactory` (one in-process app host), and the API's
+rate limiter (`RateLimitExtension.cs`, `AddFixedWindowLimiter("fixed", ...)`) is a single
+global, non-partitioned bucket (100 req/60s) — every test's HTTP calls across every class
+share that one budget for the whole test run. Adding 9 more real requests pushed the cumulative
+count over the limit within the run's window. Tried and rejected: (1) `IConfiguration` override
+via `ConfigureAppConfiguration` in-memory collection — had zero effect, config never reached the
+limiter (root cause not fully diagnosed, not worth further sinking time into); (2)
+re-registering `services.AddRateLimiter(...)` from the test project — didn't compile
+(`AddRateLimiter`/`RateLimiterOptions` types not resolvable from a plain `Microsoft.NET.Sdk`
+test project even with an explicit `FrameworkReference`). Working fix: give
+`ConsentEndpointTests` its own `IClassFixture<CustomWebApplicationFactory>` instance instead of
+joining the shared collection (so it gets an independent rate-limiter bucket), combined with
+`[assembly: CollectionBehavior(DisableTestParallelization = true)]` in
+`IntegrationTestCollection.cs` (two concurrently-starting `WebApplicationFactory<Program>`
+instances crashed host startup with "entry point exited without ever building an IHost" —
+disabling cross-collection parallelism serializes them without forcing a shared rate-limit
+bucket). Logged as L-009 in `.specs/project/STATE.md`.
 
 **Reconciliation note (2026-07-11):** T-02, T-03, T-05 were run in parallel via isolated git
 worktrees, but T-01 (`UserEntity` changes) was uncommitted at launch time, so none of the
@@ -245,7 +267,7 @@ other before merging its own response changes.
 
 ---
 
-### T-06: API — `GetConsent`/`UpdateConsent` endpoints + IoC registration
+### T-06: API — `GetConsent`/`UpdateConsent` endpoints + IoC registration ✅ DONE (2026-07-11)
 
 **What**: Add `GET /api/v1/users/me/consent` and `PUT /api/v1/users/me/consent` endpoints
 (`IEndpoint` implementations, `ClaimTypes.NameIdentifier` → `Guid userId` extraction, same

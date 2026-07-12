@@ -27,6 +27,9 @@ using RentifyxIdentity.Application.Features.Identity.Auth.VerifyEmail.Validator;
 using RentifyxIdentity.Application.Features.Identity.User.DeleteAccount;
 using RentifyxIdentity.Application.Features.Identity.User.DeleteAccount.Request;
 using RentifyxIdentity.Application.Features.Identity.User.DeleteAccount.Validator;
+using RentifyxIdentity.Application.Features.Identity.User.Consent;
+using RentifyxIdentity.Application.Features.Identity.User.Consent.Request;
+using RentifyxIdentity.Application.Features.Identity.User.Consent.Validator;
 using RentifyxIdentity.Application.Features.Identity.User.ExportData;
 using RentifyxIdentity.Application.Features.Identity.User.ExportData.Request;
 using RentifyxIdentity.Application.Features.Identity.User.ExportData.Validator;
@@ -50,6 +53,8 @@ internal static class ApplicationDependencyInjection
         services.AddScoped<IValidator<DeleteAccountRequest>, DeleteAccountValidator>();
         services.AddScoped<IValidator<ExportDataRequest>, ExportDataValidator>();
         services.AddScoped<IValidator<GetProfileRequest>, GetProfileValidator>();
+        services.AddScoped<IValidator<GetConsentRequest>, GetConsentValidator>();
+        services.AddScoped<IValidator<UpdateConsentRequest>, UpdateConsentValidator>();
 
         services.AddScoped<IHandler<ForgotPasswordRequest, Success>, ForgotPasswordHandler>();
         services.AddScoped<IHandler<LoginRequest, LoginResponse>, LoginHandler>();
@@ -61,6 +66,8 @@ internal static class ApplicationDependencyInjection
         services.AddScoped<IHandler<DeleteAccountRequest, Success>, DeleteAccountHandler>();
         services.AddScoped<IHandler<ExportDataRequest, UserDataExportResponse>, ExportDataHandler>();
         services.AddScoped<IHandler<GetProfileRequest, UserResponse>, GetProfileHandler>();
+        services.AddScoped<IHandler<GetConsentRequest, ConsentResponse>, GetConsentHandler>();
+        services.AddScoped<IHandler<UpdateConsentRequest, ConsentResponse>, UpdateConsentHandler>();
 
         return services;
     }
