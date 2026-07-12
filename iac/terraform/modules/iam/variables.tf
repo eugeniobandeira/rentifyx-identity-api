@@ -42,3 +42,9 @@ variable "service_account_name" {
   description = "Kubernetes service account name that assumes this role"
   type        = string
 }
+
+variable "enable_irsa_role" {
+  description = "Create the EKS IRSA role (trust policy tied to eks_oidc_provider_arn). Disable for environments without an EKS OIDC provider — the least-privilege policy is still created either way, just not attached to an IRSA role."
+  type        = bool
+  default     = true
+}
