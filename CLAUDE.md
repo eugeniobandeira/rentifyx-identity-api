@@ -19,7 +19,7 @@ but check STATE.md/ROADMAP.md before assuming something here reflects the curren
 
 - **Framework**: .NET 10, Minimal APIs, C# latest
 - **Architecture**: Clean Architecture · DDD · TDD
-- **Cloud**: AWS Cognito · DynamoDB · SES · Secrets Manager · KMS (via LocalStack locally)
+- **Cloud**: AWS Cognito · DynamoDB · SES · Secrets Manager · KMS (real AWS resources, provisioned via Terraform, for local dev too — no LocalStack; see `.specs/project/STATE.md` D-019)
 - **Infra**: .NET Aspire (AppHost + ServiceDefaults) · Docker · Terraform · GitHub Actions
 - **Observability**: OpenTelemetry · Serilog · Scalar/ReDoc
 - **Compliance**: LGPD · OWASP Top 10 · BACEN

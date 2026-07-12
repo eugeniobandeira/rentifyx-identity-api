@@ -37,45 +37,23 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
             RegionEndpoint = RegionEndpoint.GetBySystemName(region)
         };
 
-        bool useLocalStack = string.Equals(
-            _bootstrapConfig[ConfigurationKeys.LocalStackEnabled],
-            "true",
-            StringComparison.OrdinalIgnoreCase);
-
         try
         {
-            AmazonSecretsManagerClient client;
+            using AmazonSecretsManagerClient client = new(clientConfig);
 
-            if (useLocalStack)
+            GetSecretValueResponse response = client.GetSecretValueAsync(new GetSecretValueRequest
             {
-                string host = _bootstrapConfig[ConfigurationKeys.LocalStackHost] ?? ConfigurationKeys.DefaultLocalStackHost;
-                string port = _bootstrapConfig[ConfigurationKeys.LocalStackEdgePort] ?? ConfigurationKeys.DefaultLocalStackEdgePort;
-                clientConfig.ServiceURL = $"http://{host}:{port}";
-                client = new AmazonSecretsManagerClient(
-                    new BasicAWSCredentials(ConfigurationKeys.LocalStackTestAccessKey, ConfigurationKeys.LocalStackTestSecretKey),
-                    clientConfig);
-            }
-            else
-            {
-                client = new AmazonSecretsManagerClient(clientConfig);
-            }
+                SecretId = secretName
+            }).GetAwaiter().GetResult();
 
-            using (client)
-            {
-                GetSecretValueResponse response = client.GetSecretValueAsync(new GetSecretValueRequest
-                {
-                    SecretId = secretName
-                }).GetAwaiter().GetResult();
+            if (response.SecretString is null)
+                return;
 
-                if (response.SecretString is null)
-                    return;
+            Dictionary<string, string?>? secrets =
+                JsonSerializer.Deserialize<Dictionary<string, string?>>(response.SecretString);
 
-                Dictionary<string, string>? secrets =
-                    JsonSerializer.Deserialize<Dictionary<string, string>>(response.SecretString);
-
-                if (secrets is not null)
-                    Data = secrets;
-            }
+            if (secrets is not null)
+                Data = secrets;
         }
         catch (ResourceNotFoundException)
         {

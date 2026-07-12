@@ -1,15 +1,16 @@
-using Amazon;
+﻿using Amazon;
 using Aspire.Hosting.AWS;
 using RentifyxIdentity.AppHost;
 
 IDistributedApplicationBuilder builder = DistributedApplication.CreateBuilder(args);
 
-IAWSSDKConfig awsConfig = builder.AddAWSSDKConfig()
-    .WithRegion(RegionEndpoint.SAEast1);
+string awsRegion = builder.Configuration["AWS:Region"] ?? "sa-east-1";
 
-builder.AddProject<Projects.RentifyxIdentity_Api>("clean-arch-api")
+IAWSSDKConfig awsConfig = builder.AddAWSSDKConfig()
+    .WithRegion(RegionEndpoint.GetBySystemName(awsRegion));
+
+builder.AddProject<Projects.RentifyxIdentity_Api>("rentifyx-identity-api")
     .WithReference(awsConfig)
-    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Production")
     .WithHttpHealthCheck("/health")
     .WithScalar();
 
