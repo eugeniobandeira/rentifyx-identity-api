@@ -5,8 +5,8 @@ Draft — gap identified during post-v1.1.0 assessment, not previously tracked i
 
 ## Problem
 
-RentifyX is a rental marketplace; both individual people (PF — pessoa física, CPF) and
-companies (PJ — pessoa jurídica, CNPJ) must be able to register as owners or renters.
+RentifyX is a rental marketplace; both individual people (PF — Individual, CPF) and
+companies (PJ — Business/Legal Entity, CNPJ) must be able to register as owners or renters.
 
 Current state, verified in code:
 
