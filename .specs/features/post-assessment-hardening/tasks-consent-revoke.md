@@ -1,7 +1,7 @@
 # LGPD Granular Consent (R-03) — Tasks
 
 **Design**: `.specs/features/post-assessment-hardening/design-consent-revoke.md`
-**Status**: In Progress — T-01 through T-06 done (2026-07-11); T-07 pending
+**Status**: DONE — T-01 through T-07 complete (2026-07-11)
 
 **T-06 note — real test-infrastructure bug found and fixed, not just endpoint wiring:** adding
 `ConsentEndpointTests.cs` (9 tests against the shared `[Collection("Integration")]` factory)
@@ -307,7 +307,7 @@ registration list pattern
 
 ---
 
-### T-07: Docs — update `docs/api-contracts.md`
+### T-07: Docs — update `docs/api-contracts.md` ✅ DONE (2026-07-11)
 
 **What**: Document both new endpoints (request/response schemas, status codes, the
 suspend-on-essential-revoke behavior) in the existing contracts doc, matching its established

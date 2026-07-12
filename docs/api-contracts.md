@@ -129,10 +129,30 @@ Endpoints return `200`, `201`, or `204` depending on the operation. Body is JSON
   "id": "uuid",
   "email": "string",
   "role": "Owner | Renter | Admin",
-  "status": "PendingVerification | Active | Deleted",
-  "createdAt": "ISO 8601 datetime with offset"
+  "status": "PendingVerification | Active | Suspended | Deleted",
+  "createdAt": "ISO 8601 datetime with offset",
+  "essentialConsentGranted": true,
+  "essentialConsentGivenAt": "ISO 8601 datetime with offset | null",
+  "essentialConsentRevokedAt": "ISO 8601 datetime with offset | null",
+  "marketingConsentGranted": false,
+  "marketingConsentGivenAt": "ISO 8601 datetime with offset | null",
+  "marketingConsentRevokedAt": "ISO 8601 datetime with offset | null"
 }
 ```
+
+### `ConsentResponse`
+```json
+{
+  "essentialGranted": true,
+  "essentialGrantedAt": "ISO 8601 datetime with offset | null",
+  "essentialRevokedAt": "ISO 8601 datetime with offset | null",
+  "marketingGranted": false,
+  "marketingGrantedAt": "ISO 8601 datetime with offset | null",
+  "marketingRevokedAt": "ISO 8601 datetime with offset | null"
+}
+```
+Returned by both consent endpoints. Essential consent is granted automatically at registration;
+revoking it suspends the account (see [`PUT /api/v1/users/me/consent`](#put-apiv1usersmeconsent)).
 
 ### `AuthTokenResponse`
 ```json
@@ -407,6 +427,10 @@ Export all personal data held about the authenticated user (LGPD Art. 18 IV).
   "status": "string",
   "createdAt": "ISO 8601",
   "consentGivenAt": "ISO 8601 | null",
+  "essentialConsentRevokedAt": "ISO 8601 | null",
+  "marketingConsentGranted": false,
+  "marketingConsentGivenAt": "ISO 8601 | null",
+  "marketingConsentRevokedAt": "ISO 8601 | null",
   "auditHistory": [
     {
       "eventType": "string",
@@ -421,6 +445,59 @@ Export all personal data held about the authenticated user (LGPD Art. 18 IV).
 |---|---|
 | `401` | Missing or invalid token |
 | `404` | User not found |
+
+---
+
+#### `GET /api/v1/users/me/consent`
+Get the authenticated user's current consent state per purpose (Essential, Marketing) — LGPD
+Art. 8 §5 (consent must be revocable/inspectable at any time).
+
+- Auth: **Yes**
+- Response: `200 OK` → `ConsentResponse`
+
+**Business errors**
+| Status | Description |
+|---|---|
+| `401` | Missing or invalid token |
+| `404` | User not found |
+
+---
+
+#### `PUT /api/v1/users/me/consent`
+Grant or revoke consent for one purpose.
+
+- Auth: **Yes**
+- Response: `200 OK` → `ConsentResponse`
+
+**Request body**
+```json
+{
+  "purpose": "Essential | Marketing",
+  "granted": true
+}
+```
+
+**Validation rules**
+| Field | Rules |
+|---|---|
+| `purpose` | Required · one of `Essential`, `Marketing` |
+| `granted` | Required |
+
+**Behavior**
+| Purpose | `granted: false` (revoke) | `granted: true` (grant) |
+|---|---|---|
+| `Essential` | Suspends the account (`status` → `Suspended`); subsequent `login`/`refresh`/`reset-password`/`verify-email` calls fail until re-granted | Reactivates the account (`status` → `Active`) |
+| `Marketing` | No account effect — only signals that marketing communications should stop | No account effect |
+
+Revoking is idempotent (repeating it is a no-op success). Revoking Essential does **not** delete
+or anonymize any data — that remains exclusive to `DELETE /api/v1/users/me`.
+
+**Business errors**
+| Status | Description |
+|---|---|
+| `401` | Missing or invalid token |
+| `404` | User not found |
+| `422` | `purpose` missing or not `Essential`/`Marketing` |
 
 ---
 

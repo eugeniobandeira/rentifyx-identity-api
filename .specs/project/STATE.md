@@ -2,21 +2,26 @@
 
 ## Last Updated
 
-2026-06-30
+2026-07-11
 
 ## Current Work
 
 v1.1.0 COMPLETE (2026-06-30) — login lockout, LGPD audit completeness, Aspire+LocalStack one-liner delivered. Tagged v1.1.0. Outbox (DEF-005) and TaxId KMS (DEF-007) deferred post-v1.1.0.
 
-Post-v1.1.0 assessment (2026-07-11) produced two new feature specs, not yet implemented:
+Post-v1.1.0 assessment (2026-07-11) produced two new feature specs:
 `.specs/features/post-assessment-hardening/` (doc drift, coverage polish, test file split,
 LGPD consent revoke, TaxId KMS) and `.specs/features/pf-pj-customer-support/` (see D-018 —
-PJ/CNPJ was never modeled as a first-class concept beyond digit-length detection).
+PJ/CNPJ was never modeled as a first-class concept beyond digit-length detection; not yet
+implemented).
 
-R-03 (LGPD granular consent revoke) has gone through discuss → design → tasks (2026-07-11):
-`context.md`, `design-consent-revoke.md`, `tasks-consent-revoke.md` all in
-`.specs/features/post-assessment-hardening/`. 7 tasks (T-01 to T-07), ready for Execute.
-Not yet implemented.
+R-03 (LGPD granular consent revoke) is COMPLETE (2026-07-11) — went through discuss → design →
+tasks → execute. All 7 tasks (T-01 to T-07) done: `UserEntity` grant/revoke mutations,
+`GetConsent`/`UpdateConsent` handlers + endpoints (`GET`/`PUT /api/v1/users/me/consent`),
+DynamoDB persistence, `docs/api-contracts.md` updated. Also done from the same feature's `tasks.md` (housekeeping): R-01 (CLAUDE.md refresh), R-02
+(api-contracts.md committed), R-06 (adding-a-new-feature guide). Still open from `tasks.md`:
+R-05 (remove stale coverlet exclusions + untrack `.csproj.user`), R-07 (split
+`LgpdEndpointTests.cs` by endpoint), R-08 (coverage polish); and R-04 from the hardening spec
+proper (TaxId KMS — needs its own design pass). `pf-pj-customer-support` not started.
 
 ## Decisions
 
