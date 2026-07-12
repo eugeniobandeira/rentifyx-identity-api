@@ -7,7 +7,7 @@
 
 Production-grade Identity microservice for the RentifyX platform. Built with .NET 10 Minimal APIs, Clean Architecture, DDD, and TDD.
 
-Covers user registration, email verification, login, token refresh, logout, password reset, and LGPD compliance (data access, erasure, export, consent, audit).
+Covers user registration, email verification, login, token refresh, logout, password reset, and LGPD compliance (data access, erasure, export, granular per-purpose consent, audit).
 
 ## Tech Stack
 
@@ -32,6 +32,34 @@ Covers user registration, email verification, login, token refresh, logout, pass
 | Code Analysis | SonarAnalyzer.CSharp |
 | Security | OWASP Top 10 · gitleaks · Trivy |
 | Compliance | LGPD · BACEN |
+
+## Flows
+
+Full request/response schemas, validation rules, and status codes for every endpoint below are
+in [`docs/api-contracts.md`](docs/api-contracts.md).
+
+### Auth — `/api/v1/auth/*`
+```
+register → verify-email → login → refresh (every 15 min) → logout
+                                 ↘ forgot-password → reset-password
+```
+- `POST /auth/register` — create account (requires `consentGiven: true` for Essential consent)
+- `POST /auth/verify-email` — activate the account with the emailed token
+- `POST /auth/login` — returns an access token in the body; sets the refresh token as an
+  `httpOnly` cookie (never exposed to JavaScript, scoped to `/api/v1/auth`)
+- `POST /auth/refresh` — rotates the refresh token (reads it from the cookie, not the body)
+- `POST /auth/logout` — revokes the refresh token and clears the cookie (idempotent)
+- `POST /auth/forgot-password` / `POST /auth/reset-password` — email-token-based password reset
+
+### Users (LGPD) — `/api/v1/users/me*` (all require `Authorization: Bearer {accessToken}`)
+- `GET /users/me` — profile (Art. 18)
+- `DELETE /users/me` — soft-delete + PII anonymization (Art. 18 VI)
+- `GET /users/me/data-export` — full personal-data export, including audit history (Art. 18 IV)
+- `GET /users/me/consent` — current consent state per purpose (Essential, Marketing)
+- `PUT /users/me/consent` — grant or revoke consent for one purpose. Revoking **Essential**
+  suspends the account (blocks login/refresh/reset-password/verify-email until re-granted);
+  revoking **Marketing** has no account effect. Revoking never deletes data — that stays
+  exclusive to `DELETE /users/me`.
 
 ## Prerequisites
 
@@ -143,7 +171,9 @@ public interface IHandler<TRequest, TResponse>
 }
 ```
 
-Handlers are registered automatically via reflection — no manual wiring needed when adding new features.
+Handlers and validators are registered explicitly in `ApplicationDependencyInjection` (one
+`AddScoped<IHandler<...>>`/`AddScoped<IValidator<...>>` line per feature) — only API endpoints
+are auto-discovered via reflection (see below).
 
 ### DynamoDB single-table design
 
@@ -185,25 +215,13 @@ All endpoints are discovered and registered automatically via reflection — no 
 
 ## Adding a New Feature
 
-Follow this order every time:
+See [`docs/guides/adding-a-new-feature.md`](docs/guides/adding-a-new-feature.md) for the full
+7-step process (Domain → Contracts → Application → Infrastructure → IoC → Api → Tests), with real
+file-path examples from the `register-user` and consent features.
 
-**1. Domain** — entity / value object / domain event in `02-src/03-Domain/`
-
-**2. Contracts** — repository/service interface in `Domain/Interfaces/`
-
-**3. Application** — feature folder under `Application/Features/{Feature}/`:
-- `{Action}Request.cs`
-- `{Action}Validator.cs` (FluentValidation, messages via `ValidationMessageResource`)
-- `{Action}Handler.cs` (implements `IHandler<TRequest, TResponse>`, returns `ErrorOr<T>`)
-- `{Feature}Response.cs` + `{Feature}Mapper.cs`
-
-**4. Infrastructure** — implement repository/service in `Infrastructure/`
-
-**5. IoC** — no changes needed. Handlers and repositories are auto-discovered via reflection.
-
-**6. Api** — add one file per endpoint implementing `IEndpoint` in `Api/Endpoints/{Group}/`
-
-**7. Tests** — unit tests in `03-Handlers/` and `02-Validators/`; integration tests in `05-Integration/`
+Note: validators and handlers are registered **explicitly** in `ApplicationDependencyInjection`/
+`InfrastructureDependencyInjection` (one line per feature), not auto-discovered via reflection —
+only API *endpoints* are reflection-discovered.
 
 ## Error Handling
 
@@ -265,7 +283,7 @@ OpenTelemetry is pre-configured for traces, metrics, and logs via .NET Aspire Se
 ## Security
 
 - Secrets are never hardcoded — all sensitive config comes from AWS Secrets Manager.
-- CPF is encrypted at rest via KMS before storing in DynamoDB.
+- **Known gap**: TaxId (CPF/CNPJ) is currently stored as **plaintext** in DynamoDB. KMS encryption + HMAC blind index for lookup is deferred (see `.specs/project/STATE.md`, D-010/DEF-007).
 - Refresh tokens are stored as HMAC-SHA256 hashes (not plaintext), with DynamoDB TTL.
 - Rate limiting is applied at the route group level (OWASP A04).
 - gitleaks runs as a pre-commit hook to prevent secret leaks.
