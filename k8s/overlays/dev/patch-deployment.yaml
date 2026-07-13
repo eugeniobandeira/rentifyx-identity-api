@@ -11,8 +11,8 @@ spec:
           env:
             - name: ASPNETCORE_ENVIRONMENT
               value: Development
-            # Secrets are provided via LocalStack / local appsettings in dev.
-            # Replace with actual values when running against a local AWS stack.
+            # Secrets are loaded from real AWS Secrets Manager (rentifyx/identity/development).
+            # Replace with actual values only if bypassing Secrets Manager for debugging.
             - name: Jwt__PrivateKeyPem
               value: ""
             - name: Hmac__Key

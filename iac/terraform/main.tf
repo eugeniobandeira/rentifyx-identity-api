@@ -35,6 +35,8 @@ module "kms" {
 }
 
 module "cognito" {
+  count = var.enable_cognito ? 1 : 0
+
   source           = "./modules/cognito"
   prefix           = local.prefix
   environment      = var.environment
@@ -50,6 +52,8 @@ module "secrets" {
 }
 
 module "ec2" {
+  count = var.enable_ec2 ? 1 : 0
+
   source              = "./modules/ec2"
   prefix              = local.prefix
   environment         = var.environment
@@ -64,11 +68,13 @@ module "ec2" {
 data "aws_caller_identity" "main" {}
 
 module "github_actions" {
+  count = var.enable_ec2 && var.enable_github_actions ? 1 : 0
+
   source             = "./modules/github-actions"
   prefix             = local.prefix
   github_repo        = var.github_repo
-  ecr_repository_arn = module.ec2.ecr_repository_arn
-  ec2_instance_arn   = "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.main.account_id}:instance/${module.ec2.instance_id}"
+  ecr_repository_arn = module.ec2[0].ecr_repository_arn
+  ec2_instance_arn   = "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.main.account_id}:instance/${module.ec2[0].instance_id}"
 }
 
 module "iam" {
@@ -82,4 +88,5 @@ module "iam" {
   eks_oidc_provider_url     = var.eks_oidc_provider_url
   service_account_namespace = var.service_account_namespace
   service_account_name      = var.service_account_name
+  enable_irsa_role          = var.enable_irsa_role
 }

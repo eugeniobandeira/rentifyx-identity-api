@@ -34,14 +34,12 @@
     <PackageVersion Include="AWSSDK.DynamoDBv2" Version="4.0.21.7" />
     <PackageVersion Include="AWSSDK.SimpleEmailV2" Version="4.0.14.9" />
     <PackageVersion Include="AWSSDK.SecretsManager" Version="4.0.5.8" />
+    <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.4.1" />
   </ItemGroup>
   <ItemGroup Label="Auth">
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.4.0" />
     <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.4.0" />
-  </ItemGroup>
-  <ItemGroup Label="LocalStack">
-    <PackageVersion Include="LocalStack.Client.Extensions" Version="2.0.0" />
   </ItemGroup>
   <ItemGroup Label="Aspire">
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="9.5.1" />

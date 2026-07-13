@@ -27,7 +27,7 @@ Covers user registration, email verification, login, token refresh, logout, pass
 | Email | AWS SES v2 |
 | Secrets | AWS Secrets Manager |
 | Encryption | AWS KMS |
-| Local Cloud | LocalStack via Testcontainers |
+| Repository Test Cloud | LocalStack via Testcontainers (integration tests only — the API itself targets real AWS, including locally) |
 | Testing | xUnit · Moq · FluentAssertions · Bogus · Testcontainers |
 | Code Analysis | SonarAnalyzer.CSharp |
 | Security | OWASP Top 10 · gitleaks · Trivy |
@@ -64,7 +64,8 @@ register → verify-email → login → refresh (every 15 min) → logout
 ## Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Docker](https://www.docker.com/) (required for LocalStack and repository integration tests)
+- [Docker](https://www.docker.com/) (required for repository integration tests, which use LocalStack via Testcontainers)
+- AWS credentials with access to a real AWS account/region (`AWS_PROFILE` or `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`) — the API talks to real AWS even for local development, there is no LocalStack fallback
 - .NET Aspire workload:
 
 ```bash
@@ -73,9 +74,11 @@ dotnet workload install aspire
 
 ## Running Locally
 
-Start the API with Aspire orchestration (recommended — includes dashboard and Scalar UI):
+Provision the AWS resources first (see `iac/terraform`), then start the API with Aspire
+orchestration (recommended — includes dashboard and Scalar UI):
 
 ```bash
+cd iac/terraform && terraform apply -var="environment=development" -var="ses_identity=you@example.com"
 dotnet run --project 01-aspire/01-AppHost/RentifyxIdentity.AppHost
 ```
 
@@ -83,6 +86,12 @@ Or directly without Aspire:
 
 ```bash
 dotnet run --project 02-src/01-Api/RentifyxIdentity.Api
+```
+
+Destroy the resources when done testing:
+
+```bash
+cd iac/terraform && terraform destroy -var="environment=development" -var="ses_identity=you@example.com"
 ```
 
 ## Running Tests
@@ -113,7 +122,7 @@ kubectl apply -k k8s/overlays/prod
 
 ```
 01-aspire/
-  01-AppHost/             – .NET Aspire orchestration (starts API + LocalStack)
+  01-AppHost/             – .NET Aspire orchestration (starts API against real AWS)
   02-ServiceDefaults/     – OTel traces/metrics, health checks, service discovery
 02-src/
   01-Api/                 – Minimal API endpoints, middlewares, extensions

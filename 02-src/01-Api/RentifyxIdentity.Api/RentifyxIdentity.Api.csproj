@@ -21,6 +21,5 @@
     <PackageReference Include="ErrorOr" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
-    <PackageReference Include="LocalStack.Client.Extensions" />
   </ItemGroup>
 </Project>

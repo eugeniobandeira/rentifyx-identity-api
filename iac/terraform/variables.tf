@@ -56,3 +56,27 @@ variable "github_repo" {
   type        = string
   default     = "eugeniobandeira/rentifyx-identity-api"
 }
+
+variable "enable_ec2" {
+  description = "Provision the EC2 deploy target (instance, ECR repo, security group). Disable for a lightweight dev bootstrap that only needs DynamoDB/SES/KMS/Secrets."
+  type        = bool
+  default     = true
+}
+
+variable "enable_cognito" {
+  description = "Provision the Cognito user pool. Disable if Cognito isn't wired into the API yet (see D-004 in .specs/project/STATE.md) or isn't needed for the current test."
+  type        = bool
+  default     = true
+}
+
+variable "enable_github_actions" {
+  description = "Provision the GitHub Actions OIDC deploy role. Requires enable_ec2 = true (it grants access to the EC2 instance and ECR repo); ignored otherwise."
+  type        = bool
+  default     = true
+}
+
+variable "enable_irsa_role" {
+  description = "Provision the EKS IRSA role (requires a real eks_oidc_provider_arn/url — the sample defaults are placeholders and will fail apply if EKS isn't set up). Disable for EC2-based or local dev deployments, which don't use IRSA."
+  type        = bool
+  default     = true
+}

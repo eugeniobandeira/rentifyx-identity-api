@@ -1,4 +1,6 @@
 data "aws_iam_policy_document" "assume_role" {
+  count = var.enable_irsa_role ? 1 : 0
+
   statement {
     effect  = "Allow"
     actions = ["sts:AssumeRoleWithWebIdentity"]
@@ -77,8 +79,10 @@ data "aws_iam_policy_document" "identity_api" {
 }
 
 resource "aws_iam_role" "identity_api" {
+  count = var.enable_irsa_role ? 1 : 0
+
   name               = "${var.prefix}-api-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.assume_role[0].json
 
   tags = {
     ManagedBy = "terraform"
@@ -92,6 +96,8 @@ resource "aws_iam_policy" "identity_api" {
 }
 
 resource "aws_iam_role_policy_attachment" "identity_api" {
-  role       = aws_iam_role.identity_api.name
+  count = var.enable_irsa_role ? 1 : 0
+
+  role       = aws_iam_role.identity_api[0].name
   policy_arn = aws_iam_policy.identity_api.arn
 }
