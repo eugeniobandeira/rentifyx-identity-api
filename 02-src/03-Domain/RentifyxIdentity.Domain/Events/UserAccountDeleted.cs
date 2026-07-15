@@ -1,3 +1,3 @@
 namespace RentifyxIdentity.Domain.Events;
 
-public sealed record UserAccountDeleted(Guid UserId, DateTimeOffset OccurredAt);
+public sealed record UserAccountDeleted(Guid UserId, DateTimeOffset OccurredAt) : IDomainEvent;
