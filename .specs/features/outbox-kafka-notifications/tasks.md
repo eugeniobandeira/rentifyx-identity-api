@@ -1,7 +1,7 @@
 # Domain Event Outbox & Kafka Notification Producer — Tasks
 
 **Design**: `.specs/features/outbox-kafka-notifications/design.md`
-**Status**: Draft
+**Status**: In Progress — T0-T4 done (2026-07-15). Next: T5 (OutboxDynamoDbItem + mapper).
 
 ---
 
