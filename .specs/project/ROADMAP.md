@@ -230,10 +230,17 @@
 
 **TaxId KMS encryption at rest** _(DEF-007 / D-010)_ — SKIPPED, deferred to post-v1.1.0
 
-**Domain event Outbox** _(DEF-005)_
+**Domain event Outbox** _(DEF-005)_ — **NOT DONE.** Despite sitting under this "COMPLETE ✅"
+milestone header, this item was never implemented (confirmed via `STATE.md`: "Outbox (DEF-005) ...
+deferred post-v1.1.0"). Full spec/design/tasks now live in
+`.specs/features/outbox-kafka-notifications/`, in progress as of 2026-07-15.
 
-- `OutboxEntry` DynamoDB item written atomically in same `SaveAsync` call as user item
-- `OutboxProcessor` background service polls and dispatches to SNS/EventBridge
+- `OutboxEntry` DynamoDB item written atomically alongside the user item, via
+  `TransactWriteItemsAsync` (not a plain `SaveAsync` call — `IDynamoDBContext.SaveAsync` cannot
+  span two items atomically, confirmed during design)
+- `OutboxPublisher` background service polls and dispatches to **Kafka** (not SNS/EventBridge —
+  that was stale wording, inconsistent with ADR-004, which already targeted Kafka; corrected
+  2026-07-15 to match both ADR-004 and `rentifyx-communications-api`'s Kafka-only architecture)
 - Dead-letter handling: max 3 retries, then mark as `Failed`
 - Integration tests: verify outbox entry created on `UserRegistered`
 
