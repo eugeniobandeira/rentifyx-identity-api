@@ -127,12 +127,21 @@ graph TD
 
 | Method | Event raised | Existing event record used |
 |---|---|---|
-| `Create()` | `UserRegistered` | already exists, reused as-is |
 | `VerifyEmail()` | `UserEmailVerified` | already exists, reused as-is |
 | `ResetPassword()` | `UserPasswordChanged` | already exists, reused as-is |
 | `Suspend()` | `UserSuspended` | already exists, reused as-is |
 | `Anonymize()` | `UserAccountDeleted` | already exists, reused as-is |
-| (login handler, not `UserEntity`) | `UserLoggedIn` | already exists — raised from `LoginHandler` directly since login success isn't a `UserEntity` mutation method; needs its own `IOutboxWriter`-style call, not folded into the transactional write below (login doesn't call `UpdateAsync` on failure paths — confirm at Tasks time this doesn't change existing login latency/behavior) |
+| (login handler, not `UserEntity`) | `UserLoggedIn` | already exists — raised from `LoginHandler` directly since login success isn't a `UserEntity` mutation method |
+
+**Correction found at Tasks time (2026-07-15):** `Create()` does **not** raise `UserRegistered`,
+despite what an earlier draft of this table said. `UserRegistered` needs `RawToken` (added below)
+so comms-api can render the verification email — but `UserEntity.Create()` never sees the plaintext
+token; `RegisterUserHandler` generates `rawToken` and calls `SetEmailVerificationToken(hash, expiry)`
+*after* `Create()` returns, passing only the hash. An entity method literally cannot raise an event
+carrying data it's never given. **`UserRegistered` is raised by `RegisterUserHandler` directly**,
+same pattern as `PasswordResetRequested`/`UserLoggedIn` below — not a `UserEntity` mutation-raised
+event. This is the same reasoning already applied to `PasswordResetRequested`, just missed for
+`UserRegistered` in the first pass.
 
 **New event** (does not exist today, needed for R-06):
 ```csharp
