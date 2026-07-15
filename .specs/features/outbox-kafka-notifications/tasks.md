@@ -179,21 +179,33 @@ is handler-raised (T12/T13's concern, not this task's).
 
 **What**: DynamoDB item shape for `OutboxEntry` (`PK`/`SK` = `OUTBOX#{Id}` per D-016) and a static
 mapper (`OutboxItemMapper.ToItem`/`FromItem`), matching `UserDynamoDbMapper`'s existing split.
-**Where**: `02-src/05-Infrastructure/RentifyxIdentity.Infrastructure/DynamoDb/OutboxDynamoDbItem.cs`,
-`.../DynamoDb/OutboxItemMapper.cs`
+**Where**: `02-src/05-Infrastructure/RentifyxIdentity.Infrastructure/Models/OutboxDynamoDbItem.cs`,
+`02-src/05-Infrastructure/RentifyxIdentity.Infrastructure/Mapping/OutboxItemMapper.cs` (actual
+existing folder names — `DynamoDb/` doesn't exist in this repo, corrected at implementation time)
 **Depends on**: T4 (sequenced — not a hard dependency on T4's content, but keeps Domain fully
 settled before Infrastructure mapping starts)
-**Reuses**: `UserDynamoDbItem`/`UserDynamoDbMapper`'s exact file-split pattern
+**Reuses**: `UserDynamoDbItem`/`UserDynamoDbMapper`'s exact file-split pattern; added
+`OutboxEntry.Reconstitute()` (internal factory, mirrors `UserEntity.Reconstitute()`) since the
+mapper needs to rebuild an entry with an existing `Status`/`RetryCount`, not just `Create()`'s
+fresh-`Pending` shape
 **Requirement**: R-02 (persistence shape)
 
 **Tools**: NONE
 
 **Done when**:
 - [ ] Round-trip `ToItem(entry)` → `FromItem(item)` preserves all fields
-- [ ] Gate check passes: `dotnet test 03-tests/01-Common/RentifyxIdentity.Tests.Common`
+- [ ] `dotnet build 02-src/05-Infrastructure/RentifyxIdentity.Infrastructure -c Release` succeeds
 
-**Tests**: unit
-**Gate**: quick
+**Correction found at implementation time**: `OutboxItemMapper` is `internal` (matches
+`UserDynamoDbMapper`'s existing visibility) — only `RentifyxIdentity.Infrastructure` and
+`RentifyxIdentity.Tests.Repositories` have `InternalsVisibleTo` access (`Domain/Properties/
+AssemblyInfo.cs`). `Tests.Handlers` cannot call it, so no standalone unit test is possible here,
+matching the existing precedent: `UserDynamoDbMapper` itself has zero standalone unit tests either
+— mapper correctness is proven only via `UserRepositoryTests`' Testcontainers integration tests.
+The round-trip guarantee above is proven by **T7's** integration test instead, not this task.
+
+**Tests**: none (see correction above — round-trip proven transitively by T7)
+**Gate**: build
 
 **Commit**: `feat(infra): add OutboxDynamoDbItem and mapper`
 

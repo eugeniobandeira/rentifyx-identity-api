@@ -40,4 +40,23 @@ public sealed class OutboxEntry
     {
         RetryCount++;
     }
+
+    internal static OutboxEntry Reconstitute(
+        Guid id,
+        string targetTopic,
+        string messageJson,
+        OutboxStatus status,
+        DateTimeOffset createdAt,
+        int retryCount)
+    {
+        return new OutboxEntry
+        {
+            Id = id,
+            TargetTopic = targetTopic,
+            MessageJson = messageJson,
+            Status = status,
+            CreatedAt = createdAt,
+            RetryCount = retryCount
+        };
+    }
 }

@@ -8,9 +8,12 @@ internal static class DynamoDbConstants
 
     internal const string UserKeyPrefix = "USER#";
     internal const string AuditKeyPrefix = "AUDIT#";
+    internal const string OutboxKeyPrefix = "OUTBOX#";
+    internal const string OutboxStatusPrefix = "OUTBOX_STATUS#";
 
     internal const string GsiEmail = "GSI_Email";
     internal const string GsiTaxId = "GSI_TaxId";
+    internal const string GsiOutbox = "GSI_Outbox";
     internal const string EmailAttribute = "Email";
     internal const string TaxIdAttribute = "TaxId";
 
