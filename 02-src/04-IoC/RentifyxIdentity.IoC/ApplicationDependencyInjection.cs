@@ -36,6 +36,7 @@ using RentifyxIdentity.Application.Features.Identity.User.ExportData.Validator;
 using RentifyxIdentity.Application.Features.Identity.User.GetProfile;
 using RentifyxIdentity.Application.Features.Identity.User.GetProfile.Request;
 using RentifyxIdentity.Application.Features.Identity.User.GetProfile.Validator;
+using RentifyxIdentity.Application.Outbox;
 
 namespace RentifyxIdentity.IoC;
 
@@ -68,6 +69,8 @@ internal static class ApplicationDependencyInjection
         services.AddScoped<IHandler<GetProfileRequest, UserResponse>, GetProfileHandler>();
         services.AddScoped<IHandler<GetConsentRequest, ConsentResponse>, GetConsentHandler>();
         services.AddScoped<IHandler<UpdateConsentRequest, ConsentResponse>, UpdateConsentHandler>();
+
+        services.AddSingleton<IOutboxEntryFactory, OutboxEntryFactory>();
 
         return services;
     }

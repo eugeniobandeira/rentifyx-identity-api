@@ -62,7 +62,7 @@ public sealed class RegisterUserHandler(
             logger.LogWarning(ex, "Verification email failed for {Email}", user.Email);
         }
 
-        UserRegistered domainEvent = new(user.Id, user.Email.ToString(), user.Role, DateTimeOffset.UtcNow);
+        UserRegistered domainEvent = new(user.Id, user.Email.ToString(), user.Role, rawToken, DateTimeOffset.UtcNow);
         logger.LogInformation("Domain event: {Event}", domainEvent);
 
         logger.LogInformation("User registered successfully. Response={@Response}", user);

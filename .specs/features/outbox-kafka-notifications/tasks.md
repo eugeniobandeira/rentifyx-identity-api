@@ -1,7 +1,7 @@
 # Domain Event Outbox & Kafka Notification Producer — Tasks
 
 **Design**: `.specs/features/outbox-kafka-notifications/design.md`
-**Status**: In Progress — T0-T8 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7 `TransactWriteItemsAsync` atomic write and T8 `OutboxRepository` poll query both completed 2026-07-16). Next: T9 (`IOutboxEntryFactory`/`OutboxEntryFactory`).
+**Status**: In Progress — T0-T9 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7 `TransactWriteItemsAsync`, T8 `OutboxRepository`, T9 `OutboxEntryFactory` all completed 2026-07-16). Next: T10 (add `Confluent.Kafka` package).
 
 ---
 
@@ -310,10 +310,10 @@ code/package — different repo/solution)
 **Tools**: NONE
 
 **Done when**:
-- [ ] `UserRegistered` (with `RawToken`, added by this task since no earlier task touched that record — see Verify) maps to `DispatchNotificationRequest { TemplateId = "email-verification", Channel = "Email", Payload = { "token": RawToken }, CorrelationId = <new stable Guid per entry> }`
-- [ ] `PasswordResetRequested` maps to the same shape with `TemplateId = "password-reset"`
-- [ ] The other 4 events map to the generic `user-lifecycle-events` envelope
-- [ ] Gate check passes: `dotnet test 03-tests/03-Handlers/RentifyxIdentity.Tests.Handlers`
+- [x] `UserRegistered` (with `RawToken`, added by this task since no earlier task touched that record — see Verify) maps to `DispatchNotificationRequest { TemplateId = "email-verification", Channel = "Email", Payload = { "token": RawToken }, CorrelationId = <new stable Guid per entry> }`
+- [x] `PasswordResetRequested` maps to the same shape with `TemplateId = "password-reset"`
+- [x] The other 4 events map to the generic `user-lifecycle-events` envelope
+- [x] Gate check passes: `dotnet test 03-tests/03-Handlers/RentifyxIdentity.Tests.Handlers` (166/166 passing, 8 new)
 
 **Verify**: this task also adds the `RawToken` field to the existing `UserRegistered` record
 (`02-src/03-Domain/RentifyxIdentity.Domain/Events/UserRegistered.cs`) — confirm no other reader of
@@ -324,6 +324,8 @@ that record exists yet (grep `UserRegistered` — should only be this factory an
 **Gate**: quick
 
 **Commit**: `feat(app): add OutboxEntryFactory, add RawToken to UserRegistered`
+
+**Implementation notes (2026-07-16):** Verified via grep - `UserRegistered` had exactly one reader (`RegisterUserHandler`'s dead-end log line), updated to pass `rawToken`. `UserRegistered` and `UserLoggedIn` didn't implement `IDomainEvent` yet (both needed for the factory's `IReadOnlyCollection<IDomainEvent>` input) - added `: IDomainEvent` to both; no other change needed since both already had a matching `OccurredAt` property. Added an `OutboxEntry.Create(Guid id, string targetTopic, string messageJson)` overload so the factory can generate the entry's Id upfront and embed that same Id as `CorrelationId` in the serialized message, per design.md's `CorrelationId = outboxEntryId`. `NotificationRequestedMessage`/`UserLifecycleEventEnvelope` are `internal` records local to this task, not shared with comms-api (no project/package reference between the two repos). **This factory is not yet wired into `UserRepository`** (still uses T7's generic placeholder) or into any handler - that's T12/T13's job.
 
 ---
 

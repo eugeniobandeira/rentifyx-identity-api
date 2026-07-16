@@ -6,5 +6,5 @@ public sealed record UserRegistered(
     Guid UserId,
     string Email,
     UserRole Role,
-    DateTimeOffset OccurredAt
-);
+    string RawToken,
+    DateTimeOffset OccurredAt) : IDomainEvent;

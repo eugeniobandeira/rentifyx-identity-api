@@ -13,11 +13,18 @@ public sealed class OutboxEntry
 
     private OutboxEntry() { }
 
-    public static OutboxEntry Create(string targetTopic, string messageJson)
+    public static OutboxEntry Create(string targetTopic, string messageJson) =>
+        Create(Guid.NewGuid(), targetTopic, messageJson);
+
+    /// <summary>
+    /// Overload for callers that need the entry's Id known before construction - e.g. OutboxEntryFactory
+    /// embeds it as CorrelationId in the serialized message, so it must match this entry's own Id exactly.
+    /// </summary>
+    public static OutboxEntry Create(Guid id, string targetTopic, string messageJson)
     {
         return new OutboxEntry
         {
-            Id = Guid.NewGuid(),
+            Id = id,
             TargetTopic = targetTopic,
             MessageJson = messageJson,
             Status = OutboxStatus.Pending,
