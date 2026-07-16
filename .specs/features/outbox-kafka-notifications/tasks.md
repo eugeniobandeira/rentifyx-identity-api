@@ -1,7 +1,7 @@
 # Domain Event Outbox & Kafka Notification Producer — Tasks
 
 **Design**: `.specs/features/outbox-kafka-notifications/design.md`
-**Status**: In Progress — T0-T11 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7-T11 all completed 2026-07-16). Next: T12 (`OutboxPublisher` hosted service). **Blocker flagged for T12**: AppHost has no local Kafka resource yet.
+**Status**: In Progress — T0-T11 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7-T11 all completed 2026-07-16), plus the AppHost Kafka resource gap flagged after T11 resolved same day. Next: T12 (`OutboxPublisher` hosted service).
 
 ---
 
@@ -374,7 +374,7 @@ Infrastructure project.
 
 **Commit**: `feat(infra): add KafkaProducerFactory`
 
-**Implementation notes (2026-07-16):** Mirrors comms-api's `KafkaProducerFactory` exactly (`configuration.GetConnectionString("kafka")`, `ProducerBuilder<Null, string>`), confirmed still the current stable API for `Confluent.Kafka` 2.15.0 via Context7. Registered as `AddSingleton<IKafkaProducerFactory, KafkaProducerFactory>()` in `InfrastructureDependencyInjection` for T12 to consume. **Flag for T12/deploy**: this repo's AppHost has no Kafka resource wired yet (unlike comms-api's), so `GetConnectionString("kafka")` will throw at runtime in local dev until that's added - not this task's scope, but needed before T12 can actually run end-to-end locally.
+**Implementation notes (2026-07-16):** Mirrors comms-api's `KafkaProducerFactory` exactly (`configuration.GetConnectionString("kafka")`, `ProducerBuilder<Null, string>`), confirmed still the current stable API for `Confluent.Kafka` 2.15.0 via Context7. Registered as `AddSingleton<IKafkaProducerFactory, KafkaProducerFactory>()` in `InfrastructureDependencyInjection` for T12 to consume. **AppHost gap resolved same day**: added `Aspire.Hosting.Kafka` (9.3.1, matching comms-api's pin) and wired a standalone `builder.AddKafka("kafka").WithKafkaUI()` + `.WithReference(kafka)` on the API project in `01-aspire/01-AppHost/RentifyxIdentity.AppHost/AppHost.cs`, mirroring comms-api's AppHost exactly - `GetConnectionString("kafka")` now resolves in local dev.
 
 ---
 
