@@ -1,7 +1,7 @@
 # Domain Event Outbox & Kafka Notification Producer — Tasks
 
 **Design**: `.specs/features/outbox-kafka-notifications/design.md`
-**Status**: In Progress — T0-T11 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7-T11 all completed 2026-07-16), plus the AppHost Kafka resource gap flagged after T11 resolved same day. Next: T12 (`OutboxPublisher` hosted service).
+**Status**: In Progress — T0-T12 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7-T12 all completed 2026-07-16, plus the AppHost Kafka resource gap flagged after T11). Next: T13 (cutover — `RegisterUserHandler`/`ForgotPasswordHandler`).
 
 ---
 
@@ -391,15 +391,19 @@ produce each to its `TargetTopic` via `IKafkaProducerFactory` → `MarkPublished
 **Tools**: NONE
 
 **Done when**:
-- [ ] A `Pending` entry gets produced and marked `Published` on ack (integration test with a real Kafka container or comms-api's own Testcontainers-Kafka pattern if one exists to copy — confirm at implementation time)
-- [ ] A produce failure increments `RetryCount`; 3rd consecutive failure marks `Failed` and logs `Critical`
-- [ ] `StopAsync` drains in-flight work before returning (mirrors this repo's existing `IHostedService` graceful-stop convention)
-- [ ] Gate check passes: `dotnet test RentifyxIdentity.slnx`
+- [x] A `Pending` entry gets produced and marked `Published` on ack (real Testcontainers.Kafka + LocalStack DynamoDB, not mocked)
+- [x] A produce failure increments `RetryCount`; 3rd consecutive failure marks `Failed` and logs `Critical` (real Confluent.Kafka client against an unreachable broker, not a mocked failure)
+- [x] `StopAsync` drains in-flight work before returning (mirrors `ReconciliationHostedService`'s `PeriodicTimer` + linked-timeout drain shape - this is the first `IHostedService` in this repo, so there was no prior convention to actually mirror, only comms-api's cross-repo one)
+- [x] Gate check passes: `dotnet test RentifyxIdentity.slnx` (285/285 passing)
 
 **Tests**: integration (the polling/produce/mark-status loop is exactly the kind of behavior that needs a real dependency, not mocks — matches TESTING.md's "Repositories: Integration" precedent extended to this hosted service)
 **Gate**: full
 
 **Commit**: `feat(api): add OutboxPublisher hosted service`
+
+**Implementation notes (2026-07-16):** `OutboxPublisherOptions` (`PollIntervalSeconds`/`BatchSize`/`MaxRetryCount`, defaults 5/50/3) bound via `.Get<T>()` in `InfrastructureDependencyInjection`, same `Activator.CreateInstance<T>()` trap as T7/T8 avoided from the start this time. New packages: `Testcontainers.Kafka` 4.12.0 (test-only), `KafkaBuilder`'s parameterless constructor is obsolete now - pinned image `confluentinc/cp-kafka:7.6.0` (a `confluentinc/confluent-local` tag was tried first and failed to boot in KRaft combined mode - not this repo's bug, an image/wait-strategy mismatch).
+
+**Real bug found and fixed**: registering `OutboxPublisher` unconditionally in `Program.cs` broke every single endpoint test using `CustomWebApplicationFactory` (46 tests, all of `RegisterEndpointTests`/`ConsentEndpointTests`/etc.) - `OutboxPublisher.StartAsync` calls `IKafkaProducerFactory.Create()`, which reads `GetConnectionString("kafka")`, absent in that test environment, throwing and aborting the whole host's startup (`IHostedService.StartAsync` failures are fatal to host startup by default) - manifested as "Server hasn't been initialized yet" on every test. Fixed by removing the `OutboxPublisher` hosted-service registration in `CustomWebApplicationFactory.ConfigureWebHost`, mirroring the `RemoveKafkaDependentHostedServices` pattern comms-api's own test factories already use for exactly this class of problem.
 
 ---
 

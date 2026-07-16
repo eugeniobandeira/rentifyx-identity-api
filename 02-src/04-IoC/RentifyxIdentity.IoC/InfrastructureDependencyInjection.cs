@@ -6,10 +6,12 @@ using Amazon.SimpleEmailV2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using RentifyxIdentity.Domain.Interfaces.Notifications;
 using RentifyxIdentity.Domain.Interfaces.Users;
 using RentifyxIdentity.Infrastructure.Messaging;
+using RentifyxIdentity.Infrastructure.Options;
 using RentifyxIdentity.Infrastructure.Repositories;
 using RentifyxIdentity.Infrastructure.Services;
 
@@ -31,6 +33,13 @@ internal static class InfrastructureDependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddSingleton<IKafkaProducerFactory, KafkaProducerFactory>();
+        // .Get<T>() (constructor-argument binding), not services.Configure<T>(section) - the latter relies on
+        // Activator.CreateInstance<T>() before binding, which throws MissingMethodException for a record with
+        // no parameterless constructor (every parameter here has a default value, but C# still doesn't emit a
+        // real zero-arg constructor just because of that).
+        services.AddSingleton<IOptions<OutboxPublisherOptions>>(sp => Options.Create(
+            sp.GetRequiredService<IConfiguration>().GetSection("Outbox").Get<OutboxPublisherOptions>()
+            ?? new OutboxPublisherOptions()));
         services.AddScoped<IEmailService, EmailService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<ITokenService, TokenService>();
