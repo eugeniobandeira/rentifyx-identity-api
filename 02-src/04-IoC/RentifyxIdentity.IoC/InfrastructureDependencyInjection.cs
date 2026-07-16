@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using RentifyxIdentity.Domain.Interfaces.Notifications;
 using RentifyxIdentity.Domain.Interfaces.Users;
 using RentifyxIdentity.Infrastructure.Repositories;
 using RentifyxIdentity.Infrastructure.Services;
@@ -27,6 +28,7 @@ internal static class InfrastructureDependencyInjection
                 .Build());
 
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<ITokenService, TokenService>();

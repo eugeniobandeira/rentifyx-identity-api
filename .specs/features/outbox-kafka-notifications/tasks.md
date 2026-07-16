@@ -1,7 +1,7 @@
 # Domain Event Outbox & Kafka Notification Producer — Tasks
 
 **Design**: `.specs/features/outbox-kafka-notifications/design.md`
-**Status**: In Progress — T0-T7 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7 `TransactWriteItemsAsync` atomic write completed 2026-07-16). Next: T8 (`IOutboxRepository`/`OutboxRepository` poll query).
+**Status**: In Progress — T0-T8 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7 `TransactWriteItemsAsync` atomic write and T8 `OutboxRepository` poll query both completed 2026-07-16). Next: T9 (`IOutboxEntryFactory`/`OutboxEntryFactory`).
 
 ---
 
@@ -281,12 +281,14 @@ overloads), `02-src/05-Infrastructure/RentifyxIdentity.Infrastructure/Repositori
 **Tools**: NONE
 
 **Done when**:
-- [ ] `GetPendingAsync` returns only `Pending` entries, respects `batchSize`
-- [ ] `MarkPublishedAsync`/`MarkFailedAsync`/`IncrementRetryAsync` each update exactly the targeted item
-- [ ] Gate check passes: `dotnet test 03-tests/04-Repositories/RentifyxIdentity.Tests.Repositories`
+- [x] `GetPendingAsync` returns only `Pending` entries, respects `batchSize` — `GetNextSetAsync` used instead of `GetRemainingAsync` since the latter pages through the whole result set regardless of `Limit`
+- [x] `MarkPublishedAsync`/`MarkFailedAsync`/`IncrementRetryAsync` each update exactly the targeted item
+- [x] Gate check passes: `dotnet test 03-tests/04-Repositories/RentifyxIdentity.Tests.Repositories` (20/20 passing, 15 from T7 + 5 new)
 
 **Tests**: integration (Testcontainers + LocalStack)
 **Gate**: full
+
+**Implementation notes (2026-07-16):** `LocalStackFixture`'s table now also provisions `GSI_Outbox` (`GsiOutboxStatusPk` hash / `CreatedAt` range) to match T6's real Terraform GSI. `OutboxItemMapper`/`OutboxDynamoDbItem` construction inside the new `OutboxRepositoryTests` is done directly against the public `OutboxDynamoDbItem` model (not the internal `OutboxItemMapper`, which only `RentifyxIdentity.Infrastructure` itself can see) - matches the constraint noted in T5.
 
 **Commit**: `feat(infra): add OutboxRepository for publisher polling`
 
