@@ -1,7 +1,7 @@
 # Domain Event Outbox & Kafka Notification Producer — Tasks
 
 **Design**: `.specs/features/outbox-kafka-notifications/design.md`
-**Status**: In Progress — T0-T9 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7 `TransactWriteItemsAsync`, T8 `OutboxRepository`, T9 `OutboxEntryFactory` all completed 2026-07-16). Next: T10 (add `Confluent.Kafka` package).
+**Status**: In Progress — T0-T10 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7-T10 all completed 2026-07-16). Next: T11 (`IKafkaProducerFactory`/`KafkaProducerFactory`).
 
 ---
 
@@ -341,13 +341,15 @@ Infrastructure project.
 **Tools**: `context7` (confirm current stable `Confluent.Kafka` version — new package for this repo)
 
 **Done when**:
-- [ ] `dotnet restore` succeeds with the new package
-- [ ] Gate check passes: `dotnet build RentifyxIdentity.slnx -c Release`
+- [x] `dotnet restore` succeeds with the new package
+- [x] Gate check passes: `dotnet build RentifyxIdentity.slnx -c Release`
 
 **Tests**: none (package addition, no behavior yet)
 **Gate**: build
 
 **Commit**: `build(deps): add Confluent.Kafka package`
+
+**Implementation notes (2026-07-16):** Confirmed 2.15.0 is both the current NuGet stable release and matches comms-api's own pin - no version drift between the two repos' Kafka clients. Added a new `Messaging` label group in `Directory.Packages.props`.
 
 ---
 
