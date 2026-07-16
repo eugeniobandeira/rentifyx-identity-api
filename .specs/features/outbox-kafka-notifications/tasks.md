@@ -1,7 +1,7 @@
 # Domain Event Outbox & Kafka Notification Producer — Tasks
 
 **Design**: `.specs/features/outbox-kafka-notifications/design.md`
-**Status**: In Progress — T0-T4 done (2026-07-15). Next: T5 (OutboxDynamoDbItem + mapper).
+**Status**: In Progress — T0-T6 done (2026-07-15: T0-T4; T5 `OutboxDynamoDbItem`+`OutboxItemMapper` and T6 `GSI_Outbox` landed same day per git history, this status line just hadn't been updated). Next: T7 (`IUserRepository`/`UserRepository` atomic transactional write).
 
 ---
 
@@ -193,8 +193,8 @@ fresh-`Pending` shape
 **Tools**: NONE
 
 **Done when**:
-- [ ] Round-trip `ToItem(entry)` → `FromItem(item)` preserves all fields
-- [ ] `dotnet build 02-src/05-Infrastructure/RentifyxIdentity.Infrastructure -c Release` succeeds
+- [ ] Round-trip `ToItem(entry)` → `FromItem(item)` preserves all fields (deferred to T7's integration test, per correction note below)
+- [x] `dotnet build 02-src/05-Infrastructure/RentifyxIdentity.Infrastructure -c Release` succeeds (re-verified 2026-07-16)
 
 **Correction found at implementation time**: `OutboxItemMapper` is `internal` (matches
 `UserDynamoDbMapper`'s existing visibility) — only `RentifyxIdentity.Infrastructure` and
@@ -223,7 +223,7 @@ DynamoDB table Terraform module.
 **Tools**: NONE
 
 **Done when**:
-- [ ] `terraform fmt -check && terraform validate` pass in `iac/terraform/`
+- [x] `terraform fmt -check && terraform validate` pass in `iac/terraform/` (re-verified 2026-07-16)
 - [ ] GSI projection type matches what `T9`'s poll query actually needs (confirm at implementation — likely `ALL` or a minimal projection, decide when the poll query shape is known)
 
 **Tests**: none (Terraform, no application test framework applies)

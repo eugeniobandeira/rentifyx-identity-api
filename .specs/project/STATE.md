@@ -2,11 +2,13 @@
 
 ## Last Updated
 
-2026-07-12
+2026-07-16
 
 ## Current Work
 
 v1.1.0 COMPLETE (2026-06-30) — login lockout, LGPD audit completeness, Aspire+LocalStack one-liner delivered. Tagged v1.1.0. Outbox (DEF-005) and TaxId KMS (DEF-007) deferred post-v1.1.0.
+
+**`outbox-kafka-notifications` (DEF-005) IN PROGRESS as of 2026-07-16** — T0-T6 of 15 done (Domain: `IDomainEvent`/`AggregateRoot`, `OutboxEntry`/`OutboxStatus`, `PasswordResetRequested`, `UserEntity` raising events from its mutation methods; Infrastructure: `OutboxDynamoDbItem`+`OutboxItemMapper`; Terraform: `GSI_Outbox` added to the DynamoDB table module, `terraform validate` passing). `.specs/features/outbox-kafka-notifications/tasks.md`'s status line had drifted ("T0-T4 done") behind actual git history (T5/T6 landed same day, 2026-07-15) — corrected 2026-07-16. Next: **T7**, `IUserRepository`/`UserRepository` atomic transactional write (user item + outbox items in one DynamoDB transaction). This feature is the producer-side counterpart to `rentifyx-communications-api`'s `NotificationRequested` Kafka contract — full cross-repo integration (identity-api publishes → communications-api consumes → real Kafka on `rentifyx-platform`'s EKS) isn't testable until this feature reaches its Phase 5 cutover (T13: `RegisterUserHandler`/`ForgotPasswordHandler` switch from direct SES send to outbox publish) and platform's Kafka infra is actually `terraform apply`'d.
 
 Post-v1.1.0 assessment (2026-07-11) produced two new feature specs:
 `.specs/features/post-assessment-hardening/` (doc drift, coverage polish, test file split,
