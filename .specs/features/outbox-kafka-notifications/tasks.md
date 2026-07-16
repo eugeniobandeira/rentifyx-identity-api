@@ -1,7 +1,7 @@
 # Domain Event Outbox & Kafka Notification Producer — Tasks
 
 **Design**: `.specs/features/outbox-kafka-notifications/design.md`
-**Status**: In Progress — T0-T6 done (2026-07-15: T0-T4; T5 `OutboxDynamoDbItem`+`OutboxItemMapper` and T6 `GSI_Outbox` landed same day per git history, this status line just hadn't been updated). Next: T7 (`IUserRepository`/`UserRepository` atomic transactional write).
+**Status**: In Progress — T0-T7 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7 `TransactWriteItemsAsync` atomic write completed 2026-07-16). Next: T8 (`IOutboxRepository`/`OutboxRepository` poll query).
 
 ---
 
@@ -251,15 +251,19 @@ overloads), `02-src/05-Infrastructure/RentifyxIdentity.Infrastructure/Repositori
 **Tools**: `context7` (confirm current `TransactWriteItemsAsync`/`TransactWriteItem` request shape for the AWS SDK version pinned in this repo — new API surface for this codebase, do not guess field names)
 
 **Done when**:
-- [ ] Existing `AddAsync(UserEntity, ct)`/`UpdateAsync(UserEntity, ct)` behavior unchanged for callers passing no events (verify existing `UserRepositoryTests` still pass)
-- [ ] New overload writes user item + N outbox items in one transaction — a forced failure on the outbox write also rolls back the user item (test with Testcontainers/LocalStack, not mocked — this is exactly the atomicity guarantee under test)
-- [ ] `entity.ClearDomainEvents()` called only after the transaction actually succeeds
-- [ ] Gate check passes: `dotnet test 03-tests/04-Repositories/RentifyxIdentity.Tests.Repositories`
+- [x] Existing `AddAsync(UserEntity, ct)`/`UpdateAsync(UserEntity, ct)` behavior unchanged for callers passing no events (verify existing `UserRepositoryTests` still pass) — verified 2026-07-16, all 13 pre-existing tests pass unmodified
+- [x] New overload writes user item + N outbox items in one transaction — a forced failure on the outbox write also rolls back the user item (test with Testcontainers/LocalStack, not mocked — this is exactly the atomicity guarantee under test) — `AddAsync_WithExtraEvents_WritesUserAndOutboxItemsAtomically` (success path) + `AddAsync_TransactionFailsOnOutboxWrite_RollsBackUserItemToo` (forces a >400KB item to fail `TransactWriteItemsAsync` for real, not mocked)
+- [x] `entity.ClearDomainEvents()` called only after the transaction actually succeeds
+- [x] Gate check passes: `dotnet test 03-tests/04-Repositories/RentifyxIdentity.Tests.Repositories` (15/15 passing)
 
 **Tests**: integration (Testcontainers + LocalStack, per TESTING.md matrix — this is exactly the kind of behavior mocks can't prove)
 **Gate**: full
 
 **Commit**: `feat(infra): atomic UserEntity + Outbox write via TransactWriteItemsAsync`
+
+**Implementation notes (2026-07-16):**
+- The design.md-listed `IOutboxEntryFactory` dependency doesn't exist yet (that's T9, sequenced after T8 in this doc). `UserRepository` uses a small private placeholder (`CreateOutboxEntry`) that serializes any `IDomainEvent` onto the generic `user-lifecycle-events` topic - T9 will need to inject the real factory here and replace this placeholder with per-event-type routing (comms-api's `DispatchNotificationRequest` shape for `UserRegistered`/`PasswordResetRequested`). Flagging so T9 doesn't get scoped as "just add the factory class" without also wiring it in.
+- Found and fixed a pre-existing, unrelated bug while verifying this task: `LocalStackFixture.cs` set `RegionEndpoint` alongside `ServiceURL` on `AmazonDynamoDBConfig`, which makes every request fail with "The security token included in the request is invalid" against LocalStack (reproduced in an isolated console app outside the test project, confirmed on both AWSSDK.DynamoDBv2 4.0.21.7 and 4.0.101 - an SDK/LocalStack signing interaction, not a version issue). This silently blocked every LocalStack-backed repository test in this project until now on any machine with a working Docker install. Fixed by dropping `RegionEndpoint` - `ServiceURL` alone is sufficient.
 
 ---
 

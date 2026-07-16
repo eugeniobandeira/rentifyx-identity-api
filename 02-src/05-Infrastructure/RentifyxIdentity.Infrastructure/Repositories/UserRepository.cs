@@ -1,7 +1,12 @@
+using System.Text.Json;
+using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
+using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Entities;
+using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
 using RentifyxIdentity.Infrastructure.Constants;
 using RentifyxIdentity.Infrastructure.Mapping;
@@ -12,22 +17,27 @@ namespace RentifyxIdentity.Infrastructure.Repositories;
 public sealed class UserRepository : IUserRepository
 {
     private readonly IDynamoDBContext _context;
+    private readonly IAmazonDynamoDB _client;
     private readonly string _tableName;
 
-    public UserRepository(IDynamoDBContext context, IConfiguration configuration)
+    public UserRepository(IDynamoDBContext context, IAmazonDynamoDB client, IConfiguration configuration)
     {
         _context = context;
+        _client = client;
         _tableName = configuration[DynamoDbConstants.TableNameConfigKey]
             ?? DynamoDbConstants.DefaultTableName;
     }
 
-    public async Task AddAsync(
+    public Task AddAsync(
         UserEntity entity,
         CancellationToken ct = default)
-    {
-        UserDynamoDbItem item = UserDynamoDbMapper.ToItem(entity);
-        await _context.SaveAsync(item, new SaveConfig { OverrideTableName = _tableName }, ct);
-    }
+        => AddAsync(entity, [], ct);
+
+    public Task AddAsync(
+        UserEntity entity,
+        IReadOnlyCollection<IDomainEvent> extraEvents,
+        CancellationToken ct = default)
+        => WriteTransactionallyAsync(entity, extraEvents, ct);
 
     public async Task<UserEntity?> GetByIdAsync(
         Guid id,
@@ -67,7 +77,13 @@ public sealed class UserRepository : IUserRepository
     public Task UpdateAsync(
         UserEntity entity,
         CancellationToken ct = default)
-        => AddAsync(entity, ct);
+        => UpdateAsync(entity, [], ct);
+
+    public Task UpdateAsync(
+        UserEntity entity,
+        IReadOnlyCollection<IDomainEvent> extraEvents,
+        CancellationToken ct = default)
+        => WriteTransactionallyAsync(entity, extraEvents, ct);
 
     public async Task DeleteAsync(
         UserEntity entity,
@@ -80,6 +96,58 @@ public sealed class UserRepository : IUserRepository
             new DeleteConfig { OverrideTableName = _tableName },
             ct);
     }
+
+    /// <summary>
+    /// Writes the user item and one Outbox item per raised event in a single DynamoDB transaction - either all
+    /// items land, or none do (TransactWriteItemsAsync fails the whole request and nothing is persisted).
+    /// Domain events are only cleared after the transaction actually succeeds.
+    /// </summary>
+    private async Task WriteTransactionallyAsync(
+        UserEntity entity,
+        IReadOnlyCollection<IDomainEvent> extraEvents,
+        CancellationToken ct)
+    {
+        UserDynamoDbItem userItem = UserDynamoDbMapper.ToItem(entity);
+
+        List<TransactWriteItem> transactItems =
+        [
+            new TransactWriteItem
+            {
+                Put = new Put
+                {
+                    TableName = _tableName,
+                    Item = _context.ToDocument(userItem).ToAttributeMap()
+                }
+            }
+        ];
+
+        foreach (IDomainEvent domainEvent in entity.DomainEvents.Concat(extraEvents))
+        {
+            OutboxDynamoDbItem outboxItem = OutboxItemMapper.ToItem(CreateOutboxEntry(domainEvent));
+
+            transactItems.Add(new TransactWriteItem
+            {
+                Put = new Put
+                {
+                    TableName = _tableName,
+                    Item = _context.ToDocument(outboxItem).ToAttributeMap()
+                }
+            });
+        }
+
+        await _client.TransactWriteItemsAsync(new TransactWriteItemsRequest { TransactItems = transactItems }, ct);
+
+        entity.ClearDomainEvents();
+    }
+
+    /// <summary>
+    /// Placeholder mapping: every event lands on the generic lifecycle topic, serialized as-is. T9
+    /// (IOutboxEntryFactory) replaces this with per-event-type topic routing and comms-api's exact
+    /// DispatchNotificationRequest shape for UserRegistered/PasswordResetRequested - this method exists only to
+    /// keep T7's atomic write path testable before that factory lands.
+    /// </summary>
+    private static OutboxEntry CreateOutboxEntry(IDomainEvent domainEvent) =>
+        OutboxEntry.Create(KafkaTopics.UserLifecycleEvents, JsonSerializer.Serialize(domainEvent, domainEvent.GetType()));
 
     private async Task<UserEntity?> QueryByGsiAsync(
         string indexName,

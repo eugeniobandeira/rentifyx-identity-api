@@ -1,4 +1,3 @@
-using Amazon;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
@@ -26,10 +25,14 @@ public sealed class LocalStackFixture : IAsyncLifetime
 
         string serviceUrl = _container.GetConnectionString();
 
+        // RegionEndpoint must NOT be set alongside ServiceURL here: AWSSDK.DynamoDBv2 (tested on both 4.0.21.7
+        // and 4.0.101) rejects every request against LocalStack with "The security token included in the
+        // request is invalid." the moment RegionEndpoint is also set - reproduced outside this test project
+        // entirely (isolated console repro), so it's an SDK/LocalStack signing interaction, not a fixture bug.
+        // ServiceURL alone is sufficient to route requests to the container.
         AmazonDynamoDBConfig config = new()
         {
-            ServiceURL = serviceUrl,
-            RegionEndpoint = RegionEndpoint.SAEast1
+            ServiceURL = serviceUrl
         };
 
         Client = new AmazonDynamoDBClient(
