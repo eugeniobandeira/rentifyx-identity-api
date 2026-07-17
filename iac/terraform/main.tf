@@ -51,18 +51,36 @@ module "secrets" {
   kms_key_arn = module.kms.key_arn
 }
 
+# Cross-repo: rentifyx-platform's module.kafka.client_iam_policy_json (MSK
+# Serverless access), via terraform_remote_state rather than duplicating
+# the policy JSON by hand and risking drift. Read-only - this repo's own
+# AWS credentials already have access to that state (same account/bucket
+# this repo's own backend uses). Returns an error until
+# rentifyx-platform's network/kafka modules are actually applied (not done
+# yet as of 2026-07-17) - see try() below.
+data "terraform_remote_state" "platform" {
+  backend = "s3"
+
+  config = {
+    bucket = "rentifyx-tfstate-166613156216"
+    key    = "platform/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
 module "ec2" {
   count = var.enable_ec2 ? 1 : 0
 
-  source              = "./modules/ec2"
-  prefix              = local.prefix
-  environment         = var.environment
-  app_name            = var.app_name
-  policy_arn          = module.iam.policy_arn
-  aws_region          = var.aws_region
-  dynamodb_table_name = module.dynamodb.table_name
-  kms_key_arn         = module.kms.key_arn
-  ssh_key_name        = var.ssh_key_name
+  source                   = "./modules/ec2"
+  prefix                   = local.prefix
+  environment              = var.environment
+  app_name                 = var.app_name
+  policy_arn               = module.iam.policy_arn
+  aws_region               = var.aws_region
+  dynamodb_table_name      = module.dynamodb.table_name
+  kms_key_arn              = module.kms.key_arn
+  ssh_key_name             = var.ssh_key_name
+  kafka_client_policy_json = try(data.terraform_remote_state.platform.outputs.kafka_client_iam_policy_json, "")
 }
 
 data "aws_caller_identity" "main" {}
