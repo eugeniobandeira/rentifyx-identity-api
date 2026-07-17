@@ -1,4 +1,4 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 
 namespace RentifyxIdentity.Infrastructure.Messaging;
 

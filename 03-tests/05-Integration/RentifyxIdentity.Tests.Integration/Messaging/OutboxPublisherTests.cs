@@ -1,4 +1,4 @@
-using Amazon.DynamoDBv2.Model;
+﻿using Amazon.DynamoDBv2.Model;
 using Confluent.Kafka;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
