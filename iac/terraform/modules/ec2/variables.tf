@@ -38,3 +38,15 @@ variable "kms_key_arn" {
   description = "ARN of the KMS key used to encrypt the runtime secret"
   type        = string
 }
+
+variable "kafka_client_policy_json" {
+  description = <<-EOT
+    IAM policy JSON granting MSK Serverless access, from
+    rentifyx-platform's module.kafka.client_iam_policy_json output (read via
+    terraform_remote_state in the root module). Empty string disables this
+    attachment entirely - used until rentifyx-platform's network/kafka
+    modules are actually applied (their outputs don't exist yet).
+  EOT
+  type        = string
+  default     = ""
+}

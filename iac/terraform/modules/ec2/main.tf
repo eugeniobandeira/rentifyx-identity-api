@@ -122,9 +122,9 @@ resource "aws_iam_role_policy" "ec2_ecr" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "ECRAuth"
-        Effect = "Allow"
-        Action = ["ecr:GetAuthorizationToken"]
+        Sid      = "ECRAuth"
+        Effect   = "Allow"
+        Action   = ["ecr:GetAuthorizationToken"]
         Resource = "*"
       },
       {
@@ -139,6 +139,17 @@ resource "aws_iam_role_policy" "ec2_ecr" {
       }
     ]
   })
+}
+
+# MSK Serverless access - see rentifyx-platform ADR-002. Skipped (count = 0)
+# until that repo's module.kafka has actually been applied and its output
+# is real JSON, not an empty string.
+resource "aws_iam_role_policy" "ec2_kafka" {
+  count = var.kafka_client_policy_json != "" ? 1 : 0
+
+  name   = "${var.prefix}-ec2-kafka"
+  role   = aws_iam_role.ec2.id
+  policy = var.kafka_client_policy_json
 }
 
 resource "aws_iam_instance_profile" "ec2" {
