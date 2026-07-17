@@ -24,7 +24,7 @@ public sealed class RegisterUserHandler(
         RegisterUserRequest request,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Registering user. Payload={@Payload}", request);
+        logger.LogInformation("Registering user. Email={Email}", request.Email);
 
         List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
@@ -53,7 +53,7 @@ public sealed class RegisterUserHandler(
         UserRegistered domainEvent = new(user.Id, user.Email.ToString(), user.Role, rawToken, DateTimeOffset.UtcNow);
         await repository.AddAsync(user, [domainEvent], ct);
 
-        logger.LogInformation("User registered successfully. Response={@Response}", user);
+        logger.LogInformation("User registered successfully. UserId={UserId}", user.Id);
 
         return UserMapper.ToResponse(user);
     }
