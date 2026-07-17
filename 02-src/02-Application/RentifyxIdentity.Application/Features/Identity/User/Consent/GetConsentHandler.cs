@@ -17,7 +17,7 @@ public sealed class GetConsentHandler(
     IValidator<GetConsentRequest> validator,
     ILogger<GetConsentHandler> logger) : IHandler<GetConsentRequest, ConsentResponse>
 {
-    public async Task<ErrorOr<ConsentResponse>> Handle(
+    public async Task<ErrorOr<ConsentResponse>> HandleAsync(
         GetConsentRequest request,
         CancellationToken ct = default)
     {

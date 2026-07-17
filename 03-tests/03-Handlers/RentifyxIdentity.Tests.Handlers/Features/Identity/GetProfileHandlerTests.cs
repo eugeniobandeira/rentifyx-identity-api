@@ -68,7 +68,7 @@ public sealed class GetProfileHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(new GetProfileRequest(user.Id));
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(new GetProfileRequest(user.Id));
 
         result.IsError.Should().BeFalse();
         result.Value.Email.Should().Be(TestConstants.ValidEmail);
@@ -89,7 +89,7 @@ public sealed class GetProfileHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(new GetProfileRequest(user.Id));
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(new GetProfileRequest(user.Id));
 
         result.IsError.Should().BeFalse();
         result.Value.EssentialConsentGranted.Should().BeTrue();
@@ -104,7 +104,7 @@ public sealed class GetProfileHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(new GetProfileRequest(user.Id));
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(new GetProfileRequest(user.Id));
 
         result.IsError.Should().BeFalse();
         result.Value.Status.Should().Be("Suspended");
@@ -117,7 +117,7 @@ public sealed class GetProfileHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserEntity?)null);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(new GetProfileRequest(Guid.NewGuid()));
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(new GetProfileRequest(Guid.NewGuid()));
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.NotFound);
@@ -136,7 +136,7 @@ public sealed class GetProfileHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(new GetProfileRequest(user.Id));
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(new GetProfileRequest(user.Id));
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.NotFound);
@@ -159,7 +159,7 @@ public sealed class GetProfileHandlerTests
             .Setup(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("DynamoDB unavailable"));
 
-        ErrorOr<UserResponse> result = await _handler.Handle(new GetProfileRequest(user.Id));
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(new GetProfileRequest(user.Id));
 
         result.IsError.Should().BeFalse();
     }
@@ -177,7 +177,7 @@ public sealed class GetProfileHandlerTests
                 }
             }));
 
-        ErrorOr<UserResponse> result = await _handler.Handle(new GetProfileRequest(Guid.Empty));
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(new GetProfileRequest(Guid.Empty));
 
         result.IsError.Should().BeTrue();
 

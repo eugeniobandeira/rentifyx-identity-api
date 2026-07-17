@@ -17,7 +17,7 @@ public sealed class ExportDataHandler(
     IValidator<ExportDataRequest> validator,
     ILogger<ExportDataHandler> logger) : IHandler<ExportDataRequest, UserDataExportResponse>
 {
-    public async Task<ErrorOr<UserDataExportResponse>> Handle(
+    public async Task<ErrorOr<UserDataExportResponse>> HandleAsync(
         ExportDataRequest request,
         CancellationToken ct = default)
     {

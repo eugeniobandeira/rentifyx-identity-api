@@ -1,26 +1,26 @@
-using ErrorOr;
+﻿using ErrorOr;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Extensions;
 using RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword.Request;
+using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
-using RentifyxIdentity.Domain.Constants;
+using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
 
 namespace RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword;
 
 public sealed class ForgotPasswordHandler(
     IUserRepository repository,
-    IEmailService emailService,
     ITokenService tokenService,
     IValidator<ForgotPasswordRequest> validator,
     ILogger<ForgotPasswordHandler> logger) : IHandler<ForgotPasswordRequest, Success>
 {
     private static readonly TimeSpan TokenLifetime = TimeSpan.FromHours(TokenPolicyConstants.PasswordResetHours);
 
-    public async Task<ErrorOr<Success>> Handle(
+    public async Task<ErrorOr<Success>> HandleAsync(
         ForgotPasswordRequest request,
         CancellationToken ct = default)
     {
@@ -47,18 +47,11 @@ public sealed class ForgotPasswordHandler(
         string tokenHash = tokenService.HashToken(rawToken);
 
         user.SetPasswordResetToken(tokenHash, DateTimeOffset.UtcNow.Add(TokenLifetime));
-        await repository.UpdateAsync(user, ct);
 
-        try
-        {
-            await emailService.SendPasswordResetEmailAsync(user.Email.ToString(), rawToken, ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Password reset email failed for {Email}", user.Email);
-        }
+        PasswordResetRequested domainEvent = new(user.Id, user.Email.ToString(), rawToken, DateTimeOffset.UtcNow);
+        await repository.UpdateAsync(user, [domainEvent], ct);
 
-        logger.LogInformation("Password reset email sent. UserId={UserId}", user.Id);
+        logger.LogInformation("Password reset token issued. UserId={UserId}", user.Id);
 
         return Result.Success;
     }

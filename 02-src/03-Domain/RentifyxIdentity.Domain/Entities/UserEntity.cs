@@ -1,10 +1,12 @@
+using RentifyxIdentity.Domain.Common;
 using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Enums;
+using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.ValueObjects;
 
 namespace RentifyxIdentity.Domain.Entities;
 
-public sealed class UserEntity
+public sealed class UserEntity : AggregateRoot
 {
     public Guid Id { get; private set; }
     public Email Email { get; private set; } = null!;
@@ -90,6 +92,7 @@ public sealed class UserEntity
         Status = UserStatus.Active;
         EmailVerificationTokenHash = null;
         EmailVerificationTokenExpiry = null;
+        RaiseDomainEvent(new UserEmailVerified(Id, Email.ToString(), DateTimeOffset.UtcNow));
     }
 
     public void SetPasswordResetToken(string hash, DateTimeOffset expiry)
@@ -103,6 +106,7 @@ public sealed class UserEntity
         PasswordHash = newPassword;
         PasswordResetTokenHash = null;
         PasswordResetTokenExpiry = null;
+        RaiseDomainEvent(new UserPasswordChanged(Id, DateTimeOffset.UtcNow));
     }
 
     public void SetRefreshToken(string hash, DateTimeOffset expiry)
@@ -133,6 +137,11 @@ public sealed class UserEntity
     public void Suspend()
     {
         Status = UserStatus.Suspended;
+        // Only call site today is RevokeEssentialConsent() — this reason text is accurate for
+        // 100% of current callers. Revisit if Suspend() ever gets a second call site with a
+        // different cause (Suspend()'s signature can't take a reason param, per R-01's
+        // unchanged-public-API constraint).
+        RaiseDomainEvent(new UserSuspended(Id, "Essential consent revoked", DateTimeOffset.UtcNow));
     }
 
     internal static UserEntity Reconstitute(
@@ -186,5 +195,6 @@ public sealed class UserEntity
         Email = Email.Create(string.Format(System.Globalization.CultureInfo.InvariantCulture, AnonymizationConstants.EmailPattern, Id));
         TaxId = TaxDocument.CreateAnonymized();
         PasswordHash = Password.FromHash(AnonymizationConstants.Marker);
+        RaiseDomainEvent(new UserAccountDeleted(Id, DateTimeOffset.UtcNow));
     }
 }

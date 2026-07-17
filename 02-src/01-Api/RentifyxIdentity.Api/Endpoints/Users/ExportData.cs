@@ -26,7 +26,7 @@ internal sealed class ExportData : IEndpoint
         if (!Guid.TryParse(httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId))
             return Results.Unauthorized();
 
-        ErrorOr<UserDataExportResponse> result = await handler.Handle(
+        ErrorOr<UserDataExportResponse> result = await handler.HandleAsync(
             new ExportDataRequest(userId),
             ct);
 

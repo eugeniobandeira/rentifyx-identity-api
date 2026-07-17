@@ -16,16 +16,15 @@ namespace RentifyxIdentity.Application.Features.Identity.Auth.Register;
 
 public sealed class RegisterUserHandler(
     IUserRepository repository,
-    IEmailService emailService,
     ITokenService tokenService,
     IValidator<RegisterUserRequest> validator,
     ILogger<RegisterUserHandler> logger) : IHandler<RegisterUserRequest, UserResponse>
 {
-    public async Task<ErrorOr<UserResponse>> Handle(
+    public async Task<ErrorOr<UserResponse>> HandleAsync(
         RegisterUserRequest request,
         CancellationToken ct = default)
     {
-        logger.LogInformation("Registering user. Payload={@Payload}", request);
+        logger.LogInformation("Registering user. Email={Email}", request.Email);
 
         List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
@@ -51,21 +50,10 @@ public sealed class RegisterUserHandler(
         string tokenHash = tokenService.HashToken(rawToken);
         user.SetEmailVerificationToken(tokenHash, DateTimeOffset.UtcNow.AddHours(TokenPolicyConstants.EmailVerificationHours));
 
-        await repository.AddAsync(user, ct);
+        UserRegistered domainEvent = new(user.Id, user.Email.ToString(), user.Role, rawToken, DateTimeOffset.UtcNow);
+        await repository.AddAsync(user, [domainEvent], ct);
 
-        try
-        {
-            await emailService.SendVerificationEmailAsync(user.Email.ToString(), rawToken, ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Verification email failed for {Email}", user.Email);
-        }
-
-        UserRegistered domainEvent = new(user.Id, user.Email.ToString(), user.Role, DateTimeOffset.UtcNow);
-        logger.LogInformation("Domain event: {Event}", domainEvent);
-
-        logger.LogInformation("User registered successfully. Response={@Response}", user);
+        logger.LogInformation("User registered successfully. UserId={UserId}", user.Id);
 
         return UserMapper.ToResponse(user);
     }

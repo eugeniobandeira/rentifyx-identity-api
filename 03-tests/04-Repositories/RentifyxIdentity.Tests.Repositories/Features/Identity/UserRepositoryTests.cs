@@ -1,12 +1,14 @@
-using Amazon.DynamoDBv2.Model;
+﻿using Amazon.DynamoDBv2.Model;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using RentifyxIdentity.Application.Outbox;
 using RentifyxIdentity.Domain.Entities;
-using Xunit;
 using RentifyxIdentity.Domain.Enums;
+using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.ValueObjects;
 using RentifyxIdentity.Infrastructure.Repositories;
 using RentifyxIdentity.Tests.Repositories.Infrastructure;
+using Xunit;
 
 namespace RentifyxIdentity.Tests.Repositories.Features.Identity;
 
@@ -25,7 +27,7 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
                 ["AWS:DynamoDB:TableName"] = fixture.TableName
             })
             .Build();
-        _sut = new UserRepository(_fixture.Context, configuration);
+        _sut = new UserRepository(_fixture.Context, _fixture.Client, new OutboxEntryFactory(), configuration);
     }
 
     [Fact]
@@ -324,6 +326,80 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
         finally
         {
             await DeleteUserAsync(user.Id);
+        }
+    }
+
+    [Fact]
+    public async Task AddAsync_WithExtraEvents_WritesUserAndOutboxItemsAtomically()
+    {
+        UserEntity user = BuildUser("outbox-atomic@example.com", "12312312312");
+        PasswordResetRequested resetEvent = new(user.Id, user.Email.Value, "raw-token", DateTimeOffset.UtcNow);
+
+        try
+        {
+            await _sut.AddAsync(user, [resetEvent]);
+
+            UserEntity? retrieved = await _sut.GetByIdAsync(user.Id);
+            retrieved.Should().NotBeNull();
+
+            List<Dictionary<string, AttributeValue>> outboxItems = await ScanOutboxItemsForUserAsync(user.Id);
+            outboxItems.Should().ContainSingle();
+        }
+        finally
+        {
+            await DeleteUserAsync(user.Id);
+            await DeleteOutboxItemsForUserAsync(user.Id);
+        }
+    }
+
+    [Fact]
+    public async Task AddAsync_TransactionFailsOnOutboxWrite_RollsBackUserItemToo()
+    {
+        UserEntity user = BuildUser("outbox-rollback@example.com", "45645645645");
+        // DynamoDB rejects items over 400KB - forces TransactWriteItemsAsync to fail on the Outbox Put while
+        // the User Put in the same transaction is perfectly valid, proving atomicity (not a mocked failure).
+        PasswordResetRequested oversizedEvent = new(user.Id, user.Email.Value, new string('a', 450_000), DateTimeOffset.UtcNow);
+
+        Func<Task> act = () => _sut.AddAsync(user, [oversizedEvent]);
+
+        await act.Should().ThrowAsync<Exception>();
+
+        UserEntity? retrieved = await _sut.GetByIdAsync(user.Id);
+        retrieved.Should().BeNull("the transaction must roll back the user item when the outbox write fails");
+
+        List<Dictionary<string, AttributeValue>> outboxItems = await ScanOutboxItemsForUserAsync(user.Id);
+        outboxItems.Should().BeEmpty();
+    }
+
+    private async Task<List<Dictionary<string, AttributeValue>>> ScanOutboxItemsForUserAsync(Guid userId)
+    {
+        ScanResponse response = await _fixture.Client.ScanAsync(new ScanRequest
+        {
+            TableName = _fixture.TableName,
+            FilterExpression = "begins_with(PK, :prefix) AND contains(MessageJson, :uid)",
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                [":prefix"] = new AttributeValue { S = "OUTBOX#" },
+                [":uid"] = new AttributeValue { S = userId.ToString() }
+            }
+        });
+
+        return response.Items;
+    }
+
+    private async Task DeleteOutboxItemsForUserAsync(Guid userId)
+    {
+        List<Dictionary<string, AttributeValue>> items = await ScanOutboxItemsForUserAsync(userId);
+
+        foreach (Dictionary<string, AttributeValue> item in items)
+        {
+            await _fixture.Client.DeleteItemAsync(
+                _fixture.TableName,
+                new Dictionary<string, AttributeValue>
+                {
+                    ["PK"] = item["PK"],
+                    ["SK"] = item["SK"]
+                });
         }
     }
 

@@ -1,4 +1,3 @@
-using Amazon;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.Model;
@@ -26,10 +25,14 @@ public sealed class LocalStackFixture : IAsyncLifetime
 
         string serviceUrl = _container.GetConnectionString();
 
+        // RegionEndpoint must NOT be set alongside ServiceURL here: AWSSDK.DynamoDBv2 (tested on both 4.0.21.7
+        // and 4.0.101) rejects every request against LocalStack with "The security token included in the
+        // request is invalid." the moment RegionEndpoint is also set - reproduced outside this test project
+        // entirely (isolated console repro), so it's an SDK/LocalStack signing interaction, not a fixture bug.
+        // ServiceURL alone is sufficient to route requests to the container.
         AmazonDynamoDBConfig config = new()
         {
-            ServiceURL = serviceUrl,
-            RegionEndpoint = RegionEndpoint.SAEast1
+            ServiceURL = serviceUrl
         };
 
         Client = new AmazonDynamoDBClient(
@@ -61,7 +64,9 @@ public sealed class LocalStackFixture : IAsyncLifetime
                 new AttributeDefinition { AttributeName = "PK", AttributeType = ScalarAttributeType.S },
                 new AttributeDefinition { AttributeName = "SK", AttributeType = ScalarAttributeType.S },
                 new AttributeDefinition { AttributeName = "Email", AttributeType = ScalarAttributeType.S },
-                new AttributeDefinition { AttributeName = "TaxId", AttributeType = ScalarAttributeType.S }
+                new AttributeDefinition { AttributeName = "TaxId", AttributeType = ScalarAttributeType.S },
+                new AttributeDefinition { AttributeName = "GsiOutboxStatusPk", AttributeType = ScalarAttributeType.S },
+                new AttributeDefinition { AttributeName = "CreatedAt", AttributeType = ScalarAttributeType.S }
             ],
             KeySchema =
             [
@@ -85,6 +90,16 @@ public sealed class LocalStackFixture : IAsyncLifetime
                     KeySchema =
                     [
                         new KeySchemaElement { AttributeName = "TaxId", KeyType = KeyType.HASH }
+                    ],
+                    Projection = new Projection { ProjectionType = ProjectionType.ALL }
+                },
+                new GlobalSecondaryIndex
+                {
+                    IndexName = "GSI_Outbox",
+                    KeySchema =
+                    [
+                        new KeySchemaElement { AttributeName = "GsiOutboxStatusPk", KeyType = KeyType.HASH },
+                        new KeySchemaElement { AttributeName = "CreatedAt", KeyType = KeyType.RANGE }
                     ],
                     Projection = new Projection { ProjectionType = ProjectionType.ALL }
                 }

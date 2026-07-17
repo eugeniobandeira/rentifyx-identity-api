@@ -1,7 +1,6 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Threading;
 using FluentAssertions;
 using RentifyxIdentity.Application.Features.Identity.Auth.Login.Request;
 using RentifyxIdentity.Application.Features.Identity.Auth.Register.Request;
@@ -41,7 +40,7 @@ public sealed class ConsentEndpointTests(CustomWebApplicationFactory factory) : 
         Application.Features.Identity.UserResponse user =
             (await registerResponse.Content.ReadFromJsonAsync<Application.Features.Identity.UserResponse>())!;
 
-        string rawToken = factory.EmailService.SentVerificationEmails
+        string rawToken = factory.UserRepository.SentVerificationEmails
             .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
             .Token;
 

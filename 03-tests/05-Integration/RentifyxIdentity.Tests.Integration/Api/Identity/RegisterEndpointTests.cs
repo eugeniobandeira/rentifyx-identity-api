@@ -46,7 +46,7 @@ public sealed class RegisterEndpointTests(CustomWebApplicationFactory factory)
         root.TryGetProperty("taxId", out _).Should().BeFalse();
         root.TryGetProperty("passwordHash", out _).Should().BeFalse();
 
-        factory.EmailService.SentVerificationEmails
+        factory.UserRepository.SentVerificationEmails
             .Should().Contain(e => e.Recipient == request.Email.ToLowerInvariant());
     }
 

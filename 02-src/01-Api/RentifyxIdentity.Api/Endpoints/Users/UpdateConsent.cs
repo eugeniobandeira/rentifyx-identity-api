@@ -29,7 +29,7 @@ internal sealed class UpdateConsent : IEndpoint
         if (!Guid.TryParse(httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId))
             return Results.Unauthorized();
 
-        ErrorOr<ConsentResponse> result = await handler.Handle(
+        ErrorOr<ConsentResponse> result = await handler.HandleAsync(
             new UpdateConsentRequest(userId, request.Purpose, request.Granted),
             ct);
 

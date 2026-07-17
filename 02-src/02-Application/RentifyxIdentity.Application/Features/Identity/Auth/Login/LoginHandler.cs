@@ -22,7 +22,7 @@ public sealed class LoginHandler(
 {
     private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(TokenPolicyConstants.RefreshTokenDays);
 
-    public async Task<ErrorOr<LoginResponse>> Handle(
+    public async Task<ErrorOr<LoginResponse>> HandleAsync(
         LoginRequest request,
         CancellationToken ct = default)
     {

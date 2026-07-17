@@ -176,7 +176,7 @@ Every use case implements `IHandler<TRequest, TResponse>`, returning `ErrorOr<T>
 ```csharp
 public interface IHandler<TRequest, TResponse>
 {
-    Task<ErrorOr<TResponse>> Handle(TRequest request, CancellationToken cancellationToken = default);
+    Task<ErrorOr<TResponse>> HandleAsync(TRequest request, CancellationToken cancellationToken = default);
 }
 ```
 
@@ -214,7 +214,7 @@ internal sealed class MyAction : IEndpoint
         HttpContext httpContext,
         CancellationToken cancellationToken = default)
     {
-        var result = await handler.Handle(request, cancellationToken);
+        var result = await handler.HandleAsync(request, cancellationToken);
         return result.Match(r => Results.Ok(r), e => e.ToProblem(httpContext));
     }
 }
@@ -237,7 +237,7 @@ only API *endpoints* are reflection-discovered.
 Business logic never throws — it returns `ErrorOr<T>`. Endpoints map the result to HTTP responses:
 
 ```csharp
-var result = await handler.Handle(request, cancellationToken);
+var result = await handler.HandleAsync(request, cancellationToken);
 return result.Match(r => Results.Ok(r), e => e.ToProblem(httpContext));
 ```
 

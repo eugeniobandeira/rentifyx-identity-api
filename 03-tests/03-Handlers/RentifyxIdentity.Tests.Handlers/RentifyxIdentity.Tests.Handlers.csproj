@@ -9,7 +9,6 @@
     <ProjectReference Include="..\..\01-Common\RentifyxIdentity.Tests.Common\RentifyxIdentity.Tests.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.SimpleEmailV2" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>

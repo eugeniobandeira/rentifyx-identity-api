@@ -70,7 +70,7 @@ resource "aws_iam_role_policy_attachment" "ec2_ssm" {
 
 # ---------------------------------------------------------------------------
 # Combined runtime secret — rentifyx/identity/{environment}
-# Single JSON object with Jwt:PrivateKeyPem, Hmac:Key, Ses:FromAddress.
+# Single JSON object with Jwt:PrivateKeyPem, Hmac:Key.
 # The SecretsManagerConfigurationProvider reads this path on startup.
 # ---------------------------------------------------------------------------
 

@@ -30,7 +30,7 @@ public sealed class LgpdEndpointTests(CustomWebApplicationFactory factory)
         HttpResponseMessage registerResponse = await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
         UserResponse user = (await registerResponse.Content.ReadFromJsonAsync<UserResponse>())!;
 
-        string rawToken = factory.EmailService.SentVerificationEmails
+        string rawToken = factory.UserRepository.SentVerificationEmails
             .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
             .Token;
 

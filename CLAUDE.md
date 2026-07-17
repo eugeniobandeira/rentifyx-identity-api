@@ -75,6 +75,10 @@ k8s/                  – Kustomize base + dev/prod overlays (deployment, HPA, S
 
 All handlers return `ErrorOr<T>`. Map to HTTP with `result.Match(success => ..., errors => errors.ToProblem(httpContext))`.
 
+### Async naming
+
+Every async method gets an `Async` suffix — including interface members. `IHandler<TRequest, TResponse>.HandleAsync(...)` is the pattern every handler implements; no `Handle`/`Send`/`Process`-without-suffix methods, on interfaces or implementations. Test methods (`[Fact]`/`[Theory]`) are exempt — they follow test-naming convention (`HappyPath_...`, `InvalidEmail_...`), not this rule.
+
 ### Endpoint pattern
 
 ```csharp
@@ -92,7 +96,7 @@ internal sealed class MyAction : IEndpoint
         HttpContext httpContext,
         CancellationToken cancellationToken = default)
     {
-        var result = await handler.Handle(request, cancellationToken);
+        var result = await handler.HandleAsync(request, cancellationToken);
         return result.Match(r => Results.Ok(r), e => e.ToProblem(httpContext));
     }
 }

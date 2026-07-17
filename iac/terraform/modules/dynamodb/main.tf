@@ -26,6 +26,16 @@ resource "aws_dynamodb_table" "identity" {
     type = "S"
   }
 
+  attribute {
+    name = "GsiOutboxStatusPk"
+    type = "S"
+  }
+
+  attribute {
+    name = "CreatedAt"
+    type = "S"
+  }
+
   global_secondary_index {
     name            = "GSI_Email"
     hash_key        = "Email"
@@ -35,6 +45,15 @@ resource "aws_dynamodb_table" "identity" {
   global_secondary_index {
     name            = "GSI_TaxId"
     hash_key        = "TaxId"
+    projection_type = "ALL"
+  }
+
+  # Outbox publisher poll query: Status -> Pending entries ordered by CreatedAt.
+  # See .specs/features/outbox-kafka-notifications/design.md.
+  global_secondary_index {
+    name            = "GSI_Outbox"
+    hash_key        = "GsiOutboxStatusPk"
+    range_key       = "CreatedAt"
     projection_type = "ALL"
   }
 

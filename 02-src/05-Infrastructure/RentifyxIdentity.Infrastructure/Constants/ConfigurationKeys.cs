@@ -6,7 +6,6 @@ internal static class ConfigurationKeys
     internal const string JwtIssuer = "Jwt:Issuer";
     internal const string JwtAudience = "Jwt:Audience";
     internal const string HmacKey = "Hmac:Key";
-    internal const string SesFromAddress = "Ses:FromAddress";
     internal const string AwsRegion = "AWS:Region";
     internal const string AwsSecretsManagerSecretName = "AWS:SecretsManager:SecretName";
 

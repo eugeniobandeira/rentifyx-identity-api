@@ -104,7 +104,7 @@ HTTP Request
   → Serilog request logging
   → Rate limiter
   → Endpoint handler (static method)
-      → IHandler<TRequest, TResponse>.Handle(request, ct)
+      → IHandler<TRequest, TResponse>.HandleAsync(request, ct)
           → IValidator<TRequest>.ValidateToErrorsAsync()
           → IRepository / ITokenService / IEmailService calls
           → return ErrorOr<TResponse>

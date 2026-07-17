@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using RentifyxIdentity.Application.Common.Handler;
@@ -24,18 +24,19 @@ using RentifyxIdentity.Application.Features.Identity.Auth.ResetPassword.Validato
 using RentifyxIdentity.Application.Features.Identity.Auth.VerifyEmail;
 using RentifyxIdentity.Application.Features.Identity.Auth.VerifyEmail.Request;
 using RentifyxIdentity.Application.Features.Identity.Auth.VerifyEmail.Validator;
-using RentifyxIdentity.Application.Features.Identity.User.DeleteAccount;
-using RentifyxIdentity.Application.Features.Identity.User.DeleteAccount.Request;
-using RentifyxIdentity.Application.Features.Identity.User.DeleteAccount.Validator;
 using RentifyxIdentity.Application.Features.Identity.User.Consent;
 using RentifyxIdentity.Application.Features.Identity.User.Consent.Request;
 using RentifyxIdentity.Application.Features.Identity.User.Consent.Validator;
+using RentifyxIdentity.Application.Features.Identity.User.DeleteAccount;
+using RentifyxIdentity.Application.Features.Identity.User.DeleteAccount.Request;
+using RentifyxIdentity.Application.Features.Identity.User.DeleteAccount.Validator;
 using RentifyxIdentity.Application.Features.Identity.User.ExportData;
 using RentifyxIdentity.Application.Features.Identity.User.ExportData.Request;
 using RentifyxIdentity.Application.Features.Identity.User.ExportData.Validator;
 using RentifyxIdentity.Application.Features.Identity.User.GetProfile;
 using RentifyxIdentity.Application.Features.Identity.User.GetProfile.Request;
 using RentifyxIdentity.Application.Features.Identity.User.GetProfile.Validator;
+using RentifyxIdentity.Application.Outbox;
 
 namespace RentifyxIdentity.IoC;
 
@@ -68,6 +69,8 @@ internal static class ApplicationDependencyInjection
         services.AddScoped<IHandler<GetProfileRequest, UserResponse>, GetProfileHandler>();
         services.AddScoped<IHandler<GetConsentRequest, ConsentResponse>, GetConsentHandler>();
         services.AddScoped<IHandler<UpdateConsentRequest, ConsentResponse>, UpdateConsentHandler>();
+
+        services.AddSingleton<IOutboxEntryFactory, OutboxEntryFactory>();
 
         return services;
     }

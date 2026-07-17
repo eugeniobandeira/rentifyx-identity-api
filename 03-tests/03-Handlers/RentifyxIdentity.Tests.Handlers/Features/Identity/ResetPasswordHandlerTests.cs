@@ -80,7 +80,7 @@ public sealed class ResetPasswordHandlerTests
 
         ResetPasswordRequest request = new(TestConstants.ValidEmail, RawToken, "NewP@ssword123!");
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
 
@@ -98,7 +98,7 @@ public sealed class ResetPasswordHandlerTests
 
         ResetPasswordRequest request = new(TestConstants.ValidEmail, RawToken, "NewP@ssword123!");
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -117,7 +117,7 @@ public sealed class ResetPasswordHandlerTests
 
         ResetPasswordRequest request = new(TestConstants.ValidEmail, "wrong-token", "NewP@ssword123!");
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -136,7 +136,7 @@ public sealed class ResetPasswordHandlerTests
 
         ResetPasswordRequest request = new(TestConstants.ValidEmail, RawToken, "NewP@ssword123!");
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -154,7 +154,7 @@ public sealed class ResetPasswordHandlerTests
 
         ResetPasswordRequest request = new(TestConstants.ValidEmail, RawToken, "NewP@ssword123!");
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -172,7 +172,7 @@ public sealed class ResetPasswordHandlerTests
 
         ResetPasswordRequest request = new(TestConstants.ValidEmail, RawToken, "NewP@ssword123!");
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
@@ -190,7 +190,7 @@ public sealed class ResetPasswordHandlerTests
 
         ResetPasswordRequest request = new(TestConstants.ValidEmail, RawToken, "NewP@ssword123!");
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
@@ -214,7 +214,7 @@ public sealed class ResetPasswordHandlerTests
 
         ResetPasswordRequest request = new(TestConstants.ValidEmail, RawToken, string.Empty);
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
 

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
+using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.ValueObjects;
 using RentifyxIdentity.Tests.Common.Constants;
 using Xunit;
@@ -296,5 +297,75 @@ public sealed class UserEntityTests
         UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
 
         entity.IsMarketingConsentGranted.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Create_DoesNotRaiseAnyDomainEvent()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+
+        entity.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void VerifyEmail_RaisesUserEmailVerified()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        entity.SetEmailVerificationToken("some-hash", DateTimeOffset.UtcNow.AddHours(24));
+
+        entity.VerifyEmail();
+
+        entity.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<UserEmailVerified>()
+            .Which.UserId.Should().Be(entity.Id);
+    }
+
+    [Fact]
+    public void ResetPassword_RaisesUserPasswordChanged()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        entity.SetPasswordResetToken("reset-hash", DateTimeOffset.UtcNow.AddHours(1));
+
+        entity.ResetPassword(Password.FromPlaintext("N3wP@ssword!"));
+
+        entity.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<UserPasswordChanged>()
+            .Which.UserId.Should().Be(entity.Id);
+    }
+
+    [Fact]
+    public void Suspend_RaisesUserSuspended()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+
+        entity.Suspend();
+
+        entity.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<UserSuspended>()
+            .Which.UserId.Should().Be(entity.Id);
+    }
+
+    [Fact]
+    public void Anonymize_RaisesUserAccountDeleted()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        Guid originalId = entity.Id;
+
+        entity.Anonymize();
+
+        entity.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<UserAccountDeleted>()
+            .Which.UserId.Should().Be(originalId);
+    }
+
+    [Fact]
+    public void ClearDomainEvents_RemovesAllAccumulatedEvents()
+    {
+        UserEntity entity = UserEntity.Create(ValidEmail, ValidTaxId, ValidPassword, ValidRole);
+        entity.Suspend();
+
+        entity.ClearDomainEvents();
+
+        entity.DomainEvents.Should().BeEmpty();
     }
 }

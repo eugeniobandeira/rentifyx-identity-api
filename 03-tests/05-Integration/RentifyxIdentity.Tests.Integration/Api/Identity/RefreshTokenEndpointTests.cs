@@ -24,7 +24,7 @@ public sealed class RefreshTokenEndpointTests(CustomWebApplicationFactory factor
         RegisterUserRequest registerRequest = new RegisterUserRequestBuilder().Build();
         await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
 
-        string rawToken = factory.EmailService.SentVerificationEmails
+        string rawToken = factory.UserRepository.SentVerificationEmails
             .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
             .Token;
 
@@ -65,7 +65,7 @@ public sealed class RefreshTokenEndpointTests(CustomWebApplicationFactory factor
         RegisterUserRequest registerRequest = new RegisterUserRequestBuilder().Build();
         await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
 
-        string rawToken = factory.EmailService.SentVerificationEmails
+        string rawToken = factory.UserRepository.SentVerificationEmails
             .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
             .Token;
 
@@ -84,7 +84,7 @@ public sealed class RefreshTokenEndpointTests(CustomWebApplicationFactory factor
         RegisterUserRequest registerRequest = new RegisterUserRequestBuilder().Build();
         await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
 
-        string rawToken = factory.EmailService.SentVerificationEmails
+        string rawToken = factory.UserRepository.SentVerificationEmails
             .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
             .Token;
 

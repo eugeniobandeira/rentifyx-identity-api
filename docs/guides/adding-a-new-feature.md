@@ -58,7 +58,7 @@ public sealed class RegisterUserHandler(
     IValidator<RegisterUserRequest> validator,
     ILogger<RegisterUserHandler> logger) : IHandler<RegisterUserRequest, UserResponse>
 {
-    public async Task<ErrorOr<UserResponse>> Handle(RegisterUserRequest request, CancellationToken ct = default)
+    public async Task<ErrorOr<UserResponse>> HandleAsync(RegisterUserRequest request, CancellationToken ct = default)
     {
         List<Error>? errors = await validator.ValidateToErrorsAsync(request, ct);
         if (errors is not null)
@@ -123,7 +123,7 @@ internal sealed class Register : IEndpoint
         HttpContext httpContext,
         CancellationToken ct = default)
     {
-        var result = await handler.Handle(request, ct);
+        var result = await handler.HandleAsync(request, ct);
         return result.Match(
             user => Results.Created($"/api/v1/users/{user.Id}", user),
             errors => errors.ToProblem(httpContext));

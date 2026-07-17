@@ -24,7 +24,7 @@ internal sealed class Register : IEndpoint
         HttpContext httpContext,
         CancellationToken ct = default)
     {
-        ErrorOr<UserResponse> result = await handler.Handle(request, ct);
+        ErrorOr<UserResponse> result = await handler.HandleAsync(request, ct);
 
         return result.Match(
             response => Results.Created($"/api/v1/users/{response.Id}", response),

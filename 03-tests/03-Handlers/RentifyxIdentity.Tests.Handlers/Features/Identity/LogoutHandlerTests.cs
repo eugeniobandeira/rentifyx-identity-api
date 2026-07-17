@@ -67,7 +67,7 @@ public sealed class LogoutHandlerTests
 
         LogoutRequest request = new(TestConstants.ValidEmail, TestConstants.RawRefreshToken);
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
 
@@ -85,7 +85,7 @@ public sealed class LogoutHandlerTests
 
         LogoutRequest request = new(TestConstants.ValidEmail, TestConstants.RawRefreshToken);
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
 
@@ -111,7 +111,7 @@ public sealed class LogoutHandlerTests
 
         LogoutRequest request = new(TestConstants.ValidEmail, TestConstants.RawRefreshToken);
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
 
@@ -135,7 +135,7 @@ public sealed class LogoutHandlerTests
 
         LogoutRequest request = new(TestConstants.ValidEmail, "wrong-token");
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
 
@@ -161,7 +161,7 @@ public sealed class LogoutHandlerTests
 
         LogoutRequest request = new(string.Empty, TestConstants.RawRefreshToken);
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
 

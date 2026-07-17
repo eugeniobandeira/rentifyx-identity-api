@@ -18,7 +18,7 @@ public sealed class UpdateConsentHandler(
     IValidator<UpdateConsentRequest> validator,
     ILogger<UpdateConsentHandler> logger) : IHandler<UpdateConsentRequest, ConsentResponse>
 {
-    public async Task<ErrorOr<ConsentResponse>> Handle(
+    public async Task<ErrorOr<ConsentResponse>> HandleAsync(
         UpdateConsentRequest request,
         CancellationToken ct = default)
     {

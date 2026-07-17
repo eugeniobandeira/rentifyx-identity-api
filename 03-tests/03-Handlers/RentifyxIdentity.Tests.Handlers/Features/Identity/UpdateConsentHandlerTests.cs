@@ -66,7 +66,7 @@ public sealed class UpdateConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(
             new UpdateConsentRequest(user.Id, "Essential", false));
 
         result.IsError.Should().BeFalse();
@@ -88,7 +88,7 @@ public sealed class UpdateConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(
             new UpdateConsentRequest(user.Id, "Essential", true));
 
         result.IsError.Should().BeFalse();
@@ -109,7 +109,7 @@ public sealed class UpdateConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(
             new UpdateConsentRequest(user.Id, "Marketing", true));
 
         result.IsError.Should().BeFalse();
@@ -130,7 +130,7 @@ public sealed class UpdateConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(
             new UpdateConsentRequest(user.Id, "Marketing", false));
 
         result.IsError.Should().BeFalse();
@@ -151,8 +151,8 @@ public sealed class UpdateConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        await _handler.Handle(new UpdateConsentRequest(user.Id, "Essential", false));
-        ErrorOr<ConsentResponse> result = await _handler.Handle(
+        await _handler.HandleAsync(new UpdateConsentRequest(user.Id, "Essential", false));
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(
             new UpdateConsentRequest(user.Id, "Essential", false));
 
         result.IsError.Should().BeFalse();
@@ -172,7 +172,7 @@ public sealed class UpdateConsentHandlerTests
             .Setup(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("DynamoDB unavailable"));
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(
             new UpdateConsentRequest(user.Id, "Essential", false));
 
         result.IsError.Should().BeFalse();
@@ -185,7 +185,7 @@ public sealed class UpdateConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserEntity?)null);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(
             new UpdateConsentRequest(Guid.NewGuid(), "Essential", false));
 
         result.IsError.Should().BeTrue();
@@ -205,7 +205,7 @@ public sealed class UpdateConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(
             new UpdateConsentRequest(user.Id, "Essential", false));
 
         result.IsError.Should().BeTrue();
@@ -230,7 +230,7 @@ public sealed class UpdateConsentHandlerTests
                 }
             }));
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(
             new UpdateConsentRequest(Guid.NewGuid(), "NotAPurpose", true));
 
         result.IsError.Should().BeTrue();

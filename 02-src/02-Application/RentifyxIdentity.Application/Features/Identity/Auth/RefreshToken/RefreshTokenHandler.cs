@@ -21,7 +21,7 @@ public sealed class RefreshTokenHandler(
 {
     private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(TokenPolicyConstants.RefreshTokenDays);
 
-    public async Task<ErrorOr<LoginResponse>> Handle(
+    public async Task<ErrorOr<LoginResponse>> HandleAsync(
         RefreshTokenRequest request,
         CancellationToken ct = default)
     {

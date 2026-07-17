@@ -18,11 +18,6 @@ variable "secret_arn" {
   type        = string
 }
 
-variable "ses_identity_arn" {
-  description = "ARN of the SES verified identity for sending emails"
-  type        = string
-}
-
 variable "eks_oidc_provider_arn" {
   description = "ARN of the EKS OIDC provider for IRSA trust policy"
   type        = string

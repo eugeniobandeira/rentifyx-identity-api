@@ -26,7 +26,7 @@ internal sealed class GetProfile : IEndpoint
         if (!Guid.TryParse(httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId))
             return Results.Unauthorized();
 
-        ErrorOr<UserResponse> result = await handler.Handle(
+        ErrorOr<UserResponse> result = await handler.HandleAsync(
             new GetProfileRequest(userId),
             ct);
 

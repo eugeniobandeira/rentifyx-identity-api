@@ -25,7 +25,7 @@ internal sealed class Login : IEndpoint
         HttpContext httpContext,
         CancellationToken ct = default)
     {
-        ErrorOr<LoginResponse> result = await handler.Handle(request, ct);
+        ErrorOr<LoginResponse> result = await handler.HandleAsync(request, ct);
 
         return result.Match(
             response =>

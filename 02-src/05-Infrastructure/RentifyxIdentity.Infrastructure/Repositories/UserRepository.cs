@@ -1,7 +1,11 @@
+using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
+using RentifyxIdentity.Application.Outbox;
 using RentifyxIdentity.Domain.Entities;
+using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
 using RentifyxIdentity.Infrastructure.Constants;
 using RentifyxIdentity.Infrastructure.Mapping;
@@ -12,22 +16,33 @@ namespace RentifyxIdentity.Infrastructure.Repositories;
 public sealed class UserRepository : IUserRepository
 {
     private readonly IDynamoDBContext _context;
+    private readonly IAmazonDynamoDB _client;
+    private readonly IOutboxEntryFactory _outboxEntryFactory;
     private readonly string _tableName;
 
-    public UserRepository(IDynamoDBContext context, IConfiguration configuration)
+    public UserRepository(
+        IDynamoDBContext context,
+        IAmazonDynamoDB client,
+        IOutboxEntryFactory outboxEntryFactory,
+        IConfiguration configuration)
     {
         _context = context;
+        _client = client;
+        _outboxEntryFactory = outboxEntryFactory;
         _tableName = configuration[DynamoDbConstants.TableNameConfigKey]
             ?? DynamoDbConstants.DefaultTableName;
     }
 
-    public async Task AddAsync(
+    public Task AddAsync(
         UserEntity entity,
         CancellationToken ct = default)
-    {
-        UserDynamoDbItem item = UserDynamoDbMapper.ToItem(entity);
-        await _context.SaveAsync(item, new SaveConfig { OverrideTableName = _tableName }, ct);
-    }
+        => AddAsync(entity, [], ct);
+
+    public Task AddAsync(
+        UserEntity entity,
+        IReadOnlyCollection<IDomainEvent> extraEvents,
+        CancellationToken ct = default)
+        => WriteTransactionallyAsync(entity, extraEvents, ct);
 
     public async Task<UserEntity?> GetByIdAsync(
         Guid id,
@@ -67,7 +82,13 @@ public sealed class UserRepository : IUserRepository
     public Task UpdateAsync(
         UserEntity entity,
         CancellationToken ct = default)
-        => AddAsync(entity, ct);
+        => UpdateAsync(entity, [], ct);
+
+    public Task UpdateAsync(
+        UserEntity entity,
+        IReadOnlyCollection<IDomainEvent> extraEvents,
+        CancellationToken ct = default)
+        => WriteTransactionallyAsync(entity, extraEvents, ct);
 
     public async Task DeleteAsync(
         UserEntity entity,
@@ -79,6 +100,50 @@ public sealed class UserRepository : IUserRepository
             pk,
             new DeleteConfig { OverrideTableName = _tableName },
             ct);
+    }
+
+    /// <summary>
+    /// Writes the user item and one Outbox item per raised event in a single DynamoDB transaction - either all
+    /// items land, or none do (TransactWriteItemsAsync fails the whole request and nothing is persisted).
+    /// Domain events are only cleared after the transaction actually succeeds.
+    /// </summary>
+    private async Task WriteTransactionallyAsync(
+        UserEntity entity,
+        IReadOnlyCollection<IDomainEvent> extraEvents,
+        CancellationToken ct)
+    {
+        UserDynamoDbItem userItem = UserDynamoDbMapper.ToItem(entity);
+
+        List<TransactWriteItem> transactItems =
+        [
+            new TransactWriteItem
+            {
+                Put = new Put
+                {
+                    TableName = _tableName,
+                    Item = _context.ToDocument(userItem).ToAttributeMap()
+                }
+            }
+        ];
+
+        IReadOnlyCollection<IDomainEvent> allEvents = [.. entity.DomainEvents, .. extraEvents];
+        foreach (OutboxEntry outboxEntry in _outboxEntryFactory.CreateEntries(allEvents))
+        {
+            OutboxDynamoDbItem outboxItem = OutboxItemMapper.ToItem(outboxEntry);
+
+            transactItems.Add(new TransactWriteItem
+            {
+                Put = new Put
+                {
+                    TableName = _tableName,
+                    Item = _context.ToDocument(outboxItem).ToAttributeMap()
+                }
+            });
+        }
+
+        await _client.TransactWriteItemsAsync(new TransactWriteItemsRequest { TransactItems = transactItems }, ct);
+
+        entity.ClearDomainEvents();
     }
 
     private async Task<UserEntity?> QueryByGsiAsync(

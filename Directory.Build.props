@@ -7,7 +7,7 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AnalysisMode>Recommended</AnalysisMode>
     <LangVersion>latest</LangVersion>
-    <NoWarn>$(NoWarn);CA1848;CA1873;EnableGenerateDocumentationFile;IDE0060</NoWarn>
+    <NoWarn>$(NoWarn);CA1848;CA1873;EnableGenerateDocumentationFile;IDE0060;CA2007</NoWarn>
     <NuGetAuditMode>direct</NuGetAuditMode>
   </PropertyGroup>
 
