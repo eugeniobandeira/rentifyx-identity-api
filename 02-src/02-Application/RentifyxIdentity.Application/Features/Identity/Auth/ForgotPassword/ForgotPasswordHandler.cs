@@ -1,12 +1,12 @@
-using ErrorOr;
+﻿using ErrorOr;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Extensions;
 using RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword.Request;
+using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
-using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
 
@@ -51,7 +51,7 @@ public sealed class ForgotPasswordHandler(
         PasswordResetRequested domainEvent = new(user.Id, user.Email.ToString(), rawToken, DateTimeOffset.UtcNow);
         await repository.UpdateAsync(user, [domainEvent], ct);
 
-        logger.LogInformation("Password reset requested. UserId={UserId}", user.Id);
+        logger.LogInformation("Password reset token issued. UserId={UserId}", user.Id);
 
         return Result.Success;
     }

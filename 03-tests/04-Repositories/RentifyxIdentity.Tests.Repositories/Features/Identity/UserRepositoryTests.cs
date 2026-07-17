@@ -1,14 +1,14 @@
-using Amazon.DynamoDBv2.Model;
+﻿using Amazon.DynamoDBv2.Model;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using RentifyxIdentity.Application.Outbox;
 using RentifyxIdentity.Domain.Entities;
-using RentifyxIdentity.Domain.Events;
-using Xunit;
 using RentifyxIdentity.Domain.Enums;
+using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.ValueObjects;
 using RentifyxIdentity.Infrastructure.Repositories;
 using RentifyxIdentity.Tests.Repositories.Infrastructure;
+using Xunit;
 
 namespace RentifyxIdentity.Tests.Repositories.Features.Identity;
 

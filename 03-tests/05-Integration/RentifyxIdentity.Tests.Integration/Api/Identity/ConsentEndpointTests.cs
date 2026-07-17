@@ -1,7 +1,6 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Threading;
 using FluentAssertions;
 using RentifyxIdentity.Application.Features.Identity.Auth.Login.Request;
 using RentifyxIdentity.Application.Features.Identity.Auth.Register.Request;

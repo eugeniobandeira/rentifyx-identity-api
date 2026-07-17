@@ -1,10 +1,10 @@
-﻿using Amazon;
+﻿using System.Text.Json;
+using Amazon;
 using Amazon.Runtime;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Microsoft.Extensions.Configuration;
 using RentifyxIdentity.Infrastructure.Constants;
-using System.Text.Json;
 
 namespace RentifyxIdentity.Infrastructure.Configuration;
 

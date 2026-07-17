@@ -1,4 +1,4 @@
-using ErrorOr;
+﻿using ErrorOr;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
@@ -33,7 +33,7 @@ public sealed class ExportDataHandlerTests
 
         _auditLogServiceMock
             .Setup(a => a.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((IReadOnlyList<AuditLogEntryRecord>)[]);
+            .ReturnsAsync([]);
 
         _validatorMock
             .Setup(v => v.ValidateAsync(It.IsAny<ExportDataRequest>(), It.IsAny<CancellationToken>()))

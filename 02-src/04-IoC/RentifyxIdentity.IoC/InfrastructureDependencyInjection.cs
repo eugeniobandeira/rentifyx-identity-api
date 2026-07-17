@@ -1,7 +1,6 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
-using Amazon.Extensions.NETCore.Setup;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
