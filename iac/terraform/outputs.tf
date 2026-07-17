@@ -23,9 +23,9 @@ output "ses_identity_arn" {
   value       = module.ses.identity_arn
 }
 
-output "iam_role_arn" {
-  description = "IAM role ARN for EKS pod identity (IRSA)"
-  value       = module.iam.role_arn
+output "iam_policy_arn" {
+  description = "Least-privilege IAM policy ARN, attached to the EC2 instance role"
+  value       = module.iam.policy_arn
 }
 
 output "ec2_public_ip" {

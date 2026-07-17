@@ -96,14 +96,9 @@ module "github_actions" {
 }
 
 module "iam" {
-  source                    = "./modules/iam"
-  prefix                    = local.prefix
-  table_arn                 = module.dynamodb.table_arn
-  kms_key_arn               = module.kms.key_arn
-  secret_arn                = module.secrets.secret_arn
-  eks_oidc_provider_arn     = var.eks_oidc_provider_arn
-  eks_oidc_provider_url     = var.eks_oidc_provider_url
-  service_account_namespace = var.service_account_namespace
-  service_account_name      = var.service_account_name
-  enable_irsa_role          = var.enable_irsa_role
+  source      = "./modules/iam"
+  prefix      = local.prefix
+  table_arn   = module.dynamodb.table_arn
+  kms_key_arn = module.kms.key_arn
+  secret_arn  = module.secrets.secret_arn
 }

@@ -1,11 +1,19 @@
 # ---------------------------------------------------------------------------
 # GitHub Actions OIDC — allows the deploy workflow to assume an IAM role
 # without storing long-lived AWS credentials as GitHub secrets.
+#
+# AWS allows only one token.actions.githubusercontent.com OIDC provider per
+# account. rentifyx-platform's module.github_actions_oidc already created
+# one for real in this account (166613156216) - var.create_oidc_provider
+# defaults to false here so this module looks up that existing provider
+# instead of failing with EntityAlreadyExists.
 # ---------------------------------------------------------------------------
 
 data "aws_caller_identity" "current" {}
 
 resource "aws_iam_openid_connect_provider" "github" {
+  count = var.create_oidc_provider ? 1 : 0
+
   url = "https://token.actions.githubusercontent.com"
 
   client_id_list = ["sts.amazonaws.com"]
@@ -18,6 +26,16 @@ resource "aws_iam_openid_connect_provider" "github" {
   }
 }
 
+data "aws_iam_openid_connect_provider" "github" {
+  count = var.create_oidc_provider ? 0 : 1
+
+  url = "https://token.actions.githubusercontent.com"
+}
+
+locals {
+  oidc_provider_arn = var.create_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : data.aws_iam_openid_connect_provider.github[0].arn
+}
+
 resource "aws_iam_role" "github_deploy" {
   name = "${var.prefix}-github-deploy"
 
@@ -27,7 +45,7 @@ resource "aws_iam_role" "github_deploy" {
       {
         Effect = "Allow"
         Principal = {
-          Federated = aws_iam_openid_connect_provider.github.arn
+          Federated = local.oidc_provider_arn
         }
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
