@@ -1,29 +1,3 @@
-data "aws_iam_policy_document" "assume_role" {
-  count = var.enable_irsa_role ? 1 : 0
-
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [var.eks_oidc_provider_arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "${var.eks_oidc_provider_url}:sub"
-      values   = ["system:serviceaccount:${var.service_account_namespace}:${var.service_account_name}"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "${var.eks_oidc_provider_url}:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-  }
-}
-
 data "aws_iam_policy_document" "identity_api" {
   statement {
     sid    = "DynamoDBAccess"
@@ -66,26 +40,8 @@ data "aws_iam_policy_document" "identity_api" {
   }
 }
 
-resource "aws_iam_role" "identity_api" {
-  count = var.enable_irsa_role ? 1 : 0
-
-  name               = "${var.prefix}-api-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role[0].json
-
-  tags = {
-    ManagedBy = "terraform"
-  }
-}
-
 resource "aws_iam_policy" "identity_api" {
   name        = "${var.prefix}-api-policy"
-  description = "Least-privilege policy for the RentifyX Identity API pod"
+  description = "Least-privilege policy for the RentifyX Identity API"
   policy      = data.aws_iam_policy_document.identity_api.json
-}
-
-resource "aws_iam_role_policy_attachment" "identity_api" {
-  count = var.enable_irsa_role ? 1 : 0
-
-  role       = aws_iam_role.identity_api[0].name
-  policy_arn = aws_iam_policy.identity_api.arn
 }

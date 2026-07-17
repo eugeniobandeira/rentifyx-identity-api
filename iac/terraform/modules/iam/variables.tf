@@ -17,29 +17,3 @@ variable "secret_arn" {
   description = "ARN of the Secrets Manager secret the API must read"
   type        = string
 }
-
-variable "eks_oidc_provider_arn" {
-  description = "ARN of the EKS OIDC provider for IRSA trust policy"
-  type        = string
-}
-
-variable "eks_oidc_provider_url" {
-  description = "URL of the EKS OIDC provider without https:// prefix"
-  type        = string
-}
-
-variable "service_account_namespace" {
-  description = "Kubernetes namespace of the API service account"
-  type        = string
-}
-
-variable "service_account_name" {
-  description = "Kubernetes service account name that assumes this role"
-  type        = string
-}
-
-variable "enable_irsa_role" {
-  description = "Create the EKS IRSA role (trust policy tied to eks_oidc_provider_arn). Disable for environments without an EKS OIDC provider — the least-privilege policy is still created either way, just not attached to an IRSA role."
-  type        = bool
-  default     = true
-}

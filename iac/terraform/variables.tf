@@ -21,30 +21,6 @@ variable "ses_identity" {
   type        = string
 }
 
-variable "eks_oidc_provider_arn" {
-  description = "ARN of the EKS OIDC provider for IRSA"
-  type        = string
-  default     = "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE"
-}
-
-variable "eks_oidc_provider_url" {
-  description = "URL of the EKS OIDC provider without https:// prefix"
-  type        = string
-  default     = "oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE"
-}
-
-variable "service_account_namespace" {
-  description = "Kubernetes namespace where the API service account runs"
-  type        = string
-  default     = "prod"
-}
-
-variable "service_account_name" {
-  description = "Kubernetes service account name that assumes the IAM role"
-  type        = string
-  default     = "rentifyx-identity-api"
-}
-
 variable "ssh_key_name" {
   description = "EC2 key pair name for SSH access (leave empty to disable SSH)"
   type        = string
@@ -71,12 +47,6 @@ variable "enable_cognito" {
 
 variable "enable_github_actions" {
   description = "Provision the GitHub Actions OIDC deploy role. Requires enable_ec2 = true (it grants access to the EC2 instance and ECR repo); ignored otherwise."
-  type        = bool
-  default     = true
-}
-
-variable "enable_irsa_role" {
-  description = "Provision the EKS IRSA role (requires a real eks_oidc_provider_arn/url — the sample defaults are placeholders and will fail apply if EKS isn't set up). Disable for EC2-based or local dev deployments, which don't use IRSA."
   type        = bool
   default     = true
 }
