@@ -35,9 +35,6 @@
     <PackageVersion Include="AWSSDK.SecretsManager" Version="4.0.5.8" />
     <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.4.1" />
   </ItemGroup>
-  <ItemGroup Label="Messaging">
-    <PackageVersion Include="Confluent.Kafka" Version="2.15.0" />
-  </ItemGroup>
   <ItemGroup Label="Auth">
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.4.0" />

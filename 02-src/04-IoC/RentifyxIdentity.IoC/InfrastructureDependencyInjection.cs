@@ -1,6 +1,8 @@
 ﻿using System.Security.Cryptography;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.Extensions.NETCore.Setup;
+using Amazon.SimpleEmailV2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +24,7 @@ internal static class InfrastructureDependencyInjection
         IConfiguration configuration)
     {
         services.AddAWSService<IAmazonDynamoDB>();
+        services.AddAWSService<IAmazonSimpleEmailServiceV2>();
         services.AddSingleton<IDynamoDBContext>(sp =>
             new DynamoDBContextBuilder()
                 .WithDynamoDBClient(() => sp.GetRequiredService<IAmazonDynamoDB>())
