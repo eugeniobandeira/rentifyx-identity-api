@@ -2,9 +2,13 @@
 
 ## Last Updated
 
-2026-07-12
+2026-07-17
 
 ## Current Work
+
+**2026-07-17 session (IaC/CI hardening, no app code changes):** PR #28 (Outbox/DEF-005) merged. Fixed `iac/terraform`'s `backend.tf` (missing empty `backend "s3" {}` skeleton meant `-backend-config` CLI flags never persisted between commands). Attached `rentifyx-platform`'s MSK Serverless client IAM policy (ADR-002 there) to the EC2 role via `terraform_remote_state`, wrapped in `try(..., "")` + `count` - a safe no-op until `rentifyx-platform`'s `network`/`kafka` modules are actually applied (PR #29). Retrofitted `modules/github-actions`'s OIDC provider creation to be conditional (`create_oidc_provider`, default `false`) - `rentifyx-platform` already created the shared `token.actions.githubusercontent.com` provider for real in the account, so this module's own unconditional creation would have failed with `EntityAlreadyExists` on the next apply. Removed the entire dead IRSA (EKS pod identity) IAM setup from `modules/iam` - `eks_oidc_provider_arn`/`url` defaulted to a fake example ARN and `enable_irsa_role` defaulted to `true`, meaning a default `terraform apply` would have tried to create a real IAM role trusting a nonexistent OIDC provider and failed; this repo deploys via its own EC2 module, not EKS pods, and `rentifyx-platform`'s EKS was removed entirely this same session (PR #30, both fixes). `terraform plan` now succeeds cleanly (25 resources, down from 27). CI green (Build & Test, OWASP, Secret Scanning, Trivy) on both PRs. `deploy.yml`'s GitHub Actions workflow fails when triggered (expected - the EC2 instance/deploy role it targets don't exist yet, nothing in this repo has been `apply`'d against real AWS).
+
+**Real AWS account correction (2026-07-17):** the account this project standardizes on is `166613156216` (profile `rentifyx-admin`) - a separate account (`480831398199`) was decommissioned this session at the user's request (its `terraform-user` IAM user's access keys deleted). State bucket/lock table: `rentifyx-tfstate-166613156216` / `rentifyx-tflock`, region `us-east-1`. Nothing from this repo has been applied to AWS yet - `aws dynamodb list-tables`/`ec2 describe-instances` confirm zero resources exist under this repo's naming convention in the real account.
 
 v1.1.0 COMPLETE (2026-06-30) — login lockout, LGPD audit completeness, Aspire+LocalStack one-liner delivered. Tagged v1.1.0. Outbox (DEF-005) and TaxId KMS (DEF-007) deferred post-v1.1.0.
 
