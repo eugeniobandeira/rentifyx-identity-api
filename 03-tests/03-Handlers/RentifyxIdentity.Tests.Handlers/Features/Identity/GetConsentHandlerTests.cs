@@ -59,7 +59,7 @@ public sealed class GetConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(new GetConsentRequest(user.Id));
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(new GetConsentRequest(user.Id));
 
         result.IsError.Should().BeFalse();
         result.Value.EssentialGranted.Should().BeFalse();
@@ -75,7 +75,7 @@ public sealed class GetConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(new GetConsentRequest(user.Id));
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(new GetConsentRequest(user.Id));
 
         result.IsError.Should().BeFalse();
         result.Value.EssentialGranted.Should().BeTrue();
@@ -91,7 +91,7 @@ public sealed class GetConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(new GetConsentRequest(user.Id));
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(new GetConsentRequest(user.Id));
 
         result.IsError.Should().BeFalse();
         result.Value.MarketingGranted.Should().BeTrue();
@@ -105,7 +105,7 @@ public sealed class GetConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserEntity?)null);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(new GetConsentRequest(Guid.NewGuid()));
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(new GetConsentRequest(Guid.NewGuid()));
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.NotFound);
@@ -120,7 +120,7 @@ public sealed class GetConsentHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(new GetConsentRequest(user.Id));
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(new GetConsentRequest(user.Id));
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.NotFound);
@@ -140,7 +140,7 @@ public sealed class GetConsentHandlerTests
                 }
             }));
 
-        ErrorOr<ConsentResponse> result = await _handler.Handle(new GetConsentRequest(Guid.Empty));
+        ErrorOr<ConsentResponse> result = await _handler.HandleAsync(new GetConsentRequest(Guid.Empty));
 
         result.IsError.Should().BeTrue();
 

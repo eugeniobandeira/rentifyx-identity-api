@@ -27,7 +27,7 @@ internal sealed class RefreshToken : IEndpoint
     {
         string refreshToken = httpContext.GetRefreshTokenCookie() ?? string.Empty;
 
-        ErrorOr<LoginResponse> result = await handler.Handle(
+        ErrorOr<LoginResponse> result = await handler.HandleAsync(
             new RefreshTokenRequest(request.Email, refreshToken),
             ct);
 

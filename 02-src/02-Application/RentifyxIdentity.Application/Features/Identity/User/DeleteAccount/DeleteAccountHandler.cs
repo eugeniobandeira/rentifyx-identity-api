@@ -18,7 +18,7 @@ public sealed class DeleteAccountHandler(
     IValidator<DeleteAccountRequest> validator,
     ILogger<DeleteAccountHandler> logger) : IHandler<DeleteAccountRequest, Success>
 {
-    public async Task<ErrorOr<Success>> Handle(
+    public async Task<ErrorOr<Success>> HandleAsync(
         DeleteAccountRequest request,
         CancellationToken ct = default)
     {

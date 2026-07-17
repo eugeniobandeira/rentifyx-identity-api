@@ -19,7 +19,7 @@ public sealed class VerifyEmailHandler(
     IValidator<VerifyEmailRequest> validator,
     ILogger<VerifyEmailHandler> logger) : IHandler<VerifyEmailRequest, UserResponse>
 {
-    public async Task<ErrorOr<UserResponse>> Handle(
+    public async Task<ErrorOr<UserResponse>> HandleAsync(
         VerifyEmailRequest request,
         CancellationToken ct = default)
     {

@@ -65,7 +65,7 @@ public sealed class RegisterUserHandlerTests
 
         RegisterUserRequest request = new RegisterUserRequestBuilder().WithConsentGiven(true).Build();
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
         result.Value.Email.Should().Be(request.Email.ToLowerInvariant());
@@ -98,7 +98,7 @@ public sealed class RegisterUserHandlerTests
             .WithEmail(TestConstants.ValidEmail)
             .Build();
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
@@ -130,7 +130,7 @@ public sealed class RegisterUserHandlerTests
             .WithTaxId(TestConstants.TaxIdCpfRaw)
             .Build();
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Code.Should().Be(UserErrorCodes.TaxIdAlreadyRegistered);
@@ -159,7 +159,7 @@ public sealed class RegisterUserHandlerTests
             .WithEmail(string.Empty)
             .Build();
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
 
@@ -195,7 +195,7 @@ public sealed class RegisterUserHandlerTests
 
         RegisterUserRequest request = new RegisterUserRequestBuilder().Build();
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
         capturedEvents.Should().ContainSingle().Which.Should().BeOfType<UserRegistered>();

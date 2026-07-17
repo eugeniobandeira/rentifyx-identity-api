@@ -25,7 +25,7 @@ internal sealed class DeleteAccount : IEndpoint
         if (!Guid.TryParse(httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId))
             return Results.Unauthorized();
 
-        ErrorOr<Success> result = await handler.Handle(
+        ErrorOr<Success> result = await handler.HandleAsync(
             new DeleteAccountRequest(userId),
             ct);
 

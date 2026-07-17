@@ -18,7 +18,7 @@ public sealed class GetProfileHandler(
     IValidator<GetProfileRequest> validator,
     ILogger<GetProfileHandler> logger) : IHandler<GetProfileRequest, UserResponse>
 {
-    public async Task<ErrorOr<UserResponse>> Handle(
+    public async Task<ErrorOr<UserResponse>> HandleAsync(
         GetProfileRequest request,
         CancellationToken ct = default)
     {

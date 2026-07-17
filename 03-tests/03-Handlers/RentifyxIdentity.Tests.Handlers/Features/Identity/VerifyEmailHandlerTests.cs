@@ -79,7 +79,7 @@ public sealed class VerifyEmailHandlerTests
 
         VerifyEmailRequest request = new(TestConstants.ValidEmail, RawToken);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
         result.Value.Status.Should().Be(nameof(UserStatus.Active));
@@ -101,7 +101,7 @@ public sealed class VerifyEmailHandlerTests
 
         VerifyEmailRequest request = new(TestConstants.ValidEmail, RawToken);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -120,7 +120,7 @@ public sealed class VerifyEmailHandlerTests
 
         VerifyEmailRequest request = new(TestConstants.ValidEmail, "wrong-token");
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -136,7 +136,7 @@ public sealed class VerifyEmailHandlerTests
 
         VerifyEmailRequest request = new(TestConstants.ValidEmail, RawToken);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -154,7 +154,7 @@ public sealed class VerifyEmailHandlerTests
 
         VerifyEmailRequest request = new(TestConstants.ValidEmail, RawToken);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
         result.Value.Status.Should().Be(nameof(UserStatus.Active));
@@ -175,7 +175,7 @@ public sealed class VerifyEmailHandlerTests
 
         VerifyEmailRequest request = new(TestConstants.ValidEmail, RawToken);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
@@ -194,7 +194,7 @@ public sealed class VerifyEmailHandlerTests
 
         VerifyEmailRequest request = new(TestConstants.ValidEmail, RawToken);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
@@ -218,7 +218,7 @@ public sealed class VerifyEmailHandlerTests
 
         VerifyEmailRequest request = new(string.Empty, RawToken);
 
-        ErrorOr<UserResponse> result = await _handler.Handle(request);
+        ErrorOr<UserResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
 

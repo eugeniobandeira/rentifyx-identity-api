@@ -67,7 +67,7 @@ public sealed class DeleteAccountHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<Success> result = await _handler.Handle(new DeleteAccountRequest(user.Id));
+        ErrorOr<Success> result = await _handler.HandleAsync(new DeleteAccountRequest(user.Id));
 
         result.IsError.Should().BeFalse();
 
@@ -87,7 +87,7 @@ public sealed class DeleteAccountHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserEntity?)null);
 
-        ErrorOr<Success> result = await _handler.Handle(new DeleteAccountRequest(Guid.NewGuid()));
+        ErrorOr<Success> result = await _handler.HandleAsync(new DeleteAccountRequest(Guid.NewGuid()));
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.NotFound);
@@ -110,7 +110,7 @@ public sealed class DeleteAccountHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<Success> result = await _handler.Handle(new DeleteAccountRequest(user.Id));
+        ErrorOr<Success> result = await _handler.HandleAsync(new DeleteAccountRequest(user.Id));
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
@@ -137,7 +137,7 @@ public sealed class DeleteAccountHandlerTests
             .Setup(a => a.LogAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("DynamoDB unavailable"));
 
-        ErrorOr<Success> result = await _handler.Handle(new DeleteAccountRequest(user.Id));
+        ErrorOr<Success> result = await _handler.HandleAsync(new DeleteAccountRequest(user.Id));
 
         result.IsError.Should().BeFalse();
     }
@@ -155,7 +155,7 @@ public sealed class DeleteAccountHandlerTests
                 }
             }));
 
-        ErrorOr<Success> result = await _handler.Handle(new DeleteAccountRequest(Guid.Empty));
+        ErrorOr<Success> result = await _handler.HandleAsync(new DeleteAccountRequest(Guid.Empty));
 
         result.IsError.Should().BeTrue();
 

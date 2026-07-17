@@ -15,7 +15,7 @@ public sealed class LogoutHandler(
     IValidator<LogoutRequest> validator,
     ILogger<LogoutHandler> logger) : IHandler<LogoutRequest, Success>
 {
-    public async Task<ErrorOr<Success>> Handle(
+    public async Task<ErrorOr<Success>> HandleAsync(
         LogoutRequest request,
         CancellationToken ct = default)
     {

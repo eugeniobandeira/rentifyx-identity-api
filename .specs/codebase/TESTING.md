@@ -87,7 +87,7 @@ public sealed class RegisterUserHandlerTests
         _repository.Setup(r => r.GetByEmailAsync(It.IsAny<string>(), default)).ReturnsAsync((UserEntity?)null);
         _repository.Setup(r => r.GetByTaxIdAsync(It.IsAny<string>(), default)).ReturnsAsync((UserEntity?)null);
 
-        var result = await _sut.Handle(new RegisterUserRequest(...), default);
+        var result = await _sut.HandleAsync(new RegisterUserRequest(...), default);
 
         result.IsError.Should().BeFalse();
         result.Value.Should().BeOfType<UserResponse>();

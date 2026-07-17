@@ -23,7 +23,7 @@ internal sealed class ForgotPassword : IEndpoint
         HttpContext httpContext,
         CancellationToken ct = default)
     {
-        ErrorOr<Success> result = await handler.Handle(request, ct);
+        ErrorOr<Success> result = await handler.HandleAsync(request, ct);
 
         return result.Match(
             _ => Results.NoContent(),

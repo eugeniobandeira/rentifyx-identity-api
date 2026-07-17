@@ -75,7 +75,7 @@ public sealed class ForgotPasswordHandlerTests
 
         ForgotPasswordRequest request = new(TestConstants.ValidEmail);
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
 
@@ -99,7 +99,7 @@ public sealed class ForgotPasswordHandlerTests
 
         ForgotPasswordRequest request = new(TestConstants.ValidEmail);
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
 
@@ -119,7 +119,7 @@ public sealed class ForgotPasswordHandlerTests
 
         ForgotPasswordRequest request = new(TestConstants.ValidEmail);
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
 
@@ -139,7 +139,7 @@ public sealed class ForgotPasswordHandlerTests
 
         ForgotPasswordRequest request = new(TestConstants.ValidEmail);
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
 
@@ -164,7 +164,7 @@ public sealed class ForgotPasswordHandlerTests
 
         ForgotPasswordRequest request = new(TestConstants.ValidEmail);
 
-        ErrorOr<Success> result = await _handler.Handle(request);
+        ErrorOr<Success> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
         capturedUser!.PasswordResetTokenExpiry.Should().NotBeNull();

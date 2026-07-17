@@ -113,7 +113,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
         result.Value.AccessToken.Should().NotBeNullOrEmpty();
@@ -134,7 +134,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -160,7 +160,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, "wrong-password");
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -178,7 +178,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -196,7 +196,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
@@ -214,7 +214,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
@@ -238,7 +238,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(string.Empty, TestConstants.ValidPassword);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
 
@@ -262,7 +262,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
 
-        await _handler.Handle(request);
+        await _handler.HandleAsync(request);
 
         _auditLogServiceMock.Verify(
             a => a.LogAsync(user.Id, AuditEvents.UserLoggedIn, It.IsAny<CancellationToken>()),
@@ -280,7 +280,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.NumericType.Should().Be(429);
@@ -307,7 +307,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, "wrong-password");
 
-        await _handler.Handle(request);
+        await _handler.HandleAsync(request);
 
         user.FailedLoginAttempts.Should().Be(initialAttempts + 1);
 
@@ -333,7 +333,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, "wrong-password");
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Code.Should().Be(UserErrorCodes.InvalidCredentials);
@@ -358,7 +358,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
         user.FailedLoginAttempts.Should().Be(0);
@@ -374,7 +374,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Code.Should().Be(UserErrorCodes.InvalidCredentials);
@@ -399,7 +399,7 @@ public sealed class LoginHandlerTests
 
         LoginRequest request = new(TestConstants.ValidEmail, TestConstants.ValidPassword);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
         result.Value.AccessToken.Should().NotBeNullOrEmpty();

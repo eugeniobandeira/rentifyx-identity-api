@@ -20,7 +20,7 @@ public sealed class RegisterUserHandler(
     IValidator<RegisterUserRequest> validator,
     ILogger<RegisterUserHandler> logger) : IHandler<RegisterUserRequest, UserResponse>
 {
-    public async Task<ErrorOr<UserResponse>> Handle(
+    public async Task<ErrorOr<UserResponse>> HandleAsync(
         RegisterUserRequest request,
         CancellationToken ct = default)
     {

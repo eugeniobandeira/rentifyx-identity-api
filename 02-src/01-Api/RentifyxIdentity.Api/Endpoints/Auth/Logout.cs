@@ -30,7 +30,7 @@ internal sealed class Logout : IEndpoint
         if (string.IsNullOrEmpty(refreshToken))
             return Results.NoContent();
 
-        ErrorOr<Success> result = await handler.Handle(
+        ErrorOr<Success> result = await handler.HandleAsync(
             new LogoutRequest(request.Email, refreshToken),
             ct);
 

@@ -19,7 +19,7 @@ public sealed class ResetPasswordHandler(
     IValidator<ResetPasswordRequest> validator,
     ILogger<ResetPasswordHandler> logger) : IHandler<ResetPasswordRequest, Success>
 {
-    public async Task<ErrorOr<Success>> Handle(
+    public async Task<ErrorOr<Success>> HandleAsync(
         ResetPasswordRequest request,
         CancellationToken ct = default)
     {

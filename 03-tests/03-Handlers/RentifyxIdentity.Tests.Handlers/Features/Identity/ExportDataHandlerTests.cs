@@ -72,7 +72,7 @@ public sealed class ExportDataHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(user.Id));
+        ErrorOr<UserDataExportResponse> result = await _handler.HandleAsync(new ExportDataRequest(user.Id));
 
         result.IsError.Should().BeFalse();
         result.Value.Email.Should().Be(TestConstants.ValidEmail);
@@ -93,7 +93,7 @@ public sealed class ExportDataHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(user.Id));
+        ErrorOr<UserDataExportResponse> result = await _handler.HandleAsync(new ExportDataRequest(user.Id));
 
         result.IsError.Should().BeFalse();
         result.Value.Status.Should().Be("Suspended");
@@ -110,7 +110,7 @@ public sealed class ExportDataHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserEntity?)null);
 
-        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(Guid.NewGuid()));
+        ErrorOr<UserDataExportResponse> result = await _handler.HandleAsync(new ExportDataRequest(Guid.NewGuid()));
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.NotFound);
@@ -129,7 +129,7 @@ public sealed class ExportDataHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(user.Id));
+        ErrorOr<UserDataExportResponse> result = await _handler.HandleAsync(new ExportDataRequest(user.Id));
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.NotFound);
@@ -156,7 +156,7 @@ public sealed class ExportDataHandlerTests
             .Setup(a => a.GetByUserIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("DynamoDB unavailable"));
 
-        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(user.Id));
+        ErrorOr<UserDataExportResponse> result = await _handler.HandleAsync(new ExportDataRequest(user.Id));
 
         result.IsError.Should().BeFalse();
     }
@@ -181,7 +181,7 @@ public sealed class ExportDataHandlerTests
             .Setup(a => a.GetByUserIdAsync(user.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(stubHistory);
 
-        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(user.Id));
+        ErrorOr<UserDataExportResponse> result = await _handler.HandleAsync(new ExportDataRequest(user.Id));
 
         result.IsError.Should().BeFalse();
         result.Value.ConsentGivenAt.Should().NotBeNull();
@@ -199,7 +199,7 @@ public sealed class ExportDataHandlerTests
             .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(user.Id));
+        ErrorOr<UserDataExportResponse> result = await _handler.HandleAsync(new ExportDataRequest(user.Id));
 
         result.IsError.Should().BeFalse();
         result.Value.MarketingConsentGranted.Should().BeTrue();
@@ -219,7 +219,7 @@ public sealed class ExportDataHandlerTests
                 }
             }));
 
-        ErrorOr<UserDataExportResponse> result = await _handler.Handle(new ExportDataRequest(Guid.Empty));
+        ErrorOr<UserDataExportResponse> result = await _handler.HandleAsync(new ExportDataRequest(Guid.Empty));
 
         result.IsError.Should().BeTrue();
 

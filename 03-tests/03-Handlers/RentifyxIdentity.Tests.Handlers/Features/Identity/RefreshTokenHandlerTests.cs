@@ -86,7 +86,7 @@ public sealed class RefreshTokenHandlerTests
 
         RefreshTokenRequest request = new(TestConstants.ValidEmail, TestConstants.RawRefreshToken);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeFalse();
         result.Value.AccessToken.Should().NotBeNullOrEmpty();
@@ -107,7 +107,7 @@ public sealed class RefreshTokenHandlerTests
 
         RefreshTokenRequest request = new(TestConstants.ValidEmail, TestConstants.RawRefreshToken);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -129,7 +129,7 @@ public sealed class RefreshTokenHandlerTests
 
         RefreshTokenRequest request = new(TestConstants.ValidEmail, "wrong-token");
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -147,7 +147,7 @@ public sealed class RefreshTokenHandlerTests
 
         RefreshTokenRequest request = new(TestConstants.ValidEmail, TestConstants.RawRefreshToken);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -171,7 +171,7 @@ public sealed class RefreshTokenHandlerTests
 
         RefreshTokenRequest request = new(TestConstants.ValidEmail, TestConstants.RawRefreshToken);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -195,7 +195,7 @@ public sealed class RefreshTokenHandlerTests
 
         RefreshTokenRequest request = new(TestConstants.ValidEmail, TestConstants.RawRefreshToken);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
@@ -219,7 +219,7 @@ public sealed class RefreshTokenHandlerTests
 
         RefreshTokenRequest request = new(TestConstants.ValidEmail, TestConstants.RawRefreshToken);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Conflict);
@@ -241,7 +241,7 @@ public sealed class RefreshTokenHandlerTests
 
         RefreshTokenRequest request = new(TestConstants.ValidEmail, TestConstants.RawRefreshToken);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
         result.FirstError.Type.Should().Be(ErrorType.Validation);
@@ -265,7 +265,7 @@ public sealed class RefreshTokenHandlerTests
 
         RefreshTokenRequest request = new(string.Empty, TestConstants.RawRefreshToken);
 
-        ErrorOr<LoginResponse> result = await _handler.Handle(request);
+        ErrorOr<LoginResponse> result = await _handler.HandleAsync(request);
 
         result.IsError.Should().BeTrue();
 

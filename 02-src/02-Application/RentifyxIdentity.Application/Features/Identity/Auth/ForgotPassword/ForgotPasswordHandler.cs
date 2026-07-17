@@ -20,7 +20,7 @@ public sealed class ForgotPasswordHandler(
 {
     private static readonly TimeSpan TokenLifetime = TimeSpan.FromHours(TokenPolicyConstants.PasswordResetHours);
 
-    public async Task<ErrorOr<Success>> Handle(
+    public async Task<ErrorOr<Success>> HandleAsync(
         ForgotPasswordRequest request,
         CancellationToken ct = default)
     {
