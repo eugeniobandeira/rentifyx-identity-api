@@ -8,12 +8,16 @@ public sealed class FakeUserRepository : IUserRepository
 {
     private readonly Dictionary<Guid, UserEntity> _store = new();
 
+    public List<(string Recipient, string Token)> SentVerificationEmails { get; } = new();
+    public List<(string Recipient, string Token)> SentPasswordResetEmails { get; } = new();
+
     public Task AddAsync(UserEntity entity, CancellationToken ct = default)
         => AddAsync(entity, [], ct);
 
     public Task AddAsync(UserEntity entity, IReadOnlyCollection<IDomainEvent> extraEvents, CancellationToken ct = default)
     {
         _store[entity.Id] = entity;
+        CaptureRaisedEvents(entity, extraEvents);
         entity.ClearDomainEvents();
         return Task.CompletedTask;
     }
@@ -33,8 +37,25 @@ public sealed class FakeUserRepository : IUserRepository
             throw new InvalidOperationException($"Entity {entity.Id} not found for update.");
 
         _store[entity.Id] = entity;
+        CaptureRaisedEvents(entity, extraEvents);
         entity.ClearDomainEvents();
         return Task.CompletedTask;
+    }
+
+    private void CaptureRaisedEvents(UserEntity entity, IReadOnlyCollection<IDomainEvent> extraEvents)
+    {
+        foreach (IDomainEvent domainEvent in entity.DomainEvents.Concat(extraEvents))
+        {
+            switch (domainEvent)
+            {
+                case UserRegistered e:
+                    SentVerificationEmails.Add((e.Email, e.RawToken));
+                    break;
+                case PasswordResetRequested e:
+                    SentPasswordResetEmails.Add((e.Email, e.RawToken));
+                    break;
+            }
+        }
     }
 
     public Task DeleteAsync(UserEntity entity, CancellationToken ct = default)

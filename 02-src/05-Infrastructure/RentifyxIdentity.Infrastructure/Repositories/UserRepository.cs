@@ -1,10 +1,9 @@
-using System.Text.Json;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
-using RentifyxIdentity.Domain.Constants;
+using RentifyxIdentity.Application.Outbox;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
@@ -18,12 +17,18 @@ public sealed class UserRepository : IUserRepository
 {
     private readonly IDynamoDBContext _context;
     private readonly IAmazonDynamoDB _client;
+    private readonly IOutboxEntryFactory _outboxEntryFactory;
     private readonly string _tableName;
 
-    public UserRepository(IDynamoDBContext context, IAmazonDynamoDB client, IConfiguration configuration)
+    public UserRepository(
+        IDynamoDBContext context,
+        IAmazonDynamoDB client,
+        IOutboxEntryFactory outboxEntryFactory,
+        IConfiguration configuration)
     {
         _context = context;
         _client = client;
+        _outboxEntryFactory = outboxEntryFactory;
         _tableName = configuration[DynamoDbConstants.TableNameConfigKey]
             ?? DynamoDbConstants.DefaultTableName;
     }
@@ -121,9 +126,10 @@ public sealed class UserRepository : IUserRepository
             }
         ];
 
-        foreach (IDomainEvent domainEvent in entity.DomainEvents.Concat(extraEvents))
+        IReadOnlyCollection<IDomainEvent> allEvents = [.. entity.DomainEvents, .. extraEvents];
+        foreach (OutboxEntry outboxEntry in _outboxEntryFactory.CreateEntries(allEvents))
         {
-            OutboxDynamoDbItem outboxItem = OutboxItemMapper.ToItem(CreateOutboxEntry(domainEvent));
+            OutboxDynamoDbItem outboxItem = OutboxItemMapper.ToItem(outboxEntry);
 
             transactItems.Add(new TransactWriteItem
             {
@@ -139,15 +145,6 @@ public sealed class UserRepository : IUserRepository
 
         entity.ClearDomainEvents();
     }
-
-    /// <summary>
-    /// Placeholder mapping: every event lands on the generic lifecycle topic, serialized as-is. T9
-    /// (IOutboxEntryFactory) replaces this with per-event-type topic routing and comms-api's exact
-    /// DispatchNotificationRequest shape for UserRegistered/PasswordResetRequested - this method exists only to
-    /// keep T7's atomic write path testable before that factory lands.
-    /// </summary>
-    private static OutboxEntry CreateOutboxEntry(IDomainEvent domainEvent) =>
-        OutboxEntry.Create(KafkaTopics.UserLifecycleEvents, JsonSerializer.Serialize(domainEvent, domainEvent.GetType()));
 
     private async Task<UserEntity?> QueryByGsiAsync(
         string indexName,

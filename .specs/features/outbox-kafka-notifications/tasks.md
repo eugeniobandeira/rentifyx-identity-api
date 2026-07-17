@@ -1,7 +1,7 @@
 # Domain Event Outbox & Kafka Notification Producer — Tasks
 
 **Design**: `.specs/features/outbox-kafka-notifications/design.md`
-**Status**: In Progress — T0-T12 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7-T12 all completed 2026-07-16, plus the AppHost Kafka resource gap flagged after T11). Next: T13 (cutover — `RegisterUserHandler`/`ForgotPasswordHandler`).
+**Status**: In Progress — T0-T13 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7-T12 all completed 2026-07-16, plus the AppHost Kafka resource gap flagged after T11; T13 completed 2026-07-17). Next: T14 (remove `IEmailService`/`EmailService`/SES dead code).
 
 ---
 
@@ -424,15 +424,21 @@ actually found — same condition as today's SES call).
 **Tools**: NONE
 
 **Done when**:
-- [ ] Neither handler references `IEmailService` anymore
-- [ ] `RegisterUserHandlerTests`/`ForgotPasswordHandlerTests` updated: mock `IUserRepository`'s new overload instead of `IEmailService`; existing test count does not shrink (assertions moved, not deleted)
-- [ ] `ForgotPasswordHandler`'s blind-success behavior (always 204/success response regardless of whether the user exists) is unchanged — verified by an existing test that already covers this
-- [ ] Gate check passes: `dotnet test RentifyxIdentity.slnx`
+- [x] Neither handler references `IEmailService` anymore
+- [x] `RegisterUserHandlerTests`/`ForgotPasswordHandlerTests` updated: mock `IUserRepository`'s new overload instead of `IEmailService`; existing test count does not shrink (assertions moved, not deleted)
+- [x] `ForgotPasswordHandler`'s blind-success behavior (always success response regardless of whether the user exists) is unchanged — verified by existing `UserNotFound_ReturnsSuccess_NoOp`/`SuspendedUser_ReturnsSuccess_NoOp`/`PendingUser_ReturnsSuccess_NoOp` tests, untouched
+- [x] Gate check passes: `dotnet test RentifyxIdentity.slnx --filter "Category!=RequiresDocker"` (Validators 51/51, Handlers 166/166, Integration 46/46 — Repositories excluded, no Docker daemon available in this environment, matches existing `RequiresDocker` precedent)
 
 **Tests**: unit (existing handler test files extended, `IEmailService` mock replaced with `IUserRepository`'s new overload)
 **Gate**: full
 
 **Commit**: `feat(app): cut over Register/ForgotPassword to Outbox, remove direct SES calls`
+
+**Implementation notes (2026-07-17):**
+- **T9's flagged gap closed first**: `UserRepository` still used T7's generic placeholder `CreateOutboxEntry` (everything → `user-lifecycle-events`, raw JSON) instead of the real `OutboxEntryFactory` from T9. Injected `IOutboxEntryFactory` into `UserRepository`'s constructor (Infrastructure already references Application, no new project reference needed) and replaced the placeholder entirely — `WriteTransactionallyAsync` now calls `_outboxEntryFactory.CreateEntries(allEvents)` for real per-event-type topic routing. This was a prerequisite for T13 to actually produce comms-api's `NotificationRequestedMessage` shape, not optional cleanup.
+- `RegisterUserHandler`/`ForgotPasswordHandler` both dropped their `IEmailService` constructor parameter entirely and now construct `UserRegistered`/`PasswordResetRequested` directly, passed as `extraEvents` to `repository.AddAsync`/`UpdateAsync`. `ForgotPasswordHandler` only constructs the event inside the existing `user is null` / `user.Status is not Active` early-return guards, preserving anti-enumeration behavior unchanged (same condition as before, just event-construction instead of an email call).
+- **Real gap found beyond T13's stated scope, fixed same task**: 8 integration test files (`RegisterEndpointTests`, `VerifyEmailEndpointTests`, `PasswordResetEndpointTests`, `LoginEndpointTests`, `LogoutEndpointTests`, `RefreshTokenEndpointTests`, `ConsentEndpointTests`, `LgpdEndpointTests`) extracted raw verification/reset tokens via `factory.EmailService.SentVerificationEmails`/`SentPasswordResetEmails` — populated only because the handlers used to call `IEmailService` directly. Once that call was removed, `FakeEmailService` in `CustomWebApplicationFactory` silently stopped being populated and all 8 files' token-extraction helpers threw `InvalidOperationException: Sequence contains no matching element` (27 test failures). Fixed by capturing the raised `UserRegistered`/`PasswordResetRequested` events inside `FakeUserRepository.AddAsync`/`UpdateAsync` (same tuple shape `List<(string Recipient, string Token)>`, same property names `SentVerificationEmails`/`SentPasswordResetEmails`, now living on `FakeUserRepository` instead of `FakeEmailService`) and repointing all 8 files' `factory.EmailService.` → `factory.UserRepository.`. `FakeEmailService` itself is now dead code in test infra (nothing populates or asserts on it) — left in place since `IEmailService`/`EmailService` themselves aren't removed until T14, which is the correct place to also delete `FakeEmailService`.
+- `UserRepositoryTests` (T7's Testcontainers/LocalStack suite, `Category=RequiresDocker`) needed a real `OutboxEntryFactory()` instance passed to `UserRepository`'s new constructor parameter — not re-run in this session (no Docker daemon available in this environment), but compiles and matches T7/T8's existing pattern of exercising the real (non-mocked) implementation.
 
 ---
 

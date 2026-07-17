@@ -41,7 +41,7 @@ public sealed class ConsentEndpointTests(CustomWebApplicationFactory factory) : 
         Application.Features.Identity.UserResponse user =
             (await registerResponse.Content.ReadFromJsonAsync<Application.Features.Identity.UserResponse>())!;
 
-        string rawToken = factory.EmailService.SentVerificationEmails
+        string rawToken = factory.UserRepository.SentVerificationEmails
             .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
             .Token;
 

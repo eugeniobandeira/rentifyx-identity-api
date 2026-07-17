@@ -1,6 +1,7 @@
 using Amazon.DynamoDBv2.Model;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
+using RentifyxIdentity.Application.Outbox;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Events;
 using Xunit;
@@ -26,7 +27,7 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
                 ["AWS:DynamoDB:TableName"] = fixture.TableName
             })
             .Build();
-        _sut = new UserRepository(_fixture.Context, _fixture.Client, configuration);
+        _sut = new UserRepository(_fixture.Context, _fixture.Client, new OutboxEntryFactory(), configuration);
     }
 
     [Fact]

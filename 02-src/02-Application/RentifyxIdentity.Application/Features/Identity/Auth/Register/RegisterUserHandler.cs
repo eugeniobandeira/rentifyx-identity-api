@@ -16,7 +16,6 @@ namespace RentifyxIdentity.Application.Features.Identity.Auth.Register;
 
 public sealed class RegisterUserHandler(
     IUserRepository repository,
-    IEmailService emailService,
     ITokenService tokenService,
     IValidator<RegisterUserRequest> validator,
     ILogger<RegisterUserHandler> logger) : IHandler<RegisterUserRequest, UserResponse>
@@ -51,19 +50,8 @@ public sealed class RegisterUserHandler(
         string tokenHash = tokenService.HashToken(rawToken);
         user.SetEmailVerificationToken(tokenHash, DateTimeOffset.UtcNow.AddHours(TokenPolicyConstants.EmailVerificationHours));
 
-        await repository.AddAsync(user, ct);
-
-        try
-        {
-            await emailService.SendVerificationEmailAsync(user.Email.ToString(), rawToken, ct);
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Verification email failed for {Email}", user.Email);
-        }
-
         UserRegistered domainEvent = new(user.Id, user.Email.ToString(), user.Role, rawToken, DateTimeOffset.UtcNow);
-        logger.LogInformation("Domain event: {Event}", domainEvent);
+        await repository.AddAsync(user, [domainEvent], ct);
 
         logger.LogInformation("User registered successfully. Response={@Response}", user);
 

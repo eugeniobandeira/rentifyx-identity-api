@@ -23,7 +23,7 @@ public sealed class VerifyEmailEndpointTests(CustomWebApplicationFactory factory
         HttpResponseMessage registerResponse = await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
         registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        string rawToken = factory.EmailService.SentVerificationEmails
+        string rawToken = factory.UserRepository.SentVerificationEmails
             .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
             .Token;
 
@@ -54,7 +54,7 @@ public sealed class VerifyEmailEndpointTests(CustomWebApplicationFactory factory
         RegisterUserRequest registerRequest = new RegisterUserRequestBuilder().Build();
         await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
 
-        string rawToken = factory.EmailService.SentVerificationEmails
+        string rawToken = factory.UserRepository.SentVerificationEmails
             .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
             .Token;
 

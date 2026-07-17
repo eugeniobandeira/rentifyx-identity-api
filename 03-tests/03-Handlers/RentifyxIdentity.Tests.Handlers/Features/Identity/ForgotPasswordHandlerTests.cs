@@ -8,6 +8,7 @@ using RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword;
 using RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword.Request;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
+using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
 using RentifyxIdentity.Domain.ValueObjects;
 using RentifyxIdentity.Tests.Common.Constants;
@@ -18,7 +19,6 @@ namespace RentifyxIdentity.Tests.Handlers.Features.Identity;
 public sealed class ForgotPasswordHandlerTests
 {
     private readonly Mock<IUserRepository> _repositoryMock = new();
-    private readonly Mock<IEmailService> _emailServiceMock = new();
     private readonly Mock<ITokenService> _tokenServiceMock = new();
     private readonly Mock<IValidator<ForgotPasswordRequest>> _validatorMock = new();
     private readonly Mock<ILogger<ForgotPasswordHandler>> _loggerMock = new();
@@ -38,7 +38,6 @@ public sealed class ForgotPasswordHandlerTests
 
         _handler = new ForgotPasswordHandler(
             _repositoryMock.Object,
-            _emailServiceMock.Object,
             _tokenServiceMock.Object,
             _validatorMock.Object,
             _loggerMock.Object);
@@ -61,13 +60,18 @@ public sealed class ForgotPasswordHandlerTests
     }
 
     [Fact]
-    public async Task HappyPath_ActiveUser_StoresTokenAndSendsEmail()
+    public async Task HappyPath_ActiveUser_StoresTokenAndRaisesPasswordResetRequestedEvent()
     {
         UserEntity user = BuildUser();
 
         _repositoryMock
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
+
+        IReadOnlyCollection<IDomainEvent>? capturedEvents = null;
+        _repositoryMock
+            .Setup(r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<IReadOnlyCollection<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<UserEntity, IReadOnlyCollection<IDomainEvent>, CancellationToken>((_, events, _) => capturedEvents = events);
 
         ForgotPasswordRequest request = new(TestConstants.ValidEmail);
 
@@ -76,12 +80,14 @@ public sealed class ForgotPasswordHandlerTests
         result.IsError.Should().BeFalse();
 
         _repositoryMock.Verify(
-            r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()),
+            r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<IReadOnlyCollection<IDomainEvent>>(), It.IsAny<CancellationToken>()),
             Times.Once);
 
-        _emailServiceMock.Verify(
-            e => e.SendPasswordResetEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        capturedEvents.Should().ContainSingle().Which.Should().BeOfType<PasswordResetRequested>();
+        PasswordResetRequested domainEvent = (PasswordResetRequested)capturedEvents!.Single();
+        domainEvent.UserId.Should().Be(user.Id);
+        domainEvent.Email.Should().Be(user.Email.ToString());
+        domainEvent.RawToken.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
@@ -98,11 +104,7 @@ public sealed class ForgotPasswordHandlerTests
         result.IsError.Should().BeFalse();
 
         _repositoryMock.Verify(
-            r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()),
-            Times.Never);
-
-        _emailServiceMock.Verify(
-            e => e.SendPasswordResetEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<IReadOnlyCollection<IDomainEvent>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -122,7 +124,7 @@ public sealed class ForgotPasswordHandlerTests
         result.IsError.Should().BeFalse();
 
         _repositoryMock.Verify(
-            r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()),
+            r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<IReadOnlyCollection<IDomainEvent>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -142,12 +144,12 @@ public sealed class ForgotPasswordHandlerTests
         result.IsError.Should().BeFalse();
 
         _repositoryMock.Verify(
-            r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()),
+            r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<IReadOnlyCollection<IDomainEvent>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task EmailSendFailure_StillReturnsSuccess()
+    public async Task ActiveUser_SetsPasswordResetTokenExpiryInTheFuture()
     {
         UserEntity user = BuildUser();
 
@@ -155,18 +157,17 @@ public sealed class ForgotPasswordHandlerTests
             .Setup(r => r.GetByEmailAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
 
-        _emailServiceMock
-            .Setup(e => e.SendPasswordResetEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("SES unavailable"));
+        UserEntity? capturedUser = null;
+        _repositoryMock
+            .Setup(r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<IReadOnlyCollection<IDomainEvent>>(), It.IsAny<CancellationToken>()))
+            .Callback<UserEntity, IReadOnlyCollection<IDomainEvent>, CancellationToken>((u, _, _) => capturedUser = u);
 
         ForgotPasswordRequest request = new(TestConstants.ValidEmail);
 
         ErrorOr<Success> result = await _handler.Handle(request);
 
         result.IsError.Should().BeFalse();
-
-        _repositoryMock.Verify(
-            r => r.UpdateAsync(It.IsAny<UserEntity>(), It.IsAny<CancellationToken>()),
-            Times.Once);
+        capturedUser!.PasswordResetTokenExpiry.Should().NotBeNull();
+        capturedUser.PasswordResetTokenExpiry.Should().BeAfter(DateTimeOffset.UtcNow);
     }
 }

@@ -24,7 +24,7 @@ public sealed class PasswordResetEndpointTests(CustomWebApplicationFactory facto
         RegisterUserRequest registerRequest = new RegisterUserRequestBuilder().Build();
         await _client.PostAsJsonAsync(RegisterEndpoint, registerRequest);
 
-        string rawToken = factory.EmailService.SentVerificationEmails
+        string rawToken = factory.UserRepository.SentVerificationEmails
             .First(e => e.Recipient == registerRequest.Email.ToLowerInvariant())
             .Token;
 
@@ -44,7 +44,7 @@ public sealed class PasswordResetEndpointTests(CustomWebApplicationFactory facto
 
         forgotResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        string resetToken = factory.EmailService.SentPasswordResetEmails
+        string resetToken = factory.UserRepository.SentPasswordResetEmails
             .First(e => e.Recipient == registered.Email.ToLowerInvariant())
             .Token;
 
