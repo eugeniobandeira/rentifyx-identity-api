@@ -1,7 +1,7 @@
 # Domain Event Outbox & Kafka Notification Producer — Tasks
 
 **Design**: `.specs/features/outbox-kafka-notifications/design.md`
-**Status**: In Progress — T0-T13 done (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7-T12 all completed 2026-07-16, plus the AppHost Kafka resource gap flagged after T11; T13 completed 2026-07-17). Next: T14 (remove `IEmailService`/`EmailService`/SES dead code).
+**Status**: DONE — T0-T14 (all tasks) complete (2026-07-15: T0-T4; T5-T6 same day, doc updated 2026-07-16; T7-T12 all completed 2026-07-16, plus the AppHost Kafka resource gap flagged after T11; T13-T14 completed 2026-07-17, closing out the feature). Not yet merged/PR'd to `main`.
 
 ---
 
@@ -458,15 +458,20 @@ implementation time per design.md's open item).
 **Tools**: NONE
 
 **Done when**:
-- [ ] Zero remaining references to `IEmailService`/`EmailService` (grep confirms)
-- [ ] `AWSSDK.SimpleEmailV2` removed from `Directory.Packages.props`
-- [ ] Decision recorded (in this repo's `STATE.md`, not silently done) on whether `iac/terraform/modules/ses` is deleted or kept as a documented rollback path
-- [ ] Gate check passes: `dotnet build RentifyxIdentity.slnx -c Release && dotnet test RentifyxIdentity.slnx`
+- [x] Zero remaining references to `IEmailService`/`EmailService` (grep confirms)
+- [x] `AWSSDK.SimpleEmailV2` removed from `Directory.Packages.props`
+- [x] Decision recorded (in this repo's `STATE.md`, not silently done) on whether `iac/terraform/modules/ses` is deleted or kept as a documented rollback path — kept (still consumed by the optional `cognito` module for Cognito's own email sending, unrelated to the app's deleted `IEmailService`); only the app IAM role's now-dead `SESAccess` statement was removed
+- [x] Gate check passes: `dotnet build RentifyxIdentity.slnx -c Release && dotnet test RentifyxIdentity.slnx --filter "Category!=RequiresDocker"` (Validators 51/51, Handlers 164/164, Integration 46/46; Repositories/`RequiresDocker` not re-run, no Docker daemon available)
 
 **Tests**: none (deletion; existing test count should drop only by tests that were testing the deleted code, never by silently deleting unrelated coverage — verify test count delta matches exactly what `EmailServiceTests` contributed)
 **Gate**: build
 
 **Commit**: `chore: remove IEmailService/EmailService, SES is fully replaced by Outbox`
+
+**Implementation notes (2026-07-17):**
+- Deleted `IEmailService`, `EmailService`, `EmailServiceTests` (2 tests — Handlers count dropped 166 → 164, exact match, no unrelated coverage lost), `FakeEmailService` (unused since T13 moved token-capture to `FakeUserRepository`).
+- `iac/terraform/modules/ses/` itself is **not dead code** — `module "cognito"` (optional, `enable_cognito`) still wires `module.ses.identity_arn`/`ses_identity` as its own `from_email_address`/`source_arn` for Cognito-native email sending, a separate concern from the app's direct SES calls. What actually was dead: the app's own IAM role no longer needs `ses:SendEmail`/`ses:SendRawEmail` — removed `modules/iam`'s `SESAccess` policy statement and its now-unused `ses_identity_arn` variable/wiring. `terraform validate` passes.
+- Also removed the `Ses:FromAddress` runtime secret key from `modules/secrets/main.tf`'s combined app secret and from both `appsettings.json`/`appsettings.Production.json` — nothing reads it anymore.
 
 ---
 

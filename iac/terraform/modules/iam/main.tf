@@ -64,18 +64,6 @@ data "aws_iam_policy_document" "identity_api" {
 
     resources = [var.secret_arn]
   }
-
-  statement {
-    sid    = "SESAccess"
-    effect = "Allow"
-
-    actions = [
-      "ses:SendEmail",
-      "ses:SendRawEmail",
-    ]
-
-    resources = [var.ses_identity_arn]
-  }
 }
 
 resource "aws_iam_role" "identity_api" {

@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.Extensions.NETCore.Setup;
-using Amazon.SimpleEmailV2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,7 +23,6 @@ internal static class InfrastructureDependencyInjection
         IConfiguration configuration)
     {
         services.AddAWSService<IAmazonDynamoDB>();
-        services.AddAWSService<IAmazonSimpleEmailServiceV2>();
         services.AddSingleton<IDynamoDBContext>(sp =>
             new DynamoDBContextBuilder()
                 .WithDynamoDBClient(() => sp.GetRequiredService<IAmazonDynamoDB>())
@@ -40,7 +38,6 @@ internal static class InfrastructureDependencyInjection
         services.AddSingleton<IOptions<OutboxPublisherOptions>>(sp => Options.Create(
             sp.GetRequiredService<IConfiguration>().GetSection("Outbox").Get<OutboxPublisherOptions>()
             ?? new OutboxPublisherOptions()));
-        services.AddScoped<IEmailService, EmailService>();
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddSingleton<ITokenService, TokenService>();
         services.AddSingleton<IAuditLogService, AuditLogService>();

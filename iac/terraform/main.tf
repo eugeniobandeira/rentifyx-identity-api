@@ -83,7 +83,6 @@ module "iam" {
   table_arn                 = module.dynamodb.table_arn
   kms_key_arn               = module.kms.key_arn
   secret_arn                = module.secrets.secret_arn
-  ses_identity_arn          = module.ses.identity_arn
   eks_oidc_provider_arn     = var.eks_oidc_provider_arn
   eks_oidc_provider_url     = var.eks_oidc_provider_url
   service_account_namespace = var.service_account_namespace

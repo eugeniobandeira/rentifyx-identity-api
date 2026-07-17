@@ -32,7 +32,6 @@
   </ItemGroup>
   <ItemGroup Label="AWS">
     <PackageVersion Include="AWSSDK.DynamoDBv2" Version="4.0.21.7" />
-    <PackageVersion Include="AWSSDK.SimpleEmailV2" Version="4.0.14.9" />
     <PackageVersion Include="AWSSDK.SecretsManager" Version="4.0.5.8" />
     <PackageVersion Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.4.1" />
   </ItemGroup>

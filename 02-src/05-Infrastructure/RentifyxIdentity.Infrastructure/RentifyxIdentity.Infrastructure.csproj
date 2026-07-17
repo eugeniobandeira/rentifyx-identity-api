@@ -5,7 +5,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AWSSDK.DynamoDBv2" />
-    <PackageReference Include="AWSSDK.SimpleEmailV2" />
     <PackageReference Include="AWSSDK.SecretsManager" />
     <PackageReference Include="Confluent.Kafka" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />

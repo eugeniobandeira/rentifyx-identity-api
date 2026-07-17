@@ -15,7 +15,6 @@ namespace RentifyxIdentity.Tests.Integration;
 public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     public FakeUserRepository UserRepository { get; } = new();
-    public FakeEmailService EmailService { get; } = new();
     public FakeAuditLogService AuditLogService { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -37,7 +36,6 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                         TestAuthHandler.SchemeName, _ => { });
 
             services.AddSingleton<IUserRepository>(UserRepository);
-            services.AddSingleton<IEmailService>(EmailService);
             services.AddSingleton<ITokenService>(new FakeTokenService());
             services.AddSingleton<IAuditLogService>(AuditLogService);
 

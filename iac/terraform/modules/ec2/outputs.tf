@@ -29,6 +29,6 @@ output "ec2_role_arn" {
 }
 
 output "runtime_secret_arn" {
-  description = "ARN of the combined runtime secret (Jwt:PrivateKeyPem, Hmac:Key, Ses:FromAddress)"
+  description = "ARN of the combined runtime secret (Jwt:PrivateKeyPem, Hmac:Key)"
   value       = aws_secretsmanager_secret.runtime.arn
 }
