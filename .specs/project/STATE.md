@@ -66,6 +66,12 @@ proper (TaxId KMS — needs its own design pass). `pf-pj-customer-support` not s
 
 _None active._
 
+## Known Gaps
+
+| ID | Gap | Detail | Since |
+|---|---|---|---|
+| GAP-001 | `deploy.yml`'s `Deploy` workflow fails on every push to `main` | `Configure AWS credentials (OIDC)` step cannot assume `arn:aws:iam::166613156216:role/rentifyx-production-github-deploy` — `Not authorized to perform sts:AssumeRoleWithWebIdentity`. Trust policy on that role doesn't trust this repo/branch (or the role/OIDC condition is wrong) — same class of chicken-egg gap as `rentifyx-platform`'s CI role. Expected until the role's trust policy (or the role itself) is fixed against the real OIDC provider; the EC2 instance/deploy target this workflow deploys to also doesn't exist yet (nothing in this repo has been `apply`'d against real AWS — see D-019/2026-07-17 entries above). Not caused by any docs-only PR (#31/#32/#33 all show the same failure). | 2026-07-18 |
+
 ## Deferred Ideas
 
 | ID | Idea | Deferred until |
