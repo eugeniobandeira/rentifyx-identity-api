@@ -9,6 +9,49 @@ Production-grade Identity microservice for the RentifyX platform. Built with .NE
 
 Covers user registration, email verification, login, token refresh, logout, password reset, and LGPD compliance (data access, erasure, export, granular per-purpose consent, audit).
 
+## Why this service exists
+
+Every other RentifyX service needs to know "who is this user" and "what have they consented to"
+without re-implementing auth, password handling, or LGPD bookkeeping themselves. This service owns
+that once: it is the single source of truth for identity and consent, issues the JWTs every other
+service trusts, and — instead of calling out to email infrastructure synchronously on the request
+path — writes to a transactional Outbox table and lets a background publisher deliver events to
+Kafka on its own schedule. That decouples "did the user's request succeed" from "did the email
+provider respond in time."
+
+## Architecture
+
+```mermaid
+flowchart TB
+    Client(["Client"]) -->|JWT / Cognito| Api["RentifyxIdentity.Api"]
+    Api --> Domain["Handlers (ErrorOr)"]
+    Domain --> DynamoDB[("DynamoDB<br/>users + outbox, single table")]
+    Domain -->|"writes OutboxEntry<br/>(same transaction)"| Outbox[("Outbox table")]
+
+    Outbox --> Publisher["OutboxPublisher<br/>(IHostedService, poll loop)"]
+    Publisher -->|"produces NotificationRequested"| MSK[["rentifyx-platform:<br/>MSK Serverless<br/>(SASL/IAM)"]]
+    MSK --> CommsAPI["rentifyx-communications-api<br/>(consumes, sends via SES)"]
+
+    Api -.->|secrets at startup| SecretsManager[("Secrets Manager")]
+    Api -.-> KMS[("KMS")]
+    Api -.-> Cognito[("Cognito")]
+```
+
+Publishing is decoupled from the request path via the Outbox pattern (`OutboxRepository` +
+`OutboxPublisher`): a handler that needs to notify a user (e.g. after registration) writes an
+`OutboxEntry` row alongside its own DynamoDB write, and `OutboxPublisher` — a `PeriodicTimer`-driven
+`IHostedService` — polls for `Pending` entries, produces them to Kafka, and marks them `Published`
+on ack (retrying up to `MaxRetryCount` times, then marking `Failed` and logging Critical). This
+mirrors `rentifyx-communications-api`'s own reconciliation loop shape rather than relying on
+DynamoDB Streams.
+
+In production, `KafkaProducerFactory` authenticates to MSK Serverless via SASL/IAM
+(`AWS.MSK.Auth`) — no Kafka credentials are stored anywhere; the EC2 instance's own IAM role signs
+each token. Locally/in tests, it falls back to a plaintext producer against the Aspire-managed
+Kafka container. The MSK cluster itself, along with the IAM policy this service's EC2 role needs to
+publish to it, lives in [`rentifyx-platform`](https://github.com/eugeniobandeira/rentifyx-platform)
+and is consumed here via `terraform_remote_state` (see `iac/terraform/main.tf`).
+
 ## Tech Stack
 
 | Concern | Library / Technology |
@@ -27,6 +70,7 @@ Covers user registration, email verification, login, token refresh, logout, pass
 | Email | AWS SES v2 |
 | Secrets | AWS Secrets Manager |
 | Encryption | AWS KMS |
+| Event publishing | Apache Kafka (Confluent.Kafka) — Outbox pattern, `IHostedService` publisher, SASL/IAM auth against MSK Serverless in production (`AWS.MSK.Auth`) |
 | Repository Test Cloud | LocalStack via Testcontainers (integration tests only — the API itself targets real AWS, including locally) |
 | Testing | xUnit · Moq · FluentAssertions · Bogus · Testcontainers |
 | Code Analysis | SonarAnalyzer.CSharp |
@@ -78,7 +122,13 @@ Provision the AWS resources first (see `iac/terraform`), then start the API with
 orchestration (recommended — includes dashboard and Scalar UI):
 
 ```bash
-cd iac/terraform && terraform apply -var="environment=development" -var="ses_identity=you@example.com"
+cd iac/terraform
+terraform init \
+  -backend-config="bucket=rentifyx-tfstate-166613156216" \
+  -backend-config="key=identity-api/terraform.tfstate" \
+  -backend-config="region=us-east-1" \
+  -backend-config="dynamodb_table=rentifyx-tflock"
+terraform apply -var="environment=development" -var="ses_identity=you@example.com"
 dotnet run --project 01-aspire/01-AppHost/RentifyxIdentity.AppHost
 ```
 
