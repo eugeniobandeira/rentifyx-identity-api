@@ -68,50 +68,10 @@ resource "aws_iam_role_policy_attachment" "ec2_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-# ---------------------------------------------------------------------------
-# Combined runtime secret — rentifyx/identity/{environment}
-# Single JSON object with Jwt:PrivateKeyPem, Hmac:Key.
-# The SecretsManagerConfigurationProvider reads this path on startup.
-# ---------------------------------------------------------------------------
-
-resource "aws_secretsmanager_secret" "runtime" {
-  name        = "${var.app_name}/identity/${var.environment}"
-  description = "Combined runtime secrets for the identity API (JWT key, HMAC key, SES from-address)"
-  kms_key_id  = var.kms_key_arn
-
-  recovery_window_in_days = 0
-
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "terraform"
-  }
-}
-
-resource "aws_secretsmanager_secret_version" "runtime" {
-  secret_id     = aws_secretsmanager_secret.runtime.id
-  secret_string = "REPLACE_AT_DEPLOY_TIME"
-
-  lifecycle {
-    ignore_changes = [secret_string]
-  }
-}
-
-resource "aws_iam_role_policy" "ec2_runtime_secret" {
-  name = "${var.prefix}-ec2-runtime-secret"
-  role = aws_iam_role.ec2.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid      = "RuntimeSecretAccess"
-        Effect   = "Allow"
-        Action   = "secretsmanager:GetSecretValue"
-        Resource = aws_secretsmanager_secret.runtime.arn
-      }
-    ]
-  })
-}
+# Combined runtime secret (rentifyx/identity/{environment}) and its
+# SecretsManagerAccess grant live in module.secrets/module.iam — the EC2
+# role gets read access via the ec2_identity_api policy attachment above,
+# not a duplicate secret here.
 
 # ECR pull permissions
 resource "aws_iam_role_policy" "ec2_ecr" {
