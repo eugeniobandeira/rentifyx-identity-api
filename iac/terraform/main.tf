@@ -24,8 +24,7 @@ module "dynamodb" {
 }
 
 module "ses" {
-  source       = "./modules/ses"
-  ses_identity = var.ses_identity
+  source = "./modules/ses"
 }
 
 module "kms" {
@@ -41,7 +40,7 @@ module "cognito" {
   prefix           = local.prefix
   environment      = var.environment
   ses_from_address = var.ses_identity
-  ses_identity_arn = module.ses.identity_arn
+  ses_identity_arn = data.terraform_remote_state.platform.outputs.ses_identity_arn
 }
 
 module "secrets" {
@@ -52,12 +51,13 @@ module "secrets" {
 }
 
 # Cross-repo: rentifyx-platform's module.kafka.client_iam_policy_json (MSK
-# Serverless access), via terraform_remote_state rather than duplicating
-# the policy JSON by hand and risking drift. Read-only - this repo's own
-# AWS credentials already have access to that state (same account/bucket
-# this repo's own backend uses). Returns an error until
-# rentifyx-platform's network/kafka modules are actually applied (not done
-# yet as of 2026-07-17) - see try() below.
+# Serverless access) and module.ses.identity_arn (shared SES sender
+# identity), via terraform_remote_state rather than duplicating either by
+# hand and risking drift. Read-only - this repo's own AWS credentials
+# already have access to that state (same account/bucket this repo's own
+# backend uses). The Kafka policy is wrapped in try(..., "") below since
+# rentifyx-platform's network/kafka modules were applied later than this
+# block was first written; module.ses is not optional the same way.
 data "terraform_remote_state" "platform" {
   backend = "s3"
 

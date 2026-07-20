@@ -19,8 +19,8 @@ output "cognito_user_pool_id" {
 }
 
 output "ses_identity_arn" {
-  description = "SES email identity ARN"
-  value       = module.ses.identity_arn
+  description = "SES email identity ARN (owned by rentifyx-platform, read via terraform_remote_state)"
+  value       = data.terraform_remote_state.platform.outputs.ses_identity_arn
 }
 
 output "iam_policy_arn" {
