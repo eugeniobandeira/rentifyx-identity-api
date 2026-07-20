@@ -29,16 +29,6 @@ variable "ssh_key_name" {
   default     = ""
 }
 
-variable "app_name" {
-  description = "Application name used in the runtime secret path (e.g. rentifyx)"
-  type        = string
-}
-
-variable "kms_key_arn" {
-  description = "ARN of the KMS key used to encrypt the runtime secret"
-  type        = string
-}
-
 variable "kafka_client_policy_json" {
   description = <<-EOT
     IAM policy JSON granting MSK Serverless access, from

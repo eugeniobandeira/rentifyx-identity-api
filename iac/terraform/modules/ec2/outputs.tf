@@ -27,8 +27,3 @@ output "ec2_role_arn" {
   description = "IAM role ARN attached to the EC2 instance profile"
   value       = aws_iam_role.ec2.arn
 }
-
-output "runtime_secret_arn" {
-  description = "ARN of the combined runtime secret (Jwt:PrivateKeyPem, Hmac:Key)"
-  value       = aws_secretsmanager_secret.runtime.arn
-}
