@@ -10,14 +10,27 @@ internal static class CorsExtension
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        string[] origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-            ?? throw new InvalidOperationException("Cors:AllowedOrigins is not configured.");
-
         services.AddCors(options =>
         {
             options.AddPolicy(PolicyName, policy =>
             {
-                policy.WithOrigins(origins)
+                // TEMPORARY (2026-07-20): accepting any origin until the
+                // real frontend origin is known. Revert to the commented
+                // block below (Cors:AllowedOrigins allowlist) once it is.
+#pragma warning disable S125
+                // string[] origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                //     ?? throw new InvalidOperationException("Cors:AllowedOrigins is not configured.");
+                // policy.WithOrigins(origins)
+                //       .AllowAnyHeader()
+                //       .AllowAnyMethod()
+                //       .AllowCredentials()
+                //       .WithExposedHeaders(CorrelationIdConstants.HeaderName)
+                //       .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+#pragma warning restore S125
+
+                // SetIsOriginAllowed(_ => true) reflects any request Origin
+                // back - works with AllowCredentials() (AllowAnyOrigin() does not).
+                policy.SetIsOriginAllowed(_ => true)
                       .AllowAnyHeader()
                       .AllowAnyMethod()
                       .AllowCredentials()

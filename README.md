@@ -144,6 +144,9 @@ Destroy the resources when done testing:
 cd iac/terraform && terraform destroy -var="environment=development" -var="ses_identity=you@example.com"
 ```
 
+Destroy this repo and `rentifyx-communications-api` **before** destroying `rentifyx-platform` —
+both read its outputs (MSK client policy, shared SES identity) via `terraform_remote_state`.
+
 ## Running Tests
 
 ```bash

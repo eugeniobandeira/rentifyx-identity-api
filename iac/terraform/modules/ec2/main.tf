@@ -124,6 +124,7 @@ resource "aws_iam_instance_profile" "ec2" {
 resource "aws_security_group" "identity_api" {
   name        = "${var.prefix}-identity-api-sg"
   description = "Allow inbound HTTP on 8080 and optional SSH"
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "API"
@@ -177,11 +178,13 @@ data "aws_ami" "amazon_linux_2023" {
 }
 
 resource "aws_instance" "identity_api" {
-  ami                    = data.aws_ami.amazon_linux_2023.id
-  instance_type          = "t2.micro"
-  iam_instance_profile   = aws_iam_instance_profile.ec2.name
-  vpc_security_group_ids = [aws_security_group.identity_api.id]
-  key_name               = var.ssh_key_name != "" ? var.ssh_key_name : null
+  ami                         = data.aws_ami.amazon_linux_2023.id
+  instance_type               = "t2.micro"
+  iam_instance_profile        = aws_iam_instance_profile.ec2.name
+  vpc_security_group_ids      = [aws_security_group.identity_api.id]
+  subnet_id                   = var.subnet_id
+  associate_public_ip_address = true
+  key_name                    = var.ssh_key_name != "" ? var.ssh_key_name : null
 
   user_data = base64encode(templatefile("${path.module}/userdata.sh.tpl", {
     aws_region          = var.aws_region
