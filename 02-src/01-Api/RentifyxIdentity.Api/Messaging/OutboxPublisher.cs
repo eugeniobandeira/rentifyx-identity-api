@@ -74,7 +74,21 @@ public sealed class OutboxPublisher(
         try
         {
             while (await timer.WaitForNextTickAsync(token))
-                await PublishPendingAsync(token);
+            {
+                try
+                {
+                    await PublishPendingAsync(token);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    // A failure fetching/publishing the batch (e.g. a transient
+                    // DynamoDB error) must not kill the loop for the rest of the
+                    // process lifetime - per-entry failures are already handled
+                    // in PublishEntryAsync; this is the outer safety net so one
+                    // bad tick doesn't silently end all future polling.
+                    logger.LogError(ex, "Outbox poll tick failed, will retry next tick.");
+                }
+            }
         }
         catch (OperationCanceledException)
         {
