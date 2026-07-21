@@ -187,9 +187,10 @@ resource "aws_instance" "identity_api" {
   key_name                    = var.ssh_key_name != "" ? var.ssh_key_name : null
 
   user_data = base64encode(templatefile("${path.module}/userdata.sh.tpl", {
-    aws_region          = var.aws_region
-    ecr_repository_url  = aws_ecr_repository.identity_api.repository_url
-    dynamodb_table_name = var.dynamodb_table_name
+    aws_region              = var.aws_region
+    ecr_repository_url      = aws_ecr_repository.identity_api.repository_url
+    dynamodb_table_name     = var.dynamodb_table_name
+    kafka_bootstrap_servers = var.kafka_bootstrap_servers
   }))
 
   root_block_device {
