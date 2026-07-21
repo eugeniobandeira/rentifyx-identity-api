@@ -1,3 +1,9 @@
+# KNOWN GAP (2026-07-20): SSM Agent never registered on this AMI in
+# testing this session (aws ssm describe-instance-information stayed
+# empty 20+ minutes; IAM/network/DHCP all confirmed correct). If this
+# workflow's "Deploy to EC2 via SSM" step hangs/fails with
+# InvalidInstanceId, that's the same unresolved gap, not this workflow's
+# logic - see rentifyx-identity-api STATE.md for the full investigation.
 name: Deploy
 
 on:
@@ -16,7 +22,7 @@ permissions:
 env:
   AWS_REGION: sa-east-1
   ECR_REPOSITORY: 166613156216.dkr.ecr.sa-east-1.amazonaws.com/rentifyx-production-identity-api
-  EC2_INSTANCE_ID: i-0fcdf83e9671c77e5
+  KAFKA_SSM_PARAMETER: /rentifyx/platform/kafka/bootstrap-servers
 
 jobs:
   deploy:
@@ -32,6 +38,34 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve EC2 instance ID
+        # Never hardcode this - the instance gets replaced by lifecycle
+        # events (AMI updates via a deliberate apply, VPC migrations, etc.)
+        # and a stale ID here means every step below silently targets a
+        # dead instance. Found and fixed 2026-07-20 after exactly that.
+        run: |
+          EC2_INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=rentifyx-production-identity-api" "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" \
+            --output text)
+
+          if [ "$EC2_INSTANCE_ID" = "None" ] || [ -z "$EC2_INSTANCE_ID" ]; then
+            echo "::error::No running EC2 instance found with tag Name=rentifyx-production-identity-api"
+            exit 1
+          fi
+
+          echo "EC2_INSTANCE_ID=$EC2_INSTANCE_ID" >> "$GITHUB_ENV"
+          echo "Resolved instance: $EC2_INSTANCE_ID"
+
+      - name: Resolve Kafka bootstrap servers
+        run: |
+          BOOTSTRAP_SERVERS=$(aws ssm get-parameter \
+            --name "$KAFKA_SSM_PARAMETER" \
+            --with-decryption \
+            --query "Parameter.Value" \
+            --output text)
+          echo "KAFKA_BOOTSTRAP_SERVERS=$BOOTSTRAP_SERVERS" >> "$GITHUB_ENV"
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
@@ -53,7 +87,7 @@ jobs:
               \"aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY\",
               \"docker pull $ECR_REPOSITORY:$IMAGE_TAG\",
               \"docker rm -f rentifyx-identity-api 2>/dev/null || true\",
-              \"docker run -d --name rentifyx-identity-api --restart unless-stopped -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=Production -e AWS__Region=$AWS_REGION -e AWS__DynamoDB__TableName=rentifyx-production-identity $ECR_REPOSITORY:$IMAGE_TAG\"
+              \"docker run -d --name rentifyx-identity-api --restart unless-stopped -p 8080:8080 -e ASPNETCORE_ENVIRONMENT=Production -e AWS__Region=$AWS_REGION -e AWS__DynamoDB__TableName=rentifyx-production-identity -e ConnectionStrings__kafka=$KAFKA_BOOTSTRAP_SERVERS $ECR_REPOSITORY:$IMAGE_TAG\"
             ]" \
             --query "Command.CommandId" \
             --output text)

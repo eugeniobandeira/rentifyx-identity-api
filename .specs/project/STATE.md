@@ -2,9 +2,19 @@
 
 ## Last Updated
 
-2026-07-20
+2026-07-21
 
 ## Current Work
+
+**2026-07-21 session: end-to-end flow confirmed working for real, both prior open bugs closed.** Fixed the two bugs left open at the end of 2026-07-20 (below), redeployed against fresh infra, and confirmed the full flow works: `register`/`forgot-password` → Outbox → Kafka → `rentifyx-communications-api` consumes → SES sends → **real email delivered and confirmed rendering correctly** in the recipient's inbox.
+
+**`OutboxPublisher`'s silent-death bug (item 1 from 2026-07-20) - root cause found and fixed.** `LoopAsync`'s try/catch only caught `OperationCanceledException` - any other exception thrown by `PublishPendingAsync` (most likely from `GetPendingAsync`) propagated out of the `while` loop uncaught, silently ending the `Task.Run`'d background loop for the rest of the process lifetime, with zero log output. Fixed by wrapping each tick's `PublishPendingAsync` call in its own try/catch inside `LoopAsync`, logging and continuing to the next tick rather than letting one bad tick kill polling forever. `rentifyx-communications-api`'s `ReconciliationHostedService` had the exact same bug pattern - fixed there too (see that repo's STATE.md).
+
+**Item 2 from 2026-07-20 (consumer `Access Denied` on `GroupCoordinator`) was not this repo's bug** - it turned out to be two separate, compounding issues entirely in `rentifyx-communications-api`: an IAM resource-ARN shape mismatch (fixed in `rentifyx-platform`) and a shared-consumer-group-ID design bug (fixed in that repo). See both repos' STATE.md for the full story - this repo's own producer side (`OutboxPublisher`) was confirmed working correctly throughout; the block was entirely downstream.
+
+**`ConnectionStrings__kafka` was never wired into `userdata.sh.tpl`/`deploy.yml`** - real bug, would have reproduced the exact same boot-time crash from 2026-07-20 on any fresh deploy. Fixed: `modules/ec2` now resolves the real broker address from `rentifyx-platform`'s SSM parameter at plan time (`data.aws_ssm_parameter`, gated behind the same `try(...)` pattern as the Kafka IAM policy) and passes it through to the container; `deploy.yml` resolves the same parameter directly in its own step. `deploy.yml`'s hardcoded `EC2_INSTANCE_ID` (pointing at an instance destroyed weeks earlier) was also replaced with a dynamic `aws ec2 describe-instances --filters Name=tag:Name,...` lookup at the start of the job - instance replacement (AMI update, VPC migration, etc.) should never silently break the deploy workflow again. Both fixes confirmed working: this session's fresh `terraform apply` (21/21 resources, no errors) booted a container that connected to Kafka immediately, no crash.
+
+**All AWS infrastructure was destroyed again at the end of this session** (same `terraform destroy` pattern as before - comms-api, then identity-api, then platform). Next apply should be clean on the first try given all four fixes above are now confirmed working, not just theorized.
 
 **2026-07-20 session, part 3 (end-to-end deploy attempt against real AWS — VPC fix, real bugs found; all AWS infra destroyed at end of session):** Goal was to actually run this service against `rentifyx-platform`'s real MSK cluster and confirm `identity-api → Kafka → comms-api` end-to-end. Did not fully succeed - two real bugs were still open when the session ended (below), and everything was torn down afterward, so this needs to be redone from a clean slate next time.
 
