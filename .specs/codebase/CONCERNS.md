@@ -31,14 +31,6 @@
 - Impact: Adds noise to the Scalar UI (`/api/v1/examples` endpoints exposed), increases build time marginally, and risks confusion about what is "real" vs. example code.
 - Fix approach: Remove all `Example*` files once the first real feature (Identity) is implemented and serves as the de-facto reference. Do not remove before that — the pattern is actively needed.
 
-**Coverage gate not yet enforced in CI:**
-
-- Issue: `coverlet.collector` is installed but CI pipeline (`ci.yml`) does not fail on coverage below 80%.
-- Files: `.github/workflows/ci.yml`
-- Why: T-018/019/020 deferred to E-01 completion.
-- Impact: PRs can merge with < 80% coverage without CI blocking them.
-- Fix approach: Add `--threshold 80 --threshold-type line` to `dotnet test` in `ci.yml`.
-
 ## Security Considerations
 
 **Authenticated endpoints have no JWT bearer scheme registered:**

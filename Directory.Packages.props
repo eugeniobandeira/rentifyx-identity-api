@@ -10,7 +10,6 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
   </ItemGroup>
   <ItemGroup Label="Security">
     <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />

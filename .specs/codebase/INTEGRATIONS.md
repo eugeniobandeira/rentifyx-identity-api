@@ -92,7 +92,10 @@
 1. Secret scanning — gitleaks with `.gitleaks.toml`
 2. Build (Release) — `dotnet build`
 3. Test — `dotnet test`
-**Planned gates (E-01):** Coverage ≥80%, OWASP dependency-check, Trivy container scan
+4. OWASP dependency-check
+5. Trivy container scan
+
+Coverage is collected and reported (`coverlet.collector`) but not gated on a percentage (gate removed 2026-07-21) — CI only blocks on a failing test.
 
 ## Git Hooks
 

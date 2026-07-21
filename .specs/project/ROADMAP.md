@@ -1,7 +1,7 @@
 # Roadmap
 
-**Current Milestone:** v1.1.0 — In Planning
-**Last Released:** v1.0.0 ✅ (2026-06-29)
+**Current Milestone:** post-v1.1.0 hardening (see `.specs/project/STATE.md` for the actively-maintained, up-to-date status — this file's milestone headers below predate several shipped epics and are not kept current)
+**Last Released:** v1.1.0 ✅ (2026-06-30)
 
 ---
 
