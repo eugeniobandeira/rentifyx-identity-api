@@ -149,9 +149,8 @@ dotnet test --filter "FullyQualifiedName~Identity"
 
 ## Coverage Targets
 
-- **Goal:** ≥ 80% enforced in CI
 - **Tool:** coverlet.collector
-- **Enforcement:** GitHub Actions gate — PR blocked if coverage drops below threshold (to be wired in E-01 T-018/019/020)
+- **Enforcement:** GitHub Actions reports coverage as an artifact; CI only blocks on test failures, not on a coverage percentage (the 80% gate was removed 2026-07-21)
 
 ## Test Coverage Matrix
 
