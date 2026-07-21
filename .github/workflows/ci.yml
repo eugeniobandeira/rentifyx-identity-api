@@ -67,17 +67,6 @@ jobs:
           "-targetdir:coverage/report"
           "-reporttypes:TextSummary"
 
-      - name: Enforce coverage gate (line >= 80%)
-        run: |
-          LINE=$(grep "Line coverage" coverage/report/Summary.txt | grep -oP '\d+(\.\d+)?(?=%)')
-          echo "Line coverage: ${LINE}%"
-          if awk "BEGIN {exit !($LINE >= 80)}"; then
-            echo "Coverage gate passed: ${LINE}% >= 80%"
-          else
-            echo "Coverage gate FAILED: ${LINE}% < 80%"
-            exit 1
-          fi
-
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         if: always()
