@@ -7,7 +7,7 @@
 ## Goals
 
 - Ship a production-ready Identity API with zero critical OWASP vulnerabilities and full LGPD Art. 18 compliance
-- Achieve ≥80% test coverage across unit, integration, and end-to-end tests
+- Maintain meaningful test coverage across unit, integration, and end-to-end tests (CI blocks on test failures, not a coverage percentage — gate removed 2026-07-21)
 - Deliver all auth flows (register → verify → login → refresh → logout → password reset) with JWT + Cognito by end of Week 4 (E-04)
 - Make the service observable and operable from day one (structured logs, OTel traces, health checks, Scalar UI)
 
@@ -41,7 +41,7 @@
 - Three roles: `Owner`, `Renter`, `Admin`
 - TaxId (CPF/CNPJ) as a unique identity field with mod-11 validation and KMS encryption at rest
 - Rate limiting: 5 failed logins → 15-min lockout
-- DevSecOps: gitleaks, Trivy, OWASP ZAP, coverage gate ≥80%, GitHub Actions CI on PRs
+- DevSecOps: gitleaks, Trivy, OWASP ZAP, GitHub Actions CI on PRs (blocks on test failures, not a coverage percentage)
 
 **Explicitly out of scope:**
 

@@ -1,48 +1,36 @@
 # External Integrations
 
-> **Status note:** All AWS integrations are planned/stubbed. Real wiring happens in E-04 (Week 4). LocalStack is used for local development. Interfaces are defined in Domain; stubs live in Infrastructure.
+> **Status note:** All integrations below are real and implemented, not stubs — this note previously said otherwise (was written at project inception, 2026-06-21, and never updated). Local dev targets real AWS (D-022, 2026-07-12) via a named credentials profile, not LocalStack — LocalStack is used only for automated repository integration tests (Testcontainers).
 
 ## Identity & Authentication
 
-**Service:** AWS Cognito
-**Purpose:** JWT access token issuance, RSA-2048 key management, token validation.
+**Service:** Custom JWT (RS256) — not AWS Cognito. Cognito is provisioned as an optional Terraform module (`iac/terraform/modules/cognito`, `enable_cognito` flag) but is not consumed by any application code (D-004: hybrid model originally planned Cognito for user-facing auth, deferred to E-05, and E-05 shipped without ever wiring it in).
 **Interface:** `Domain/Interfaces/Users/ITokenService.cs`
-**Implementation:** `Infrastructure/Services/TokenService.cs` (stub → E-04)
-**Configuration:** Cognito User Pool ID and App Client ID via AWS Secrets Manager
-**Auth:** IAM role / service account (no hardcoded credentials)
+**Implementation:** `Infrastructure/Services/TokenService.cs` (real, signs with an RSA-2048 private key)
+**Configuration:** JWT signing key (PEM) via AWS Secrets Manager
 **Key operations:**
 - `GenerateAccessToken(UserEntity)` → signed JWT (15 min TTL, RSA-2048)
 - `GenerateRefreshToken()` → random bytes (7d TTL)
 - `HashToken(string)` → HMAC-SHA256 hash for storage
 - `ValidateRefreshToken(hash, token)` → constant-time comparison
 
-**ADR:** `docs/decisions/006-cognito-vs-custom-jwt.md`
+## Email — no longer sent directly by this service
 
-## Email
-
-**Service:** AWS SES (Simple Email Service)
-**Purpose:** Transactional email — email verification and password reset links.
-**Interface:** `Domain/Interfaces/Users/IEmailService.cs`
-**Implementation:** `Infrastructure/Services/EmailService.cs` (stub → E-04)
-**Configuration:** SES region, sender address via AWS Secrets Manager
-**Key operations:**
-- `SendVerificationEmailAsync(to, token, ct)` — 24h HMAC token link
-- `SendPasswordResetEmailAsync(to, token, ct)` — 1h HMAC token link
+Direct SES sending (`IEmailService`/`EmailService`) was removed 2026-07-17 (D-014, T14 of the `outbox-kafka-notifications` feature). Handlers that need to notify a user (registration, password reset) now raise a domain event (`UserRegistered`, `PasswordResetRequested`) alongside their own DynamoDB write; `OutboxPublisher` (`IHostedService`, `Infrastructure/`) polls for pending outbox entries and produces them to Kafka as a `NotificationRequested` message, consumed by `rentifyx-communications-api`, which owns the actual SES send. See that repo's `docs/contracts/notification-requested.md` for the message schema.
 
 ## Database
 
 **Service:** AWS DynamoDB
-**Purpose:** Single-table persistence for User aggregate and Refresh Token items.
-**Interface:** `Domain/Interfaces/Users/IUserRepository.cs` (extends `IRepository<UserEntity>`)
-**Implementation:** `Infrastructure/Repositories/UserRepository.cs` (stub → E-04)
-**Configuration:** Table name, endpoint (LocalStack locally) via `appsettings.json` + Secrets Manager
-**Design:** Single-table (ADR-005); GSIs for email and TaxId lookups
-**Local dev:** LocalStack (Docker) simulates DynamoDB — started via Aspire AppHost
+**Purpose:** Single-table persistence for the User aggregate, refresh tokens, and outbox entries.
+**Interface:** `Domain/Interfaces/Users/IUserRepository.cs` (extends `IRepository<UserEntity>`), `Domain/Interfaces/Notifications/IOutboxRepository.cs`
+**Implementation:** `Infrastructure/Repositories/{UserRepository,OutboxRepository}.cs` — real, `IDynamoDBContext`-based (not `IAmazonDynamoDB` raw calls — see D-012)
+**Configuration:** Table name via `appsettings.json` + Secrets Manager; real AWS DynamoDB in every environment (local dev included, per D-022) — no LocalStack outside automated repository tests
+**Design:** Single-table (ADR-005); GSIs for email lookup, TaxId lookup, and the outbox's pending-entry query
 **Key operations:**
-- `AddAsync(UserEntity)` — PK: `USER#{id}`, SK: `PROFILE`
+- `AddAsync(UserEntity)` — PK: `USER#{id}`, SK: `PROFILE` — writes the user item and its outbox entries in one `TransactWriteItemsAsync` (T7)
 - `GetByIdAsync(Guid)` — direct key lookup
-- `GetByEmailAsync(string)` — GSI: `email-index`
-- `GetByTaxIdAsync(string)` — GSI: `taxid-index` (stores encrypted value)
+- `GetByEmailAsync(string)` — GSI lookup
+- `GetByTaxIdAsync(string)` — GSI lookup (TaxId stored as plaintext, D-010 — KMS encryption deferred, DEF-007)
 - `UpdateAsync(UserEntity)` — conditional write
 - `DeleteAsync(UserEntity)` — physical delete (not used; soft-delete via `Anonymize()`)
 
@@ -54,23 +42,15 @@
 **Purpose:** Runtime injection of all sensitive config — never in `appsettings.json` or env vars.
 **Integration:** Loaded at startup via AWS SDK into `IConfiguration` pipeline
 **Secrets managed:**
-- Cognito User Pool ID / App Client ID
-- SES sender address / region
-- OpenAPI contact info
+- JWT RS256 private key (PEM) — for `TokenService`
 - HMAC signing key (for verification and reset tokens)
+- OpenAPI contact info
 
 **ADR:** `docs/decisions/001-secrets-manager-over-appsettings.md`
 
-## Encryption at Rest
+## Encryption at Rest — deferred (DEF-007)
 
-**Service:** AWS KMS (Key Management Service)
-**Purpose:** Encrypt CPF/CNPJ (TaxId) before storing in DynamoDB.
-**Interface:** (to be defined in E-04) — likely `IKmsService`
-**Configuration:** KMS Key ARN via Secrets Manager
-**Flow:** `TaxDocument` value object exposes raw digits for KMS encryption; `UserRepository` encrypts before write, decrypts after read
-**Local dev:** LocalStack KMS
-
-**ADR:** `docs/decisions/002-taxid-as-identity-field.md`
+TaxId (CPF/CNPJ) is currently stored as **plaintext** in DynamoDB (D-010) — KMS encryption + an HMAC blind index for secure search was scoped for E-04 but explicitly deferred post-v1.1.0 (DEF-007), acceptable for a study project at this stage. No `IKmsService`/KMS integration exists in application code today, even though `iac/terraform/modules/kms` provisions a KMS key (currently unused by any encrypt/decrypt call).
 
 ## Observability
 
@@ -92,7 +72,10 @@
 1. Secret scanning — gitleaks with `.gitleaks.toml`
 2. Build (Release) — `dotnet build`
 3. Test — `dotnet test`
-**Planned gates (E-01):** Coverage ≥80%, OWASP dependency-check, Trivy container scan
+4. OWASP dependency-check
+5. Trivy container scan
+
+Coverage is collected and reported (`coverlet.collector`) but not gated on a percentage (gate removed 2026-07-21) — CI only blocks on a failing test.
 
 ## Git Hooks
 

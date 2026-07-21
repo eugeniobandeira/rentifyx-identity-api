@@ -29,7 +29,7 @@ flowchart TB
     Domain -->|"writes OutboxEntry<br/>(same transaction)"| Outbox[("Outbox table")]
 
     Outbox --> Publisher["OutboxPublisher<br/>(IHostedService, poll loop)"]
-    Publisher -->|"produces NotificationRequested"| MSK[["rentifyx-platform:<br/>MSK Serverless<br/>(SASL/IAM)"]]
+    Publisher -->|"produces NotificationRequested"| MSK[["rentifyx-platform:<br/>self-hosted Kafka<br/>(KRaft, PLAINTEXT)"]]
     MSK --> CommsAPI["rentifyx-communications-api<br/>(consumes, sends via SES)"]
 
     Api -.->|secrets at startup| SecretsManager[("Secrets Manager")]
@@ -45,12 +45,12 @@ on ack (retrying up to `MaxRetryCount` times, then marking `Failed` and logging 
 mirrors `rentifyx-communications-api`'s own reconciliation loop shape rather than relying on
 DynamoDB Streams.
 
-In production, `KafkaProducerFactory` authenticates to MSK Serverless via SASL/IAM
-(`AWS.MSK.Auth`) — no Kafka credentials are stored anywhere; the EC2 instance's own IAM role signs
-each token. Locally/in tests, it falls back to a plaintext producer against the Aspire-managed
-Kafka container. The MSK cluster itself, along with the IAM policy this service's EC2 role needs to
-publish to it, lives in [`rentifyx-platform`](https://github.com/eugeniobandeira/rentifyx-platform)
-and is consumed here via `terraform_remote_state` (see `iac/terraform/main.tf`).
+`KafkaProducerFactory` always builds a plain PLAINTEXT producer — no credentials, no SASL — since
+the broker is self-hosted (KRaft, single node) and requires no auth. Locally/in tests it targets
+the Aspire-managed Kafka container; in production it targets the real broker. The broker itself
+lives in [`rentifyx-platform`](https://github.com/eugeniobandeira/rentifyx-platform)
+(`.specs/features/self-hosted-kafka/`) and its bootstrap address is consumed here via
+`terraform_remote_state`/SSM (see `iac/terraform/main.tf`).
 
 ## Tech Stack
 
@@ -70,7 +70,7 @@ and is consumed here via `terraform_remote_state` (see `iac/terraform/main.tf`).
 | Email | AWS SES v2 |
 | Secrets | AWS Secrets Manager |
 | Encryption | AWS KMS |
-| Event publishing | Apache Kafka (Confluent.Kafka) — Outbox pattern, `IHostedService` publisher, SASL/IAM auth against MSK Serverless in production (`AWS.MSK.Auth`) |
+| Event publishing | Apache Kafka (Confluent.Kafka) — Outbox pattern, `IHostedService` publisher, PLAINTEXT against `rentifyx-platform`'s self-hosted broker (no SASL/IAM) |
 | Repository Test Cloud | LocalStack via Testcontainers (integration tests only — the API itself targets real AWS, including locally) |
 | Testing | xUnit · Moq · FluentAssertions · Bogus · Testcontainers |
 | Code Analysis | SonarAnalyzer.CSharp |
