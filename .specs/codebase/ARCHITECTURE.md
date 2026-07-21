@@ -42,10 +42,10 @@
 
 ### CQRS-style Handler Pattern
 
-**Location:** `Application/Features/{Feature}/{Action}/{Action}Handler.cs`
+**Location:** `Application/Features/Identity/{Auth,User}/{Action}/{Action}Handler.cs`
 **Purpose:** Each use case is a dedicated handler class; no MediatR.
 **Implementation:** Implements `IHandler<TRequest, TResponse>`. Returns `ErrorOr<T>`. Injected into endpoint handlers via DI.
-**Example:** `Application/Features/Examples/Handlers/Create/CreateExampleHandler.cs`
+**Example:** `Application/Features/Identity/Auth/RegisterUser/RegisterUserHandler.cs`
 
 ```
 Request → Validator.ValidateToErrorsAsync() → Guard checks → Repo call → Return ErrorOr<Response>
@@ -56,14 +56,12 @@ Request → Validator.ValidateToErrorsAsync() → Guard checks → Repo call →
 **Location:** `Api/Endpoints/{Group}/{Action}.cs`
 **Purpose:** Endpoints register themselves — no manual wiring in `Program.cs`.
 **Implementation:** Each endpoint implements `IEndpoint`. `AddEndpoints(assembly)` scans and registers all as transient. `MapEndpoints()` instantiates them and calls `MapEndpoint(routeGroup)`.
-**Example:** `Api/Endpoints/Examples/Create.cs`
 
 ### Generic Repository Contract
 
 **Location:** `Domain/Interfaces/Common/IRepository.cs`
 **Purpose:** Decouples application from persistence. Two variants: `IRepository<T>` (basic CRUD) and `IRepository<T, TFilter>` (CRUD + filtered paged list).
-**Implementation:** Domain defines the interface; Infrastructure implements it. IoC auto-discovers implementations via reflection.
-**Example:** `Infrastructure/Repositories/ExampleRepository.cs`
+**Implementation:** Domain defines the interface; Infrastructure implements it (`IUserRepository`/`UserRepository`, real DynamoDB via `IDynamoDBContext`). IoC auto-discovers implementations via reflection.
 
 ### Reflection-Based DI Auto-Registration
 
@@ -73,7 +71,7 @@ Request → Validator.ValidateToErrorsAsync() → Guard checks → Repo call →
 - Handlers: scans for types implementing `IHandler<,>` → registers as Scoped
 - Validators: `AddValidatorsFromAssembly()` — FluentValidation DI extension
 - Repositories: scans for types implementing `IRepository<>` or `IRepository<,>` → registers both concrete and all interface types as Scoped
-**Caveat:** Domain services (`ITokenService`, `IEmailService`) are NOT auto-discovered — must be registered explicitly.
+**Caveat:** Domain services (`ITokenService`, `IPasswordHasher`, `IAuditLogService`) are NOT auto-discovered — must be registered explicitly. `IEmailService` no longer exists — direct SES sending was removed 2026-07-17 (D-014/T14) in favor of the Outbox → Kafka → `rentifyx-communications-api` flow (handlers raise domain events, `OutboxPublisher` produces them).
 
 ### ErrorOr Result Pattern
 
@@ -106,7 +104,7 @@ HTTP Request
   → Endpoint handler (static method)
       → IHandler<TRequest, TResponse>.HandleAsync(request, ct)
           → IValidator<TRequest>.ValidateToErrorsAsync()
-          → IRepository / ITokenService / IEmailService calls
+          → IRepository / ITokenService calls (email raised as a domain event → Outbox, not sent directly)
           → return ErrorOr<TResponse>
       → result.Match(
             success → Results.Ok/Created/NoContent(response DTO)
@@ -136,6 +134,6 @@ Exception
 - API: references Application (handler interfaces, request/response types) and IoC (via DI extensions)
 
 **Assembly scanning markers:**
-- Application: `typeof(CreateExampleHandler).Assembly`
-- Infrastructure: `typeof(InfrastructureAssemblyMarker).Assembly`
+- Application: a handler type's own `.Assembly` (e.g. `typeof(RegisterUserHandler).Assembly`)
+- Infrastructure: a repository/service type's own `.Assembly`
 - API endpoints: `Assembly.GetExecutingAssembly()` (from `Program.cs`)
