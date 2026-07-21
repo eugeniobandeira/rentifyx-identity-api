@@ -6,7 +6,9 @@
 
 ## Current Work
 
-**2026-07-21 session: end-to-end flow confirmed working for real, both prior open bugs closed.** Fixed the two bugs left open at the end of 2026-07-20 (below), redeployed against fresh infra, and confirmed the full flow works: `register`/`forgot-password` → Outbox → Kafka → `rentifyx-communications-api` consumes → SES sends → **real email delivered and confirmed rendering correctly** in the recipient's inbox.
+**2026-07-21 session, part 2: CI coverage gate removed.** `.github/workflows/ci.yml`'s 80% line-coverage gate step removed (PR #39) — CI now only fails on a failing test, not on a coverage percentage; the coverage summary artifact upload is unchanged. Same change applied to `rentifyx-communications-api` (PR #17). `CLAUDE.md`, `.specs/codebase/TESTING.md`, `.specs/codebase/STACK.md`, `.specs/project/PROJECT.md` updated to stop describing the removed gate as current CI behavior.
+
+**2026-07-21 session, part 1: end-to-end flow confirmed working for real, both prior open bugs closed.** Fixed the two bugs left open at the end of 2026-07-20 (below), redeployed against fresh infra, and confirmed the full flow works: `register`/`forgot-password` → Outbox → Kafka → `rentifyx-communications-api` consumes → SES sends → **real email delivered and confirmed rendering correctly** in the recipient's inbox.
 
 **`OutboxPublisher`'s silent-death bug (item 1 from 2026-07-20) - root cause found and fixed.** `LoopAsync`'s try/catch only caught `OperationCanceledException` - any other exception thrown by `PublishPendingAsync` (most likely from `GetPendingAsync`) propagated out of the `while` loop uncaught, silently ending the `Task.Run`'d background loop for the rest of the process lifetime, with zero log output. Fixed by wrapping each tick's `PublishPendingAsync` call in its own try/catch inside `LoopAsync`, logging and continuing to the next tick rather than letting one bad tick kill polling forever. `rentifyx-communications-api`'s `ReconciliationHostedService` had the exact same bug pattern - fixed there too (see that repo's STATE.md).
 

@@ -8,7 +8,7 @@ A production-grade Identity API covering:
 - User registration, email verification, login, token refresh, logout, password reset
 - LGPD compliance (data access, erasure, export, consent, audit)
 - AWS integration: Cognito, DynamoDB, SES, Secrets Manager, KMS
-- DevSecOps: OWASP ZAP, gitleaks, Trivy, coverage gate ≥80%
+- DevSecOps: OWASP ZAP, gitleaks, Trivy, CI fails on any failing test (no coverage-percentage gate)
 
 The full 28-day plan is in `RentifyX_IdentityAPI_Plan.jsx`. For current progress, active
 decisions, and deferred work, `.specs/project/STATE.md` and `.specs/project/ROADMAP.md` are the
@@ -131,7 +131,7 @@ dotnet build RentifyxIdentity.slnx --configuration Release
 GitHub Actions (`ci.yml`) triggers on PRs to `main`:
 1. **Secret Scanning** – gitleaks with `.gitleaks.toml` (blocks if secrets found)
 2. **Build & Test** – restore → build Release → test
-3. **Coverage gate** – ReportGenerator merges `coverlet.collector` output; PR fails if line coverage < 80% (currently ~95.6%)
+3. **Coverage report** – ReportGenerator merges `coverlet.collector` output and uploads a summary artifact; PR is not blocked on a coverage percentage, only on test failures
 4. **OWASP dependency-check** – `dependency-check/Dependency-Check_Action`, fails on CVSS ≥ 7 (suppressions in `.owasp-suppressions.xml`)
 5. **Trivy container scan** – `aquasecurity/trivy-action` on the built image, blocks on CRITICAL/HIGH
 

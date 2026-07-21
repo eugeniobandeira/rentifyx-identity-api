@@ -42,7 +42,7 @@
 - Test data: Bogus 35.6.1 (fluent builder pattern)
 - E2E: Microsoft.AspNetCore.Mvc.Testing 10.0.8 (`CustomWebApplicationFactory`)
 - Repository tests: Testcontainers (LocalStack / DynamoDB — planned E-04)
-- Coverage: coverlet.collector 6.0.4 — gate ≥ 80% (enforced in CI)
+- Coverage: coverlet.collector 6.0.4 — reported in CI as an artifact, no percentage gate
 - Test SDK: Microsoft.NET.Test.Sdk 17.12.0
 
 ## External Services

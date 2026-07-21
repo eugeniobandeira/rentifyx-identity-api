@@ -57,4 +57,4 @@
 - Timeline: 28-day plan across 6 epics (E-01 → E-06)
 - Technical: AWS-native (no EF Core, no relational DB); all secrets via Secrets Manager — never in code or env vars
 - Compliance: LGPD (Brazil), OWASP Top 10, BACEN guidelines
-- Coverage gate: ≥80% enforced in CI before merge
+- CI blocks merge on test failures; coverage is reported, not gated on a percentage (gate removed 2026-07-21)
