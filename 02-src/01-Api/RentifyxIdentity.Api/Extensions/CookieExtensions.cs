@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using RentifyxIdentity.Api.Constants;
 using RentifyxIdentity.Domain.Constants;
 
 namespace RentifyxIdentity.Api.Extensions;
 
+[ExcludeFromCodeCoverage]
 internal static class CookieExtensions
 {
     public static void AppendRefreshTokenCookie(

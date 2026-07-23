@@ -1,7 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
 using RentifyxIdentity.Api.Middlewares;
 
 namespace RentifyxIdentity.Api.Extensions;
 
+[ExcludeFromCodeCoverage]
 public static class MiddlewareExtensions
 {
     public static IApplicationBuilder UseCorrelationId(this IApplicationBuilder app) =>
