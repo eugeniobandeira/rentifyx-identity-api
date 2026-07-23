@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,7 +15,6 @@ using RentifyxIdentity.Infrastructure.Services;
 
 namespace RentifyxIdentity.IoC;
 
-[ExcludeFromCodeCoverage]
 internal static class InfrastructureDependencyInjection
 {
     internal static IServiceCollection Register(
