@@ -28,7 +28,7 @@ but check STATE.md/ROADMAP.md before assuming something here reflects the curren
 
 ```
 01-aspire/
-  01-AppHost/         – .NET Aspire orchestration (starts API + future LocalStack)
+  01-AppHost/         – .NET Aspire orchestration (starts API against real AWS; no LocalStack in the runtime path, see D-022)
   02-ServiceDefaults/ – OTel traces/metrics, health checks, service discovery
 02-src/
   01-Api/             – Minimal API endpoints, middlewares, extensions
@@ -46,8 +46,11 @@ docs/
   architecture/       – Architecture overview (C4 context/container/component diagrams)
   decisions/          – ADRs (000-template + ADR-001 to 008, all written)
   guides/             – adding-a-new-feature.md
-iac/                  – Terraform (DynamoDB, Cognito, SES, KMS, Secrets Manager, IAM modules — implemented in E-06)
-k8s/                  – Kustomize base + dev/prod overlays (deployment, HPA, SecretProviderClass — implemented in E-06)
+iac/                  – Terraform (DynamoDB, Cognito, SES, KMS, Secrets Manager, IAM, EC2, github-actions
+                        modules — implemented in E-06; EC2 via Terraform + GitHub Actions OIDC is the
+                        actual deploy path, see iac/README.md)
+k8s/                  – Kustomize base + dev/prod overlays (deployment, HPA, SecretProviderClass — built
+                        alongside E-06 but not the deployment path actually used, see iac/README.md)
 ```
 
 ## Key conventions
