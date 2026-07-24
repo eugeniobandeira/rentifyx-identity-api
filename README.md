@@ -105,6 +105,70 @@ register → verify-email → login → refresh (every 15 min) → logout
   revoking **Marketing** has no account effect. Revoking never deletes data — that stays
   exclusive to `DELETE /users/me`.
 
+## API Endpoints
+
+All routes are mounted under `/api/v1` via `MapVersionedApi(1)` (`Extensions/EndpointExtensions.cs`).
+Full request/response schemas, validation rules, and status codes are in
+[`docs/api-contracts.md`](docs/api-contracts.md).
+
+### Auth (public — no token required)
+
+| Method & Path | What it does | Request → Response |
+|---|---|---|
+| `POST /auth/register` | Creates a new user account (`RegisterUser` handler); requires `consentGiven: true` for Essential consent | `RegisterUserRequest` → `UserResponse` |
+| `POST /auth/verify-email` | Activates the account using the token emailed after registration | `VerifyEmailRequest` → `UserResponse` |
+| `POST /auth/login` | Authenticates by email/password; returns the access token in the body and sets the refresh token as an `httpOnly` cookie | `LoginRequest` → `AuthTokenResponse` |
+| `POST /auth/refresh` | Rotates the refresh token, reading it from the cookie (not the body); issues a new access token | `EmailRequestBody` (+ cookie) → `AuthTokenResponse` |
+| `POST /auth/logout` | Revokes the refresh token and clears the cookie; idempotent, always `204` | `EmailRequestBody` (+ cookie) → `204 No Content` |
+| `POST /auth/forgot-password` | Sends a password reset email; always returns `204` to prevent email enumeration | `ForgotPasswordRequest` → `204 No Content` |
+| `POST /auth/reset-password` | Confirms a password reset using the emailed token | `ResetPasswordRequest` → `204 No Content` |
+
+### Users / LGPD (requires `Authorization: Bearer {accessToken}`)
+
+| Method & Path | What it does | Request → Response |
+|---|---|---|
+| `GET /users/me` | Returns the authenticated user's profile (LGPD Art. 18) | — → `UserResponse` |
+| `DELETE /users/me` | Soft-deletes the account and anonymizes PII (LGPD Art. 18 VI) | — → `204 No Content` |
+| `GET /users/me/data-export` | Full personal-data export, including audit history (LGPD Art. 18 IV) | — → `UserDataExportResponse` |
+| `GET /users/me/consent` | Current consent state per purpose (Essential, Marketing) | — → `ConsentResponse` |
+| `PUT /users/me/consent` | Grants or revokes consent for a purpose. Revoking Essential suspends the account (blocks login/refresh/reset-password/verify-email); revoking Marketing has no account effect; revoking never deletes data | `UpdateConsentApiRequest` → `ConsentResponse` |
+
+### Health (public)
+
+| Method & Path | What it does |
+|---|---|
+| `GET /health` | Runs all registered health checks |
+| `GET /alive` | Liveness probe |
+| `GET /api/v1/health` | Application-level health check |
+
+## Infrastructure
+
+Provisioned via Terraform in [`iac/terraform`](iac/terraform), split into modules under `iac/terraform/modules/`:
+
+| Module | Provisions |
+|---|---|
+| `dynamodb` | The single-table `identity` table (`PK`/`SK`, `GSI_Email`, `GSI_TaxId`, `GSI_Outbox` for the outbox poll loop), pay-per-request, TTL, point-in-time recovery, and encryption at rest enabled |
+| `kms` | A dedicated KMS key (`alias/{prefix}-taxid`, rotation enabled) reserved for TaxId (CPF/CNPJ) encryption — not yet wired into the app (see Security section: TaxId is currently stored in plaintext) |
+| `secrets` | An AWS Secrets Manager secret (`{app}/identity/{environment}`) holding the combined runtime secret (`Jwt:PrivateKeyPem`, `Hmac:Key`), encrypted with the KMS key from `module.kms`; the actual values are injected at deploy time, not by Terraform |
+| `cognito` (optional, `enable_cognito`) | A Cognito User Pool + app client, refresh-token-only auth flow — access tokens are still issued by the API itself using the RS256 key from Secrets Manager, not by Cognito |
+| `ec2` (optional, `enable_ec2`) | The actual deploy target: an ECR repository for the API image, an EC2 instance (`t2.micro`, Amazon Linux 2023) that pulls and runs the container, its IAM role/instance profile, and a security group opening port 8080 (+ optional SSH) |
+| `iam` | A least-privilege IAM policy granting the API only the DynamoDB item/query actions it needs on its own table, KMS encrypt/decrypt/generate-data-key on the TaxId key, and `secretsmanager:GetSecretValue` on its own secret — attached to the EC2 instance role |
+| `github-actions` (optional, `enable_github_actions`, requires `enable_ec2`) | An IAM role assumable by GitHub Actions via OIDC (no long-lived AWS credentials in GitHub secrets), scoped to `main`-branch workflows of this repo, allowed to push to ECR and trigger deploys on the EC2 instance via SSM `SendCommand` |
+| `ses` | The identity-specific SES v2 configuration set (bounce/complaint suppression, reputation metrics); the shared SES email identity itself lives in `rentifyx-platform` and is consumed here |
+
+Networking (VPC, subnets) is **not** owned by this repo: `main.tf` reads `vpc_id` and
+`public_subnets` from `rentifyx-platform`'s state via `data.terraform_remote_state.platform`
+(cross-repo, read-only, same S3 backend/account). The same mechanism is used to read the shared
+SES identity ARN and, when available, the Kafka bootstrap address for `OutboxPublisher`.
+
+The API itself is packaged by the root [`Dockerfile`](Dockerfile) (multi-stage build on
+`mcr.microsoft.com/dotnet/aspnet:10.0`, exposing port `8080`) and that is the image the `ec2`
+module's EC2 instance pulls from ECR and runs — this is the actual deploy path.
+
+A [`k8s/`](k8s) directory with Kustomize manifests (base + dev/prod overlays) also exists in the
+repo, but per `.specs/project/STATE.md` it was built as part of E-06 alongside the Terraform/EC2
+path and is not the path actually used for deployment; EC2 via Terraform + GitHub Actions OIDC is.
+
 ## Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
