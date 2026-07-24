@@ -1,4 +1,5 @@
-﻿using ErrorOr;
+﻿using System.Diagnostics.CodeAnalysis;
+using ErrorOr;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using RentifyxIdentity.Application.Common.Handler;
@@ -40,6 +41,7 @@ using RentifyxIdentity.Application.Outbox;
 
 namespace RentifyxIdentity.IoC;
 
+[ExcludeFromCodeCoverage]
 internal static class ApplicationDependencyInjection
 {
     internal static IServiceCollection Register(IServiceCollection services)

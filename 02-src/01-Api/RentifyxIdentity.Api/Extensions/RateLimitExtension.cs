@@ -1,8 +1,10 @@
-﻿using System.Threading.RateLimiting;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace RentifyxIdentity.Api.Extensions;
 
+[ExcludeFromCodeCoverage]
 internal static class RateLimitExtension
 {
     internal const string PolicyName = "fixed";
