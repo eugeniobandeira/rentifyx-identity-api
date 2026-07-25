@@ -2,9 +2,20 @@
 
 ## Last Updated
 
-2026-07-21
+2026-07-25
 
 ## Current Work
+
+**2026-07-25 session: full cross-repo live end-to-end test — real bugs found and fixed in this repo's `iac/terraform/modules/ec2/userdata.sh.tpl`, PR #45 (not yet merged).** Applied `rentifyx-platform` + this repo + `rentifyx-communications-api` for real against AWS to test `register → Outbox → Kafka → comms-api → SES` end-to-end (first genuine confirmation since the 2026-07-21 session's flow, which itself never fully closed the loop). Two bugs found in this repo's own userdata, previously undetected because the normal deploy path (`deploy.yml`'s single-line SSM `RunShellScript` command) never exercises this multi-line file — only a fresh EC2 boot does:
+
+1. **SSM Agent not pre-installed** on this AL2023 AMI resolution, despite AWS's docs describing AL2023 as including it by default. Fixed: explicit `dnf install -y amazon-ssm-agent` + `systemctl enable --now`.
+2. **`docker run` never actually executed on fresh boot** — the optional Kafka bootstrap env var was templated inside the `docker run \` backslash-continuation via a Terraform `%{ if }/%{ endif }` directive; without the `~` trim marker this leaves a blank (non-continued) line that terminates the command early with no `IMAGE` argument, and with `~` it strips too much and glues adjacent lines together via a literal escaped space, corrupting the whole command. Fixed by building the flag as a plain shell variable (`$KAFKA_ENV`) instead.
+
+Same two bugs found and fixed identically in `rentifyx-platform`'s Kafka broker userdata and `rentifyx-communications-api`'s userdata this same session — see those repos' STATE.md for the full cross-repo writeup, including a third real bug (`__consumer_offsets` replication-factor mismatch on a single-node broker) and a fourth (`consumer.Consume()` uncaught exception silently killing Kafka consumer loops in comms-api) that blocked the flow even after these two were fixed.
+
+**Full flow confirmed working end-to-end for real, live, user-verified:** registered `eugeniobandeira00@gmail.com` against a real running instance → verified email → forgot-password → reset-password → login, all against a real JWT/DynamoDB/Kafka/SES stack. User confirmed receiving both the verification and password-reset emails in their real inbox.
+
+**Not yet done:** PR #45 (`fix/userdata-ssm-docker-run`) is open, not merged — do that before assuming this fix is on `main`. All real AWS infrastructure applied this session was destroyed again at session end (same teardown pattern as prior sessions).
 
 **2026-07-21 session, part 3: MSK Serverless replaced with self-hosted Kafka.** `rentifyx-platform`'s MSK Serverless cluster was replaced with a self-hosted, single-broker Kafka (KRaft, PLAINTEXT) on a new dedicated EC2 to cut AWS cost — see that repo's `.specs/features/self-hosted-kafka/` for the full spec/design. This repo's `KafkaProducerFactory` (`RentifyxIdentity.Infrastructure/Messaging/`) simplified to match: dropped the `IHostEnvironment`-gated SASL/IAM branch, `AWSMSKAuthTokenGenerator`, and the `AWS.MSK.Auth` package reference entirely — `Create()` now always builds a plain `ProducerConfig { BootstrapServers = ... }` with no security protocol set (broker has no auth). `iac/terraform/main.tf`'s `module "ec2"` call no longer passes `kafka_client_policy_json` (nothing to grant IAM access to anymore; `modules/ec2/variables.tf`'s var stays with its existing `default = ""`, unused now). `kafka_ssm_parameter_path` wiring unchanged — same SSM parameter, only its value's shape changed upstream. `KafkaProducerFactoryTests.cs` reduced from 4 to 2 tests (dropped the 2 SASL/IAM-branch tests). Build green, `terraform validate` passes. Not yet applied against real AWS or tested end-to-end; not yet PR'd.
 
