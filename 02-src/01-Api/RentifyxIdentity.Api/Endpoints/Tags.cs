@@ -5,4 +5,5 @@ internal static class Tags
     public const string HEALTH = "Health";
     public const string AUTH = "Auth";
     public const string USERS = "Users";
+    public const string ADMIN = "Admin";
 }

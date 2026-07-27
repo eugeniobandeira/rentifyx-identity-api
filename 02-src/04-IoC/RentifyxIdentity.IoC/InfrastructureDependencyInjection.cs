@@ -30,6 +30,7 @@ internal static class InfrastructureDependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
         services.AddSingleton<IKafkaProducerFactory, KafkaProducerFactory>();
+        services.AddSingleton<IUserStatusSnapshotPublisher, UserStatusSnapshotPublisher>();
         // .Get<T>() (constructor-argument binding), not services.Configure<T>(section) - the latter relies on
         // Activator.CreateInstance<T>() before binding, which throws MissingMethodException for a record with
         // no parameterless constructor (every parameter here has a default value, but C# still doesn't emit a
@@ -51,7 +52,11 @@ internal static class InfrastructureDependencyInjection
                     ValidIssuer = configuration["Jwt:Issuer"],
                     ValidAudience = configuration["Jwt:Audience"],
                     ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero
+                    ClockSkew = TimeSpan.Zero,
+                    // TokenService issues a bare "role" claim (not ClaimTypes.Role) - without this,
+                    // RequireRole()/IsInRole() silently always return false rather than erroring
+                    // (same gotcha rentifyx-asset-registry-api's own e05 hit and documented first).
+                    RoleClaimType = "role"
                 };
 
                 if (!string.IsNullOrWhiteSpace(pem))
@@ -64,7 +69,8 @@ internal static class InfrastructureDependencyInjection
                 options.TokenValidationParameters = parameters;
             });
 
-        services.AddAuthorization();
+        services.AddAuthorizationBuilder()
+            .AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
 
         return services;
     }

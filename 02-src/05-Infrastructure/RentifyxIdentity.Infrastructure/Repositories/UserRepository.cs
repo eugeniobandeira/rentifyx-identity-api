@@ -5,6 +5,7 @@ using Amazon.DynamoDBv2.Model;
 using Microsoft.Extensions.Configuration;
 using RentifyxIdentity.Application.Outbox;
 using RentifyxIdentity.Domain.Entities;
+using RentifyxIdentity.Domain.Enums;
 using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
 using RentifyxIdentity.Infrastructure.Constants;
@@ -144,6 +145,21 @@ public sealed class UserRepository : IUserRepository
         await _client.TransactWriteItemsAsync(new TransactWriteItemsRequest { TransactItems = transactItems }, ct);
 
         entity.ClearDomainEvents();
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetAllActiveUserIdsAsync(CancellationToken ct = default)
+    {
+        List<ScanCondition> conditions =
+        [
+            new ScanCondition(nameof(UserDynamoDbItem.Pk), ScanOperator.BeginsWith, DynamoDbConstants.UserKeyPrefix),
+            new ScanCondition(nameof(UserDynamoDbItem.Status), ScanOperator.Equal, nameof(UserStatus.Active))
+        ];
+
+        List<UserDynamoDbItem> items = await _context
+            .ScanAsync<UserDynamoDbItem>(conditions, new ScanConfig { OverrideTableName = _tableName })
+            .GetRemainingAsync(ct);
+
+        return items.Select(item => Guid.Parse(item.Id)).ToList();
     }
 
     private async Task<UserEntity?> QueryByGsiAsync(
