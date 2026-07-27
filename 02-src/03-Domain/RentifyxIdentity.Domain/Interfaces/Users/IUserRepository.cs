@@ -19,4 +19,12 @@ public interface IUserRepository : IRepository<UserEntity>
 
     /// <summary>Same atomic write path as the AddAsync overload above, for update call sites.</summary>
     Task UpdateAsync(UserEntity entity, IReadOnlyCollection<IDomainEvent> extraEvents, CancellationToken ct = default);
+
+    /// <summary>
+    /// Full-table scan for every user currently in <see cref="Enums.UserStatus.Active"/> status - used only
+    /// by the owner-status snapshot republish feature (backfills downstream services' cold-start caches, e.g.
+    /// rentifyx-asset-registry-api's G-005). Not for hot-path use: a Scan reads every item in the table,
+    /// unlike every other query here which goes through a GSI.
+    /// </summary>
+    Task<IReadOnlyList<Guid>> GetAllActiveUserIdsAsync(CancellationToken ct = default);
 }

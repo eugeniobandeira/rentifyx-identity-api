@@ -3,6 +3,8 @@ using ErrorOr;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using RentifyxIdentity.Application.Common.Handler;
+using RentifyxIdentity.Application.Features.Admin.RepublishStatusSnapshot;
+using RentifyxIdentity.Application.Features.Admin.RepublishStatusSnapshot.Request;
 using RentifyxIdentity.Application.Features.Identity;
 using RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword;
 using RentifyxIdentity.Application.Features.Identity.Auth.ForgotPassword.Request;
@@ -71,6 +73,9 @@ internal static class ApplicationDependencyInjection
         services.AddScoped<IHandler<GetProfileRequest, UserResponse>, GetProfileHandler>();
         services.AddScoped<IHandler<GetConsentRequest, ConsentResponse>, GetConsentHandler>();
         services.AddScoped<IHandler<UpdateConsentRequest, ConsentResponse>, UpdateConsentHandler>();
+        services.AddScoped<
+            IHandler<RepublishStatusSnapshotRequest, RepublishStatusSnapshotResponse>,
+            RepublishStatusSnapshotHandler>();
 
         services.AddSingleton<IOutboxEntryFactory, OutboxEntryFactory>();
 
