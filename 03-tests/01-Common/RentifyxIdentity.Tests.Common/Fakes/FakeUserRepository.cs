@@ -1,4 +1,5 @@
 using RentifyxIdentity.Domain.Entities;
+using RentifyxIdentity.Domain.Enums;
 using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
 
@@ -79,6 +80,16 @@ public sealed class FakeUserRepository : IUserRepository
         }
 
         return Task.FromResult(match);
+    }
+
+    public Task<IReadOnlyList<Guid>> GetAllActiveUserIdsAsync(CancellationToken ct = default)
+    {
+        IReadOnlyList<Guid> activeIds = _store.Values
+            .Where(entity => entity.Status == UserStatus.Active)
+            .Select(entity => entity.Id)
+            .ToList();
+
+        return Task.FromResult(activeIds);
     }
 
     public Task<UserEntity?> GetByTaxIdAsync(string taxId, CancellationToken ct = default)

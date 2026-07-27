@@ -144,6 +144,13 @@ GitHub Actions (`ci.yml`) triggers on PRs to `main`:
 - No stack traces in error responses (`GlobalExceptionHandler` strips them).
 - Rate limiting is configured at the `v1` route group level.
 - Refresh tokens stored as hash (not plaintext), with DynamoDB TTL.
+- Role-gated endpoints use `.RequireAuthorization("AdminOnly")` (`AddAuthorizationBuilder().AddPolicy(...)`
+  in `InfrastructureDependencyInjection`, `RequireRole("Admin")`). `TokenValidationParameters.RoleClaimType`
+  must be `"role"` (matching `TokenService`'s bare `"role"` claim, not `ClaimTypes.Role`) or role checks
+  silently always fail — first used by `Endpoints/Admin/RepublishStatusSnapshot.cs`. Every other endpoint
+  in this repo is currently either `.AllowAnonymous()` or gated only by a manual claim-parsing check inside
+  the handler (see `GetProfile.cs`), not real ASP.NET authorization — do not assume the latter enforces
+  anything if called with no token at all.
 - **Known gap**: TaxId (CPF/CNPJ) is currently stored as **plaintext** in DynamoDB (D-010 in
   `.specs/project/STATE.md`). KMS encryption + HMAC blind index for lookup is deferred
   (DEF-007) — do not assume it's already encrypted when working in this area.
