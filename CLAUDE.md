@@ -156,3 +156,7 @@ GitHub Actions (`ci.yml`) triggers on PRs to `main`:
 - **Integration** (`03-tests/05-Integration/`) – `CustomWebApplicationFactory` + `Microsoft.AspNetCore.Mvc.Testing`
 - Test data: Bogus via builder classes in `Tests.Common/Builders/`
 - Assertions: FluentAssertions
+
+## System architecture
+
+Cross-repo system architecture (all RentifyX services, shared infra, Kafka event contracts) lives in `rentifyx-platform`, not duplicated here: [`../rentifyx-platform/docs/system-architecture.md`](../rentifyx-platform/docs/system-architecture.md) (or `.html` for a rendered view with the diagram).
