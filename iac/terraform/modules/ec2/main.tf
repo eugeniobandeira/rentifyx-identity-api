@@ -5,6 +5,10 @@
 resource "aws_ecr_repository" "identity_api" {
   name                 = "${var.prefix}-identity-api"
   image_tag_mutability = "MUTABLE"
+  # Lets `terraform destroy` delete this repo even with images still pushed -
+  # every teardown otherwise fails on RepositoryNotEmptyException, requiring
+  # a manual `aws ecr batch-delete-image` first.
+  force_delete = true
 
   image_scanning_configuration {
     scan_on_push = true
