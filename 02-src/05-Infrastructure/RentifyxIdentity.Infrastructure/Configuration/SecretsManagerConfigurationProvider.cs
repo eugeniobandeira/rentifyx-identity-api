@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using Amazon;
+﻿using Amazon;
 using Amazon.Runtime;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
@@ -27,33 +26,39 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
             return;
 
         string resolvedEnv = (env ?? "Development").ToLowerInvariant();
-
-        string secretNameTemplate = _bootstrapConfig[ConfigurationKeys.AwsSecretsManagerSecretName] ?? string.Empty;
-        string secretName = secretNameTemplate.Replace("{environment}", resolvedEnv, StringComparison.OrdinalIgnoreCase);
-
         string region = _bootstrapConfig[ConfigurationKeys.AwsRegion] ?? ConfigurationKeys.DefaultAwsRegion;
         AmazonSecretsManagerConfig clientConfig = new()
         {
             RegionEndpoint = RegionEndpoint.GetBySystemName(region)
         };
 
+        using AmazonSecretsManagerClient client = new(clientConfig);
+
+        // One Secrets Manager entry per credential, not a combined JSON blob -
+        // each fetched/failed independently so one missing/unreadable secret
+        // doesn't block the other, and each value is inspectable directly via
+        // `aws secretsmanager get-secret-value` with no JSON unwrapping.
+        LoadSecret(client, ConfigurationKeys.AwsSecretsManagerJwtPrivateKeySecretName, resolvedEnv, ConfigurationKeys.JwtPrivateKeyPem);
+        LoadSecret(client, ConfigurationKeys.AwsSecretsManagerHmacKeySecretName, resolvedEnv, ConfigurationKeys.HmacKey);
+    }
+
+    private void LoadSecret(AmazonSecretsManagerClient client, string secretNameConfigKey, string resolvedEnv, string dataKey)
+    {
+        string secretNameTemplate = _bootstrapConfig[secretNameConfigKey] ?? string.Empty;
+        if (secretNameTemplate.Length == 0)
+            return;
+
+        string secretName = secretNameTemplate.Replace("{environment}", resolvedEnv, StringComparison.OrdinalIgnoreCase);
+
         try
         {
-            using AmazonSecretsManagerClient client = new(clientConfig);
-
             GetSecretValueResponse response = client.GetSecretValueAsync(new GetSecretValueRequest
             {
                 SecretId = secretName
             }).GetAwaiter().GetResult();
 
-            if (response.SecretString is null)
-                return;
-
-            Dictionary<string, string?>? secrets =
-                JsonSerializer.Deserialize<Dictionary<string, string?>>(response.SecretString);
-
-            if (secrets is not null)
-                Data = secrets;
+            if (response.SecretString is not null)
+                Data[dataKey] = response.SecretString;
         }
         catch (ResourceNotFoundException)
         {
@@ -62,8 +67,7 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
         catch (Exception ex) when (
             ex is DecryptionFailureException
             or InternalServiceErrorException
-            or AmazonServiceException
-            or JsonException)
+            or AmazonServiceException)
         {
             // Write to stderr so it surfaces in docker logs without crashing the app
             Console.Error.WriteLine($"[SecretsManager] Failed to load secret '{secretName}': {ex.GetType().Name}: {ex.Message}");

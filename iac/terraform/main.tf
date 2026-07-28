@@ -112,9 +112,10 @@ module "github_actions" {
 }
 
 module "iam" {
-  source      = "./modules/iam"
-  prefix      = local.prefix
-  table_arn   = module.dynamodb.table_arn
-  kms_key_arn = module.kms.key_arn
-  secret_arn  = module.secrets.secret_arn
+  source                     = "./modules/iam"
+  prefix                     = local.prefix
+  table_arn                  = module.dynamodb.table_arn
+  kms_key_arn                = module.kms.key_arn
+  jwt_private_key_secret_arn = module.secrets.jwt_private_key_secret_arn
+  hmac_key_secret_arn        = module.secrets.hmac_key_secret_arn
 }

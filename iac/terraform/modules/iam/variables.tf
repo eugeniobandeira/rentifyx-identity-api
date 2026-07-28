@@ -13,7 +13,12 @@ variable "kms_key_arn" {
   type        = string
 }
 
-variable "secret_arn" {
-  description = "ARN of the Secrets Manager secret the API must read"
+variable "jwt_private_key_secret_arn" {
+  description = "ARN of the JWT signing private key secret"
+  type        = string
+}
+
+variable "hmac_key_secret_arn" {
+  description = "ARN of the HMAC key secret"
   type        = string
 }

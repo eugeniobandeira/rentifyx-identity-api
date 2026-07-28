@@ -36,7 +36,7 @@ data "aws_iam_policy_document" "identity_api" {
 
     actions = ["secretsmanager:GetSecretValue"]
 
-    resources = [var.secret_arn]
+    resources = [var.jwt_private_key_secret_arn, var.hmac_key_secret_arn]
   }
 }
 

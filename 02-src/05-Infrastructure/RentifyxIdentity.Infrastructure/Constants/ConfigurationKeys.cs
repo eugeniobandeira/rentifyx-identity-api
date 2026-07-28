@@ -7,7 +7,12 @@ internal static class ConfigurationKeys
     internal const string JwtAudience = "Jwt:Audience";
     internal const string HmacKey = "Hmac:Key";
     internal const string AwsRegion = "AWS:Region";
-    internal const string AwsSecretsManagerSecretName = "AWS:SecretsManager:SecretName";
+
+    // One Secrets Manager entry per credential, not a combined JSON blob -
+    // each secret's value is the raw string (PEM/key), inspectable directly
+    // via `aws secretsmanager get-secret-value` with no JSON unwrapping.
+    internal const string AwsSecretsManagerJwtPrivateKeySecretName = "AWS:SecretsManager:JwtPrivateKeySecretName";
+    internal const string AwsSecretsManagerHmacKeySecretName = "AWS:SecretsManager:HmacKeySecretName";
 
     internal const string DefaultAwsRegion = "sa-east-1";
     internal const string TestingEnvironment = "Testing";
