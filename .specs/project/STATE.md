@@ -1,5 +1,12 @@
 # Project State
 
+## Quick Status (read this first — everything below is historical detail/changelog)
+
+- **Infra**: nothing deployed right now — full teardown confirmed 2026-07-28.
+- **JWT signing key note**: `rentifyx/identity/production`'s secret has `lifecycle { ignore_changes = [secret_string] }` — the real RSA/HMAC values are seeded manually via `aws secretsmanager put-secret-value`, never tracked in Terraform state. A `destroy`+`apply` cycle recreates the secret with Terraform's literal placeholder (`"REPLACE_AT_DEPLOY_TIME"`), which crashes the app on boot until a real key is written again. There is no backup of any previously-generated real key — expect to regenerate one every time this repo's infra is reapplied from scratch, and re-sync the matching public key into `rentifyx-asset-registry-api`'s secret.
+- **Don't trust prose claims of "live"/"destroyed" in this file at face value** — verify against the real AWS account before assuming either way.
+- Full history below, newest first.
+
 ## Last Updated
 
 2026-07-27
