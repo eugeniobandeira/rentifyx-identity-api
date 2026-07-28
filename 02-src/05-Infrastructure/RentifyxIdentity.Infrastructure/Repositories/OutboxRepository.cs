@@ -1,4 +1,4 @@
-using Amazon.DynamoDBv2.DataModel;
+﻿using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using Microsoft.Extensions.Configuration;
 using RentifyxIdentity.Domain.Entities;
@@ -10,17 +10,12 @@ using RentifyxIdentity.Infrastructure.Models;
 
 namespace RentifyxIdentity.Infrastructure.Repositories;
 
-public sealed class OutboxRepository : IOutboxRepository
+public sealed class OutboxRepository(IDynamoDBContext context, IConfiguration configuration)
+    : IOutboxRepository
 {
-    private readonly IDynamoDBContext _context;
-    private readonly string _tableName;
-
-    public OutboxRepository(IDynamoDBContext context, IConfiguration configuration)
-    {
-        _context = context;
-        _tableName = configuration[DynamoDbConstants.TableNameConfigKey]
+    private readonly IDynamoDBContext _context = context;
+    private readonly string _tableName = configuration[DynamoDbConstants.TableNameConfigKey]
             ?? DynamoDbConstants.DefaultTableName;
-    }
 
     public async Task<IReadOnlyList<OutboxEntry>> GetPendingAsync(int batchSize, CancellationToken ct = default)
     {

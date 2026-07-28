@@ -1,4 +1,4 @@
-using Amazon.DynamoDBv2;
+﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
@@ -14,25 +14,17 @@ using RentifyxIdentity.Infrastructure.Models;
 
 namespace RentifyxIdentity.Infrastructure.Repositories;
 
-public sealed class UserRepository : IUserRepository
+public sealed class UserRepository(
+    IDynamoDBContext context,
+    IAmazonDynamoDB client,
+    IOutboxEntryFactory outboxEntryFactory,
+    IConfiguration configuration) : IUserRepository
 {
-    private readonly IDynamoDBContext _context;
-    private readonly IAmazonDynamoDB _client;
-    private readonly IOutboxEntryFactory _outboxEntryFactory;
-    private readonly string _tableName;
-
-    public UserRepository(
-        IDynamoDBContext context,
-        IAmazonDynamoDB client,
-        IOutboxEntryFactory outboxEntryFactory,
-        IConfiguration configuration)
-    {
-        _context = context;
-        _client = client;
-        _outboxEntryFactory = outboxEntryFactory;
-        _tableName = configuration[DynamoDbConstants.TableNameConfigKey]
+    private readonly IDynamoDBContext _context = context;
+    private readonly IAmazonDynamoDB _client = client;
+    private readonly IOutboxEntryFactory _outboxEntryFactory = outboxEntryFactory;
+    private readonly string _tableName = configuration[DynamoDbConstants.TableNameConfigKey]
             ?? DynamoDbConstants.DefaultTableName;
-    }
 
     public Task AddAsync(
         UserEntity entity,
