@@ -37,7 +37,7 @@ public sealed class OutboxEntry
 
     /// <summary>
     /// Overload for callers that need the entry's Id known before construction - e.g. OutboxEntryFactory
-    /// embeds it as CorrelationId in the serialized message, so it must match this entry's own Id exactly.
+    /// embeds it as IdempotencyKey in the serialized message, so it must match this entry's own Id exactly.
     /// </summary>
     public static OutboxEntry Create(
         Guid id,

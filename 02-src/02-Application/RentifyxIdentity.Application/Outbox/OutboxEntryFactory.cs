@@ -46,14 +46,14 @@ public sealed class OutboxEntryFactory : IOutboxEntryFactory
     }
 
     private static string SerializeNotificationRequested(
-        Guid correlationId,
+        Guid idempotencyKey,
         Guid recipientId,
         string recipientEmail,
         string templateId,
         string rawToken)
     {
         NotificationRequestedMessage message = new(
-            CorrelationId: correlationId,
+            IdempotencyKey: idempotencyKey,
             RecipientId: recipientId,
             RecipientEmail: recipientEmail,
             Channel: "Email",

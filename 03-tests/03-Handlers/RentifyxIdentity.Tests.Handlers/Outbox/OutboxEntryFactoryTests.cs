@@ -26,7 +26,7 @@ public sealed class OutboxEntryFactoryTests
         entry.PartitionKey.Should().Be(domainEvent.UserId.ToString());
 
         using JsonDocument message = JsonDocument.Parse(entry.MessageJson);
-        message.RootElement.GetProperty("CorrelationId").GetGuid().Should().Be(entry.Id);
+        message.RootElement.GetProperty("IdempotencyKey").GetGuid().Should().Be(entry.Id);
         message.RootElement.GetProperty("RecipientId").GetGuid().Should().Be(domainEvent.UserId);
         message.RootElement.GetProperty("RecipientEmail").GetString().Should().Be(domainEvent.Email);
         message.RootElement.GetProperty("Channel").GetString().Should().Be("Email");
@@ -47,7 +47,7 @@ public sealed class OutboxEntryFactoryTests
         entry.PartitionKey.Should().Be(domainEvent.UserId.ToString());
 
         using JsonDocument message = JsonDocument.Parse(entry.MessageJson);
-        message.RootElement.GetProperty("CorrelationId").GetGuid().Should().Be(entry.Id);
+        message.RootElement.GetProperty("IdempotencyKey").GetGuid().Should().Be(entry.Id);
         message.RootElement.GetProperty("RecipientId").GetGuid().Should().Be(domainEvent.UserId);
         message.RootElement.GetProperty("RecipientEmail").GetString().Should().Be(domainEvent.Email);
         message.RootElement.GetProperty("TemplateId").GetString().Should().Be("password-reset");
