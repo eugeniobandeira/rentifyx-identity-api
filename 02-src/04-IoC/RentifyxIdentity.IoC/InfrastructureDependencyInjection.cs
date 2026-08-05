@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using RentifyxIdentity.Domain.Constants;
+using RentifyxIdentity.Domain.Enums;
 using RentifyxIdentity.Domain.Interfaces.Notifications;
 using RentifyxIdentity.Domain.Interfaces.Users;
 using RentifyxIdentity.Infrastructure.Messaging;
@@ -70,7 +72,7 @@ internal static class InfrastructureDependencyInjection
             });
 
         services.AddAuthorizationBuilder()
-            .AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+            .AddPolicy(AuthorizationPolicies.AdminOnly, policy => policy.RequireRole(nameof(UserRole.Admin)));
 
         return services;
     }

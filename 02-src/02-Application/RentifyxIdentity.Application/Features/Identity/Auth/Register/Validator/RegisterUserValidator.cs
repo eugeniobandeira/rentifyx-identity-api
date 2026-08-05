@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using RentifyxIdentity.Application.Features.Identity.Auth.Register.Request;
 using RentifyxIdentity.Domain.Constants;
+using RentifyxIdentity.Domain.Enums;
 using RentifyxIdentity.Domain.MessageResource;
 
 namespace RentifyxIdentity.Application.Features.Identity.Auth.Register.Validator;
@@ -53,7 +54,7 @@ public sealed class RegisterUserValidator : AbstractValidator<RegisterUserReques
                 .WithMessage(ValidationMessageResource.ROLE_REQUIRED);
 
         RuleFor(x => x.Role)
-            .Must(role => role is "Owner" or "Renter" or "Admin")
+            .Must(role => role is nameof(UserRole.Owner) or nameof(UserRole.Renter) or nameof(UserRole.Admin))
                 .WithMessage(ValidationMessageResource.ROLE_INVALID)
             .When(x => !string.IsNullOrEmpty(x.Role));
 
