@@ -38,7 +38,11 @@ internal sealed class SecretsManagerConfigurationProvider(IConfiguration bootstr
         LoadSecret(client, ConfigurationKeys.AwsSecretsManagerHmacKeySecretName, resolvedEnv, ConfigurationKeys.HmacKey);
     }
 
-    private void LoadSecret(AmazonSecretsManagerClient client, string secretNameConfigKey, string resolvedEnv, string dataKey)
+    private void LoadSecret(
+        AmazonSecretsManagerClient client,
+        string secretNameConfigKey,
+        string resolvedEnv,
+        string dataKey)
     {
         string secretNameTemplate = _bootstrapConfig[secretNameConfigKey] ?? string.Empty;
         if (secretNameTemplate.Length == 0)
@@ -71,7 +75,8 @@ internal sealed class SecretsManagerConfigurationProvider(IConfiguration bootstr
     }
 }
 
-internal sealed class SecretsManagerConfigurationSource(IConfiguration bootstrapConfig) : IConfigurationSource
+internal sealed class SecretsManagerConfigurationSource(IConfiguration bootstrapConfig)
+    : IConfigurationSource
 {
     private readonly IConfiguration _bootstrapConfig = bootstrapConfig;
 
