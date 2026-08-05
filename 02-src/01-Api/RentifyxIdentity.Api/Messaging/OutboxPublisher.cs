@@ -25,7 +25,7 @@ public sealed class OutboxPublisher(
     private PeriodicTimer? _timer;
     private CancellationTokenSource? _loopCts;
     private Task? _loopTask;
-    private IProducer<Null, string>? _producer;
+    private IProducer<string, string>? _producer;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -113,7 +113,7 @@ public sealed class OutboxPublisher(
         {
             await _producer!.ProduceAsync(
                 entry.TargetTopic,
-                new Message<Null, string> { Value = entry.MessageJson },
+                new Message<string, string> { Key = entry.PartitionKey ?? string.Empty, Value = entry.MessageJson },
                 token);
 
             await repository.MarkPublishedAsync(entry.Id, token);

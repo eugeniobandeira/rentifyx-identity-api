@@ -22,6 +22,7 @@ public sealed class OutboxEntryFactoryTests
         entries.Should().ContainSingle();
         OutboxEntry entry = entries[0];
         entry.TargetTopic.Should().Be("notification-requested");
+        entry.PartitionKey.Should().Be(domainEvent.UserId.ToString());
 
         using JsonDocument message = JsonDocument.Parse(entry.MessageJson);
         message.RootElement.GetProperty("CorrelationId").GetGuid().Should().Be(entry.Id);
@@ -42,6 +43,7 @@ public sealed class OutboxEntryFactoryTests
         entries.Should().ContainSingle();
         OutboxEntry entry = entries[0];
         entry.TargetTopic.Should().Be("notification-requested");
+        entry.PartitionKey.Should().Be(domainEvent.UserId.ToString());
 
         using JsonDocument message = JsonDocument.Parse(entry.MessageJson);
         message.RootElement.GetProperty("CorrelationId").GetGuid().Should().Be(entry.Id);
@@ -63,6 +65,7 @@ public sealed class OutboxEntryFactoryTests
         entries.Should().ContainSingle();
         OutboxEntry entry = entries[0];
         entry.TargetTopic.Should().Be("user-lifecycle-events");
+        entry.PartitionKey.Should().Be(expectedAggregateId.ToString());
 
         using JsonDocument message = JsonDocument.Parse(entry.MessageJson);
         message.RootElement.GetProperty("EventType").GetString().Should().Be(expectedEventType);

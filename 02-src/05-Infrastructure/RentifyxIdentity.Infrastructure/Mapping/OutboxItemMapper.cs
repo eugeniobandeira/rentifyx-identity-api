@@ -22,6 +22,7 @@ internal static class OutboxItemMapper
             Status = entry.Status.ToString(),
             CreatedAt = entry.CreatedAt.ToString("O"),
             RetryCount = entry.RetryCount,
+            PartitionKey = entry.PartitionKey,
             GsiOutboxStatusPk = $"{DynamoDbConstants.OutboxStatusPrefix}{entry.Status}"
         };
     }
@@ -37,6 +38,7 @@ internal static class OutboxItemMapper
             messageJson: item.MessageJson,
             status: status,
             createdAt: createdAt,
-            retryCount: item.RetryCount);
+            retryCount: item.RetryCount,
+            partitionKey: item.PartitionKey);
     }
 }

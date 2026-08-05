@@ -11,7 +11,7 @@ public sealed class UserStatusSnapshotPublisher(IKafkaProducerFactory producerFa
 
     public async Task PublishSnapshotAsync(IReadOnlyCollection<Guid> activeUserIds, CancellationToken ct = default)
     {
-        using IProducer<Null, string> producer = producerFactory.Create();
+        using IProducer<string, string> producer = producerFactory.Create();
 
         foreach (Guid userId in activeUserIds)
         {
@@ -31,7 +31,7 @@ public sealed class UserStatusSnapshotPublisher(IKafkaProducerFactory producerFa
 
             await producer.ProduceAsync(
                 KafkaTopics.UserLifecycleEvents,
-                new Message<Null, string> { Value = json },
+                new Message<string, string> { Key = userId.ToString(), Value = json },
                 ct);
         }
 

@@ -5,7 +5,7 @@ namespace RentifyxIdentity.Infrastructure.Messaging;
 
 public sealed class KafkaProducerFactory(IConfiguration configuration) : IKafkaProducerFactory
 {
-    public IProducer<Null, string> Create()
+    public IProducer<string, string> Create()
     {
         string bootstrapServers = configuration.GetConnectionString("kafka")
             ?? throw new InvalidOperationException("Connection string 'kafka' not found.");
@@ -15,6 +15,6 @@ public sealed class KafkaProducerFactory(IConfiguration configuration) : IKafkaP
             BootstrapServers = bootstrapServers
         };
 
-        return new ProducerBuilder<Null, string>(config).Build();
+        return new ProducerBuilder<string, string>(config).Build();
     }
 }
