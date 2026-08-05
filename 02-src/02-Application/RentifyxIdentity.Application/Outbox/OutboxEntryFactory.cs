@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Entities;
@@ -13,6 +14,8 @@ public sealed class OutboxEntryFactory : IOutboxEntryFactory
     private static OutboxEntry CreateEntry(IDomainEvent domainEvent)
     {
         Guid entryId = Guid.NewGuid();
+        string? traceParent = Activity.Current?.Id;
+        string? traceState = Activity.Current?.TraceStateString;
 
         return domainEvent switch
         {
@@ -20,31 +23,37 @@ public sealed class OutboxEntryFactory : IOutboxEntryFactory
                 entryId,
                 KafkaTopics.NotificationRequested,
                 SerializeNotificationRequested(entryId, e.UserId, e.Email, "email-verification", e.RawToken),
-                e.UserId.ToString()),
+                e.UserId.ToString(),
+                traceParent,
+                traceState),
 
             PasswordResetRequested e => OutboxEntry.Create(
                 entryId,
                 KafkaTopics.NotificationRequested,
                 SerializeNotificationRequested(entryId, e.UserId, e.Email, "password-reset", e.RawToken),
-                e.UserId.ToString()),
+                e.UserId.ToString(),
+                traceParent,
+                traceState),
 
             _ => OutboxEntry.Create(
                 entryId,
                 KafkaTopics.UserLifecycleEvents,
                 SerializeLifecycleEnvelope(domainEvent),
-                LifecycleAggregateId(domainEvent).ToString())
+                LifecycleAggregateId(domainEvent).ToString(),
+                traceParent,
+                traceState)
         };
     }
 
     private static string SerializeNotificationRequested(
-        Guid correlationId,
+        Guid idempotencyKey,
         Guid recipientId,
         string recipientEmail,
         string templateId,
         string rawToken)
     {
         NotificationRequestedMessage message = new(
-            CorrelationId: correlationId,
+            IdempotencyKey: idempotencyKey,
             RecipientId: recipientId,
             RecipientEmail: recipientEmail,
             Channel: "Email",

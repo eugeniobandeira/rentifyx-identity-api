@@ -6,7 +6,7 @@ namespace RentifyxIdentity.Application.Outbox;
 /// repos/solutions - this is the agreed JSON contract, kept in sync manually.
 /// </summary>
 internal sealed record NotificationRequestedMessage(
-    Guid CorrelationId,
+    Guid IdempotencyKey,
     Guid RecipientId,
     string RecipientEmail,
     string Channel,

@@ -17,23 +17,35 @@ public sealed class OutboxEntry
     /// </summary>
     public string? PartitionKey { get; private set; }
 
+    /// <summary>
+    /// W3C traceparent/tracestate captured from the originating request's Activity at creation
+    /// time - the actual Kafka publish happens later, asynchronously, once OutboxPublisher's
+    /// background poller picks this entry up, by which point that Activity is no longer current.
+    /// </summary>
+    public string? TraceParent { get; private set; }
+    public string? TraceState { get; private set; }
+
     private OutboxEntry() { }
 
     public static OutboxEntry Create(
         string targetTopic,
         string messageJson,
-        string? partitionKey = null) =>
-        Create(Guid.NewGuid(), targetTopic, messageJson, partitionKey);
+        string? partitionKey = null,
+        string? traceParent = null,
+        string? traceState = null) =>
+        Create(Guid.NewGuid(), targetTopic, messageJson, partitionKey, traceParent, traceState);
 
     /// <summary>
     /// Overload for callers that need the entry's Id known before construction - e.g. OutboxEntryFactory
-    /// embeds it as CorrelationId in the serialized message, so it must match this entry's own Id exactly.
+    /// embeds it as IdempotencyKey in the serialized message, so it must match this entry's own Id exactly.
     /// </summary>
     public static OutboxEntry Create(
         Guid id,
         string targetTopic,
         string messageJson,
-        string? partitionKey = null)
+        string? partitionKey = null,
+        string? traceParent = null,
+        string? traceState = null)
     {
         return new OutboxEntry
         {
@@ -43,7 +55,9 @@ public sealed class OutboxEntry
             Status = OutboxStatus.Pending,
             CreatedAt = DateTimeOffset.UtcNow,
             RetryCount = 0,
-            PartitionKey = partitionKey
+            PartitionKey = partitionKey,
+            TraceParent = traceParent,
+            TraceState = traceState
         };
     }
 
@@ -60,7 +74,9 @@ public sealed class OutboxEntry
         OutboxStatus status,
         DateTimeOffset createdAt,
         int retryCount,
-        string? partitionKey)
+        string? partitionKey,
+        string? traceParent,
+        string? traceState)
     {
         return new OutboxEntry
         {
@@ -70,7 +86,9 @@ public sealed class OutboxEntry
             Status = status,
             CreatedAt = createdAt,
             RetryCount = retryCount,
-            PartitionKey = partitionKey
+            PartitionKey = partitionKey,
+            TraceParent = traceParent,
+            TraceState = traceState
         };
     }
 }
