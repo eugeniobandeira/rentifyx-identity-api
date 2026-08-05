@@ -1,7 +1,12 @@
 # Distributed Tracing Across the Kafka Boundary Tasks
 
 **Design**: `.specs/features/distributed-tracing-kafka/design.md`
-**Status**: Draft
+**Status**: Done — T1-T12 all implemented. identity-api PR #50, rentifyx-communications-api PR #22 (both open, not yet merged, 2026-08-05).
+
+**Deviations from plan** (see individual commit messages for full SPEC_DEVIATION rationale):
+- T1+T2 merged into one commit (tightly coupled, couldn't build independently)
+- T8 scope expanded beyond plan (full-domain rename in comms-api, not just the wire DTO) per explicit user decision after being asked
+- T12 needed no signature change to `IFailureRouter.RouteAsync`/`ProcessAsync` — `RetryContext` already carried the needed data end-to-end, so `TraceParent`/`TraceState` were added as fields on it instead of threading a new headers parameter through three signatures
 
 **Note on test conventions**: `rentifyx-communications-api` has no `.specs/codebase/TESTING.md`.
 Conventions below for that repo (xUnit/Moq/FluentAssertions, mirrored `00`-`06` test-project
