@@ -1,9 +1,14 @@
-﻿using Confluent.Kafka;
+﻿using System.Diagnostics;
+using System.Text;
+using Confluent.Kafka;
 using Microsoft.Extensions.Options;
+using OpenTelemetry;
+using OpenTelemetry.Context.Propagation;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Interfaces.Notifications;
 using RentifyxIdentity.Infrastructure.Messaging;
 using RentifyxIdentity.Infrastructure.Options;
+using Serilog.Context;
 
 namespace RentifyxIdentity.Api.Messaging;
 
@@ -109,11 +114,35 @@ public sealed class OutboxPublisher(
 
     private async Task PublishEntryAsync(IOutboxRepository repository, OutboxEntry entry, CancellationToken token)
     {
+        ActivityLink[] links = [];
+        if (entry.TraceParent is not null &&
+            ActivityContext.TryParse(entry.TraceParent, entry.TraceState, isRemote: true, out ActivityContext parentContext))
+            links = [new ActivityLink(parentContext)];
+
+        using Activity? activity = OutboxActivitySource.Instance.StartActivity(
+            $"{entry.TargetTopic} publish",
+            ActivityKind.Producer,
+            default(ActivityContext),
+            links: links);
+
+        using IDisposable? traceIdScope = LogContext.PushProperty("TraceId", activity?.TraceId.ToString());
+        using IDisposable? spanIdScope = LogContext.PushProperty("SpanId", activity?.SpanId.ToString());
+
         try
         {
+            Headers headers = [];
+            if (activity is not null)
+            {
+                TraceContextPropagator propagator = new();
+                propagator.Inject(
+                    new PropagationContext(activity.Context, Baggage.Current),
+                    headers,
+                    static (h, key, value) => h.Add(key, Encoding.UTF8.GetBytes(value)));
+            }
+
             await _producer!.ProduceAsync(
                 entry.TargetTopic,
-                new Message<string, string> { Key = entry.PartitionKey ?? string.Empty, Value = entry.MessageJson },
+                new Message<string, string> { Key = entry.PartitionKey ?? string.Empty, Value = entry.MessageJson, Headers = headers },
                 token);
 
             await repository.MarkPublishedAsync(entry.Id, token);

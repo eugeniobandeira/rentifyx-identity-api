@@ -50,6 +50,55 @@ public sealed class OutboxPublisherTests : IClassFixture<OutboxPublisherFixture>
     }
 
     [Fact]
+    public async Task PendingEntry_WithTraceParent_ProducesMessageCarryingTraceparentHeader()
+    {
+        const string traceParent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01";
+        string partitionKey = Guid.NewGuid().ToString();
+
+        Guid id = await SeedAsync(status: "Pending", topic: "user-lifecycle-events", traceParent: traceParent, partitionKey: partitionKey);
+        OutboxPublisher publisher = BuildPublisher(
+            new WorkingKafkaProducerFactory(_fixture.KafkaBootstrapAddress),
+            pollIntervalSeconds: 1,
+            maxRetryCount: 3);
+
+        try
+        {
+            await publisher.StartAsync(CancellationToken.None);
+            await WaitUntilAsync(async () => await GetStatusAsync(id) == "Published", TimeSpan.FromSeconds(15));
+
+            using IConsumer<string, string> consumer = new ConsumerBuilder<string, string>(new ConsumerConfig
+            {
+                BootstrapServers = _fixture.KafkaBootstrapAddress,
+                GroupId = $"trace-test-{Guid.NewGuid()}",
+                AutoOffsetReset = AutoOffsetReset.Earliest
+            }).Build();
+            consumer.Subscribe("user-lifecycle-events");
+
+            ConsumeResult<string, string>? result = null;
+            DateTimeOffset deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(10);
+            while (DateTimeOffset.UtcNow < deadline)
+            {
+                ConsumeResult<string, string>? candidate = consumer.Consume(TimeSpan.FromSeconds(1));
+                if (candidate is not null && candidate.Message.Key == partitionKey)
+                {
+                    result = candidate;
+                    break;
+                }
+            }
+
+            result.Should().NotBeNull();
+            result!.Message.Headers.TryGetLastBytes("traceparent", out byte[] headerBytes).Should().BeTrue();
+            System.Text.Encoding.UTF8.GetString(headerBytes).Should().StartWith("00-");
+        }
+        finally
+        {
+            await publisher.StopAsync(CancellationToken.None);
+            publisher.Dispose();
+            await DeleteAsync(id);
+        }
+    }
+
+    [Fact]
     public async Task ProduceFailsThreeTimes_MarksFailed_AndStopsRetrying()
     {
         Guid id = await SeedAsync(status: "Pending", topic: "user-lifecycle-events");
@@ -141,7 +190,7 @@ public sealed class OutboxPublisherTests : IClassFixture<OutboxPublisherFixture>
         return response.Item is { Count: > 0 } ? response.Item["Status"].S : null;
     }
 
-    private async Task<Guid> SeedAsync(string status, string topic)
+    private async Task<Guid> SeedAsync(string status, string topic, string? traceParent = null, string? partitionKey = null)
     {
         Guid id = Guid.NewGuid();
         string pk = $"OUTBOX#{id}";
@@ -156,7 +205,8 @@ public sealed class OutboxPublisherTests : IClassFixture<OutboxPublisherFixture>
             Status = status,
             CreatedAt = DateTimeOffset.UtcNow.ToString("O"),
             RetryCount = 0,
-            PartitionKey = Guid.NewGuid().ToString(),
+            PartitionKey = partitionKey ?? Guid.NewGuid().ToString(),
+            TraceParent = traceParent,
             GsiOutboxStatusPk = $"OUTBOX_STATUS#{status}"
         };
 
