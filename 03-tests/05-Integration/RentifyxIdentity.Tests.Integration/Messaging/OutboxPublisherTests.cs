@@ -135,7 +135,7 @@ public sealed class OutboxPublisherTests : IClassFixture<OutboxPublisherFixture>
             new Dictionary<string, AttributeValue>
             {
                 ["PK"] = new AttributeValue { S = pk },
-                ["SK"] = new AttributeValue { S = pk }
+                ["SK"] = new AttributeValue { S = "ENTRY" }
             });
 
         return response.Item is { Count: > 0 } ? response.Item["Status"].S : null;
@@ -149,7 +149,7 @@ public sealed class OutboxPublisherTests : IClassFixture<OutboxPublisherFixture>
         OutboxDynamoDbItem item = new()
         {
             Pk = pk,
-            Sk = pk,
+            Sk = "ENTRY",
             Id = id.ToString(),
             TargetTopic = topic,
             MessageJson = "{}",

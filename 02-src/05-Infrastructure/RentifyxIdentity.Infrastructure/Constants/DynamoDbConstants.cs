@@ -11,6 +11,9 @@ internal static class DynamoDbConstants
     internal const string OutboxKeyPrefix = "OUTBOX#";
     internal const string OutboxStatusPrefix = "OUTBOX_STATUS#";
 
+    internal const string UserSortKey = "PROFILE";
+    internal const string OutboxSortKey = "ENTRY";
+
     internal const string GsiEmail = "GSI_Email";
     internal const string GsiTaxId = "GSI_TaxId";
     internal const string GsiOutbox = "GSI_Outbox";

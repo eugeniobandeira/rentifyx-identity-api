@@ -15,7 +15,7 @@ internal static class OutboxItemMapper
         return new OutboxDynamoDbItem
         {
             Pk = pk,
-            Sk = pk,
+            Sk = DynamoDbConstants.OutboxSortKey,
             Id = entry.Id.ToString(),
             TargetTopic = entry.TargetTopic,
             MessageJson = entry.MessageJson,

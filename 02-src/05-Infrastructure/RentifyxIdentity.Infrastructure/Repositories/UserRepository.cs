@@ -44,7 +44,7 @@ public sealed class UserRepository(
         string pk = $"{DynamoDbConstants.UserKeyPrefix}{id}";
         UserDynamoDbItem? item = await _context.LoadAsync<UserDynamoDbItem>(
             pk,
-            pk,
+            DynamoDbConstants.UserSortKey,
             new LoadConfig { OverrideTableName = _tableName },
             ct);
         return item is null ? null : UserDynamoDbMapper.ToEntity(item);
@@ -90,7 +90,7 @@ public sealed class UserRepository(
         string pk = $"{DynamoDbConstants.UserKeyPrefix}{entity.Id}";
         await _context.DeleteAsync<UserDynamoDbItem>(
             pk,
-            pk,
+            DynamoDbConstants.UserSortKey,
             new DeleteConfig { OverrideTableName = _tableName },
             ct);
     }

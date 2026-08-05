@@ -53,7 +53,7 @@ public sealed class OutboxRepository(IDynamoDBContext context, IConfiguration co
         string pk = $"{DynamoDbConstants.OutboxKeyPrefix}{id}";
         OutboxDynamoDbItem? item = await _context.LoadAsync<OutboxDynamoDbItem>(
             pk,
-            pk,
+            DynamoDbConstants.OutboxSortKey,
             new LoadConfig { OverrideTableName = _tableName },
             ct);
 

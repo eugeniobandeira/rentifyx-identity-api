@@ -150,7 +150,7 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
                 new Dictionary<string, AttributeValue>
                 {
                     ["PK"] = new AttributeValue { S = $"USER#{user.Id}" },
-                    ["SK"] = new AttributeValue { S = $"USER#{user.Id}" }
+                    ["SK"] = new AttributeValue { S = "PROFILE" }
                 });
 
             raw.Item.Should().ContainKey("TTL");
@@ -178,7 +178,7 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
                 new Dictionary<string, AttributeValue>
                 {
                     ["PK"] = new AttributeValue { S = $"USER#{user.Id}" },
-                    ["SK"] = new AttributeValue { S = $"USER#{user.Id}" }
+                    ["SK"] = new AttributeValue { S = "PROFILE" }
                 });
 
             raw.Item.Should().NotContainKey("TTL");
@@ -421,7 +421,7 @@ public sealed class UserRepositoryTests : IClassFixture<LocalStackFixture>
             new Dictionary<string, AttributeValue>
             {
                 ["PK"] = new AttributeValue { S = $"USER#{id}" },
-                ["SK"] = new AttributeValue { S = $"USER#{id}" }
+                ["SK"] = new AttributeValue { S = "PROFILE" }
             });
     }
 }

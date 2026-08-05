@@ -17,7 +17,7 @@ internal static class UserDynamoDbMapper
         return new UserDynamoDbItem
         {
             Pk = pk,
-            Sk = pk,
+            Sk = DynamoDbConstants.UserSortKey,
             Id = entity.Id.ToString(),
             Email = entity.Email.Value.ToLowerInvariant(),
             TaxId = entity.TaxId.RawValue,
