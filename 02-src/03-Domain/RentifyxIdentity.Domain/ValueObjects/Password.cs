@@ -4,7 +4,8 @@ public sealed class Password
 {
     public string HashValue { get; }
 
-    private Password(string hash) => HashValue = hash;
+    private Password(string hash)
+        => HashValue = hash;
 
     public static Password FromPlaintext(string plaintext)
     {
