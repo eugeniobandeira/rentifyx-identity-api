@@ -156,6 +156,7 @@ public sealed class OutboxPublisherTests : IClassFixture<OutboxPublisherFixture>
             Status = status,
             CreatedAt = DateTimeOffset.UtcNow.ToString("O"),
             RetryCount = 0,
+            PartitionKey = Guid.NewGuid().ToString(),
             GsiOutboxStatusPk = $"OUTBOX_STATUS#{status}"
         };
 
@@ -170,19 +171,19 @@ public sealed class OutboxPublisherTests : IClassFixture<OutboxPublisherFixture>
             new Dictionary<string, AttributeValue>
             {
                 ["PK"] = new AttributeValue { S = $"OUTBOX#{id}" },
-                ["SK"] = new AttributeValue { S = $"OUTBOX#{id}" }
+                ["SK"] = new AttributeValue { S = "ENTRY" }
             });
 
     private sealed class WorkingKafkaProducerFactory(string bootstrapAddress) : IKafkaProducerFactory
     {
-        public IProducer<Null, string> Create() =>
-            new ProducerBuilder<Null, string>(new ProducerConfig { BootstrapServers = bootstrapAddress }).Build();
+        public IProducer<string, string> Create() =>
+            new ProducerBuilder<string, string>(new ProducerConfig { BootstrapServers = bootstrapAddress }).Build();
     }
 
     private sealed class BrokenKafkaProducerFactory : IKafkaProducerFactory
     {
-        public IProducer<Null, string> Create() =>
-            new ProducerBuilder<Null, string>(new ProducerConfig
+        public IProducer<string, string> Create() =>
+            new ProducerBuilder<string, string>(new ProducerConfig
             {
                 BootstrapServers = "127.0.0.1:1",
                 MessageTimeoutMs = 1000,

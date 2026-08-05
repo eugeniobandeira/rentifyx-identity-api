@@ -21,6 +21,7 @@ public sealed class OutboxDynamoDbItem
     public string CreatedAt { get; set; } = null!;
 
     public int RetryCount { get; set; }
+    public string? PartitionKey { get; set; }
 
     [DynamoDBGlobalSecondaryIndexHashKey(DynamoDbConstants.GsiOutbox)]
     [DynamoDBProperty("GsiOutboxStatusPk")]

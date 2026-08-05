@@ -4,5 +4,5 @@ namespace RentifyxIdentity.Infrastructure.Messaging;
 
 public interface IKafkaProducerFactory
 {
-    IProducer<Null, string> Create();
+    IProducer<string, string> Create();
 }

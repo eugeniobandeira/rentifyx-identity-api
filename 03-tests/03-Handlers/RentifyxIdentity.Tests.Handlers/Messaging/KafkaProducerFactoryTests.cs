@@ -27,7 +27,7 @@ public sealed class KafkaProducerFactoryTests
             .Build();
         KafkaProducerFactory sut = new(configuration);
 
-        using IProducer<Null, string> producer = sut.Create();
+        using IProducer<string, string> producer = sut.Create();
 
         producer.Should().NotBeNull();
     }
