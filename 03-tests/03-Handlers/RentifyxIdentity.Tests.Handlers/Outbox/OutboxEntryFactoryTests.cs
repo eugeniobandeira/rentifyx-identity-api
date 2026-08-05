@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using FluentAssertions;
 using RentifyxIdentity.Application.Outbox;
@@ -87,6 +88,36 @@ public sealed class OutboxEntryFactoryTests
 
         entries.Should().HaveCount(2);
         entries.Select(e => e.Id).Should().OnlyHaveUniqueItems();
+    }
+
+    [Fact]
+    public void CreateEntries_NoActiveActivity_LeavesTraceParentNull()
+    {
+        UserRegistered domainEvent = new(Guid.NewGuid(), "user@example.com", UserRole.Renter, "raw-token", DateTimeOffset.UtcNow);
+
+        IReadOnlyList<OutboxEntry> entries = _sut.CreateEntries([domainEvent]);
+
+        entries[0].TraceParent.Should().BeNull();
+        entries[0].TraceState.Should().BeNull();
+    }
+
+    [Fact]
+    public void CreateEntries_WithActiveActivity_CapturesTraceParent()
+    {
+        using ActivitySource source = new(nameof(OutboxEntryFactoryTests));
+        using ActivityListener listener = new()
+        {
+            ShouldListenTo = _ => true,
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        using Activity? activity = source.StartActivity("test-request");
+        UserRegistered domainEvent = new(Guid.NewGuid(), "user@example.com", UserRole.Renter, "raw-token", DateTimeOffset.UtcNow);
+
+        IReadOnlyList<OutboxEntry> entries = _sut.CreateEntries([domainEvent]);
+
+        entries[0].TraceParent.Should().Be(activity!.Id);
     }
 
     public static TheoryData<IDomainEvent, Guid, string> LifecycleEvents()
