@@ -140,7 +140,7 @@ public sealed class OutboxRepositoryTests : IClassFixture<LocalStackFixture>
         OutboxDynamoDbItem item = new()
         {
             Pk = pk,
-            Sk = pk,
+            Sk = "ENTRY",
             Id = id.ToString(),
             TargetTopic = "user-lifecycle-events",
             MessageJson = "{}",
@@ -161,6 +161,6 @@ public sealed class OutboxRepositoryTests : IClassFixture<LocalStackFixture>
             new Dictionary<string, AttributeValue>
             {
                 ["PK"] = new AttributeValue { S = $"OUTBOX#{id}" },
-                ["SK"] = new AttributeValue { S = $"OUTBOX#{id}" }
+                ["SK"] = new AttributeValue { S = "ENTRY" }
             });
 }

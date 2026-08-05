@@ -7,14 +7,10 @@ using RentifyxIdentity.Infrastructure.Constants;
 
 namespace RentifyxIdentity.Infrastructure.Configuration;
 
-internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvider
+internal sealed class SecretsManagerConfigurationProvider(IConfiguration bootstrapConfig)
+    : ConfigurationProvider
 {
-    private readonly IConfiguration _bootstrapConfig;
-
-    public SecretsManagerConfigurationProvider(IConfiguration bootstrapConfig)
-    {
-        _bootstrapConfig = bootstrapConfig;
-    }
+    private readonly IConfiguration _bootstrapConfig = bootstrapConfig;
 
     public override void Load()
     {
@@ -42,7 +38,11 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
         LoadSecret(client, ConfigurationKeys.AwsSecretsManagerHmacKeySecretName, resolvedEnv, ConfigurationKeys.HmacKey);
     }
 
-    private void LoadSecret(AmazonSecretsManagerClient client, string secretNameConfigKey, string resolvedEnv, string dataKey)
+    private void LoadSecret(
+        AmazonSecretsManagerClient client,
+        string secretNameConfigKey,
+        string resolvedEnv,
+        string dataKey)
     {
         string secretNameTemplate = _bootstrapConfig[secretNameConfigKey] ?? string.Empty;
         if (secretNameTemplate.Length == 0)
@@ -75,14 +75,10 @@ internal sealed class SecretsManagerConfigurationProvider : ConfigurationProvide
     }
 }
 
-internal sealed class SecretsManagerConfigurationSource : IConfigurationSource
+internal sealed class SecretsManagerConfigurationSource(IConfiguration bootstrapConfig)
+    : IConfigurationSource
 {
-    private readonly IConfiguration _bootstrapConfig;
-
-    public SecretsManagerConfigurationSource(IConfiguration bootstrapConfig)
-    {
-        _bootstrapConfig = bootstrapConfig;
-    }
+    private readonly IConfiguration _bootstrapConfig = bootstrapConfig;
 
     public IConfigurationProvider Build(IConfigurationBuilder builder)
         => new SecretsManagerConfigurationProvider(_bootstrapConfig);

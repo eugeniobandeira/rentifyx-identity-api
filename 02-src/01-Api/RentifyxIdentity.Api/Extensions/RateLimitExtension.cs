@@ -11,7 +11,7 @@ internal static class RateLimitExtension
 
     public static IServiceCollection AddRateLimiting(
         this IServiceCollection services,
-        IConfiguration configuration)
+             IConfiguration configuration)
     {
         int permitLimit = configuration.GetValue("RateLimit:PermitLimit", 100);
         int windowSeconds = configuration.GetValue("RateLimit:WindowSeconds", 60);

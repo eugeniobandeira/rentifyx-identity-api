@@ -53,4 +53,70 @@
   <data name="DESCRIPTION_MAX_LENGTH" xml:space="preserve">
     <value>A descrição deve ter no máximo {MaxLength} caracteres.</value>
   </data>
+  <data name="EMAIL_REQUIRED" xml:space="preserve">
+    <value>Email é obrigatório.</value>
+  </data>
+  <data name="EMAIL_INVALID_FORMAT" xml:space="preserve">
+    <value>Formato de email inválido.</value>
+  </data>
+  <data name="EMAIL_DISPOSABLE_DOMAIN" xml:space="preserve">
+    <value>Domínios de email descartáveis não são permitidos.</value>
+  </data>
+  <data name="EMAIL_MAX_LENGTH" xml:space="preserve">
+    <value>O email deve ter no máximo {MaxLength} caracteres.</value>
+  </data>
+  <data name="PASSWORD_REQUIRED" xml:space="preserve">
+    <value>Senha é obrigatória.</value>
+  </data>
+  <data name="PASSWORD_MIN_LENGTH" xml:space="preserve">
+    <value>A senha deve ter no mínimo {MinLength} caracteres.</value>
+  </data>
+  <data name="PASSWORD_COMPLEXITY" xml:space="preserve">
+    <value>A senha deve conter ao menos uma letra maiúscula, uma letra minúscula, um dígito e um símbolo.</value>
+  </data>
+  <data name="PASSWORD_MAX_LENGTH" xml:space="preserve">
+    <value>A senha deve ter no máximo {MaxLength} caracteres.</value>
+  </data>
+  <data name="TAXID_REQUIRED" xml:space="preserve">
+    <value>CPF/CNPJ é obrigatório.</value>
+  </data>
+  <data name="TAXID_INVALID_FORMAT" xml:space="preserve">
+    <value>CPF/CNPJ deve ser válido.</value>
+  </data>
+  <data name="ROLE_REQUIRED" xml:space="preserve">
+    <value>Perfil é obrigatório.</value>
+  </data>
+  <data name="ROLE_INVALID" xml:space="preserve">
+    <value>O perfil deve ser um dos seguintes: Owner, Renter, Admin.</value>
+  </data>
+  <data name="TOKEN_REQUIRED" xml:space="preserve">
+    <value>Token é obrigatório.</value>
+  </data>
+  <data name="USER_NOT_FOUND" xml:space="preserve">
+    <value>Usuário não encontrado.</value>
+  </data>
+  <data name="USER_EMAIL_ALREADY_REGISTERED" xml:space="preserve">
+    <value>Este endereço de email já está cadastrado.</value>
+  </data>
+  <data name="USER_TAXID_ALREADY_REGISTERED" xml:space="preserve">
+    <value>Este CPF/CNPJ já está cadastrado.</value>
+  </data>
+  <data name="USER_INVALID_CREDENTIALS" xml:space="preserve">
+    <value>Credenciais inválidas.</value>
+  </data>
+  <data name="USER_ACCOUNT_NOT_ACTIVE" xml:space="preserve">
+    <value>A conta não está ativa.</value>
+  </data>
+  <data name="USER_TOKEN_INVALID_OR_EXPIRED" xml:space="preserve">
+    <value>Token inválido ou expirado.</value>
+  </data>
+  <data name="CONSENT_REQUIRED" xml:space="preserve">
+    <value>Você deve fornecer consentimento para se cadastrar.</value>
+  </data>
+  <data name="CONSENT_PURPOSE_REQUIRED" xml:space="preserve">
+    <value>Finalidade é obrigatória.</value>
+  </data>
+  <data name="CONSENT_PURPOSE_INVALID" xml:space="preserve">
+    <value>A finalidade deve ser uma das seguintes: Essential, Marketing.</value>
+  </data>
 </root>

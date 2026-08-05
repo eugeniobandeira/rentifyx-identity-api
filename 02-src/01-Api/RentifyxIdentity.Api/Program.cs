@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Reflection;
+using Microsoft.AspNetCore.Localization;
 using RentifyxIdentity.Api.Extensions;
 using RentifyxIdentity.Api.Messaging;
 using RentifyxIdentity.Api.Middlewares;
@@ -43,10 +44,19 @@ try
     builder.Services.AddProblemDetails();
     builder.Services.AddHostedService<OutboxPublisher>();
 
+    CultureInfo[] supportedCultures = [new("en"), new("pt-BR")];
+    builder.Services.Configure<RequestLocalizationOptions>(options =>
+    {
+        options.DefaultRequestCulture = new RequestCulture("en");
+        options.SupportedCultures = supportedCultures;
+        options.SupportedUICultures = supportedCultures;
+    });
+
     WebApplication app = builder.Build();
 
     app.MapDefaultEndpoints();
 
+    app.UseRequestLocalization();
     app.UseExceptionHandler();
     app.UseCorrelationId();
     app.UseSecurityHeaders();

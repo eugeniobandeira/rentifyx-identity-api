@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
@@ -7,7 +7,9 @@ namespace RentifyxIdentity.Api.Extensions;
 [ExcludeFromCodeCoverage]
 public static class OpenApiExtensions
 {
-    public static IServiceCollection AddOpenApiDocumentation(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddOpenApiDocumentation(
+        this IServiceCollection services,
+             IConfiguration configuration)
     {
         string contactName = configuration["OpenApi:ContactName"]!;
         string contactUrl = configuration["OpenApi:ContactUrl"]!;

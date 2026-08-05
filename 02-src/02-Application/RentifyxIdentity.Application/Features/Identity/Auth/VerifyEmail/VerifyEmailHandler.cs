@@ -8,7 +8,6 @@ using RentifyxIdentity.Application.Features.Identity.Mapper;
 using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Entities;
 using RentifyxIdentity.Domain.Enums;
-using RentifyxIdentity.Domain.Events;
 using RentifyxIdentity.Domain.Interfaces.Users;
 
 namespace RentifyxIdentity.Application.Features.Identity.Auth.VerifyEmail;
@@ -47,9 +46,6 @@ public sealed class VerifyEmailHandler(
 
         user.VerifyEmail();
         await repository.UpdateAsync(user, ct);
-
-        UserEmailVerified domainEvent = new(user.Id, user.Email.ToString(), DateTimeOffset.UtcNow);
-        logger.LogInformation("Domain event: {Event}", domainEvent);
 
         logger.LogInformation("Email verified successfully. UserId={UserId}", user.Id);
 

@@ -1,3 +1,4 @@
+﻿using System.Globalization;
 using RentifyxIdentity.Domain.Common;
 using RentifyxIdentity.Domain.Constants;
 using RentifyxIdentity.Domain.Enums;
@@ -36,10 +37,7 @@ public sealed class UserEntity : AggregateRoot
     public bool IsLockedOut(DateTimeOffset now) =>
         LockoutUntil.HasValue && now < LockoutUntil.Value;
 
-    public void SetConsent(DateTimeOffset timestamp)
-    {
-        ConsentGivenAt = timestamp;
-    }
+    public void SetConsent(DateTimeOffset timestamp) => ConsentGivenAt = timestamp;
 
     public void GrantEssentialConsent(DateTimeOffset now)
     {
@@ -192,7 +190,7 @@ public sealed class UserEntity : AggregateRoot
     public void Anonymize()
     {
         Status = UserStatus.Deleted;
-        Email = Email.Create(string.Format(System.Globalization.CultureInfo.InvariantCulture, AnonymizationConstants.EmailPattern, Id));
+        Email = Email.Create(string.Format(CultureInfo.InvariantCulture, AnonymizationConstants.EmailPattern, Id));
         TaxId = TaxDocument.CreateAnonymized();
         PasswordHash = Password.FromHash(AnonymizationConstants.Marker);
         RaiseDomainEvent(new UserAccountDeleted(Id, DateTimeOffset.UtcNow));

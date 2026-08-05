@@ -1,4 +1,4 @@
-using RentifyxIdentity.Domain.Events;
+﻿using RentifyxIdentity.Domain.Events;
 
 namespace RentifyxIdentity.Domain.Common;
 
@@ -8,13 +8,7 @@ public abstract class AggregateRoot
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-    protected void RaiseDomainEvent(IDomainEvent domainEvent)
-    {
-        _domainEvents.Add(domainEvent);
-    }
+    protected void RaiseDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
 
-    public void ClearDomainEvents()
-    {
-        _domainEvents.Clear();
-    }
+    public void ClearDomainEvents() => _domainEvents.Clear();
 }

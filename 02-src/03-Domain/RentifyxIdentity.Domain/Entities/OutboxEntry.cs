@@ -1,4 +1,4 @@
-using RentifyxIdentity.Domain.Enums;
+﻿using RentifyxIdentity.Domain.Enums;
 
 namespace RentifyxIdentity.Domain.Entities;
 
@@ -33,20 +33,11 @@ public sealed class OutboxEntry
         };
     }
 
-    public void MarkPublished()
-    {
-        Status = OutboxStatus.Published;
-    }
+    public void MarkPublished() => Status = OutboxStatus.Published;
 
-    public void MarkFailed()
-    {
-        Status = OutboxStatus.Failed;
-    }
+    public void MarkFailed() => Status = OutboxStatus.Failed;
 
-    public void IncrementRetryCount()
-    {
-        RetryCount++;
-    }
+    public void IncrementRetryCount() => RetryCount++;
 
     internal static OutboxEntry Reconstitute(
         Guid id,

@@ -82,6 +82,25 @@ All handlers return `ErrorOr<T>`. Map to HTTP with `result.Match(success => ...,
 
 Every async method gets an `Async` suffix — including interface members. `IHandler<TRequest, TResponse>.HandleAsync(...)` is the pattern every handler implements; no `Handle`/`Send`/`Process`-without-suffix methods, on interfaces or implementations. Test methods (`[Fact]`/`[Theory]`) are exempt — they follow test-naming convention (`HappyPath_...`, `InvalidEmail_...`), not this rule.
 
+### Formatting: multi-parameter signatures and records
+
+- Any method/constructor/record with 2+ parameters: one parameter per line, each on its own line (never cram multiple on one line, never leave the first param on the signature line if others wrap).
+  ```csharp
+  public sealed record UserSuspended(
+      Guid UserId,
+      string Reason,
+      DateTimeOffset OccurredAt) : IDomainEvent;
+  ```
+- Primary-constructor base type/interface goes on its own line when the constructor has any params:
+  ```csharp
+  internal sealed class SecretsManagerConfigurationSource(IConfiguration bootstrapConfig)
+      : IConfigurationSource
+  ```
+- Single-statement void methods: prefer expression-bodied (`=>`) over a block body.
+  ```csharp
+  public void MarkPublished() => Status = OutboxStatus.Published;
+  ```
+
 ### Endpoint pattern
 
 ```csharp
