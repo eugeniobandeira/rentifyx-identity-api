@@ -17,7 +17,7 @@ try
 {
     WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-    builder.AddServiceDefaults();
+    builder.AddServiceDefaults(OutboxActivitySource.Name);
 
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
