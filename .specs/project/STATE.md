@@ -149,6 +149,7 @@ _None active._
 | DEF-005 | Domain event dispatch via Outbox pattern | E-05 |
 | DEF-006 | LGPD export: consent records and login history | Confirm scope with team before E-05 |
 | DEF-007 | TaxId KMS encryption + HMAC blind index for secure search | Post-v1.1.0 — skipped in v1.1.0 by design |
+| DEF-008 | GSI on `Status` for `GetAllActiveUserIdsAsync` (currently full-table Scan filtered by `PK begins_with USER#` + `Status=Active`) | If active-user listing becomes hot-path or table grows large enough for Scan cost to matter — explicitly not worth the extra write cost (index maintenance on every User write) at current scale |
 
 | D-012 | `UserRepository` uses `IDynamoDBContext` (high-level API), not `IAmazonDynamoDB` | Eliminates manual `Dictionary<string, AttributeValue>` construction; `SaveAsync`/`LoadAsync`/`DeleteAsync` are cleaner and less error-prone | 2026-06-30 |
 | D-013 | `UserDynamoDbItem` GSI properties named in PascalCase with `[DynamoDBProperty]` for physical name | CA1707 forbids underscores in member names; `[DynamoDBProperty("GSI_Email_PK")]` preserves the DynamoDB attribute name | 2026-06-30 |
