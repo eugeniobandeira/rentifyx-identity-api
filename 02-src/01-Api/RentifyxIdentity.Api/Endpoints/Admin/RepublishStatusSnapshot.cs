@@ -4,6 +4,7 @@ using RentifyxIdentity.Api.Extensions;
 using RentifyxIdentity.Application.Common.Handler;
 using RentifyxIdentity.Application.Features.Admin.RepublishStatusSnapshot;
 using RentifyxIdentity.Application.Features.Admin.RepublishStatusSnapshot.Request;
+using RentifyxIdentity.Domain.Constants;
 
 namespace RentifyxIdentity.Api.Endpoints.Admin;
 
@@ -20,7 +21,7 @@ internal sealed class RepublishStatusSnapshot : IEndpoint
            .WithName("RepublishUserStatusSnapshot")
            .WithDescription("Republishes every active user's status onto user-lifecycle-events for downstream cache backfill.")
            .WithTags(Tags.ADMIN)
-           .RequireAuthorization("AdminOnly");
+           .RequireAuthorization(AuthorizationPolicies.AdminOnly);
     }
 
     private static async Task<IResult> HandleAsync(
